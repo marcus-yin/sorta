@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SORTA Metro - MTIF Application</title>
+    <style>
+      :root {
+        --metro-blue: #003da5;
+        --metro-red: #e4002b;
+        --metro-navy: #0b1f3a;
+        --metro-ink: #111827;
+        --metro-slate: #475569;
+        --metro-border: #e2e8f0;
+        --metro-panel: #f8fafc;
+        --metro-white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--metro-ink);
+        background: #f3f5f9;
+      }
+
+      .metro-banner {
+        background: linear-gradient(120deg, var(--metro-blue), #1b4fbf);
+        padding: 24px 18px;
+        color: var(--metro-white);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 4px solid var(--metro-red);
+      }
+
+      .metro-logo {
+        width: 140px;
+        height: auto;
+        background: var(--metro-white);
+        padding: 8px 12px;
+        border-radius: 10px;
+      }
+
+      .metro-banner-text h1 {
+        font-size: 22px;
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .metro-banner-text p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .metro-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+
+      .metro-card {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .metro-card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-left: 4px solid var(--metro-red);
+        padding-left: 10px;
+      }
+
+      .metro-card p {
+        margin: 0 0 8px;
+        color: var(--metro-slate);
+        font-size: 14px;
+      }
+
+      .metro-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .metro-button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .metro-button.primary {
+        background: var(--metro-red);
+        color: var(--metro-white);
+      }
+
+      .metro-button.secondary {
+        background: var(--metro-blue);
+        color: var(--metro-white);
+      }
+
+      .metro-button.ghost {
+        background: transparent;
+        border: 1px solid var(--metro-border);
+        color: var(--metro-ink);
+      }
+
+      .metro-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      }
+
+      .metro-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 12px 0 0;
+      }
+
+      .metro-nav a {
+        text-decoration: none;
+        background: var(--metro-panel);
+        color: var(--metro-navy);
+        border: 1px solid var(--metro-border);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .metro-section {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .metro-section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: var(--metro-navy);
+        border-left: 4px solid var(--metro-blue);
+        padding-left: 10px;
+      }
+
+      .metro-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+
+      .metro-col-12 {
+        grid-column: span 12;
+      }
+
+      .metro-col-6 {
+        grid-column: span 6;
+      }
+
+      .metro-col-4 {
+        grid-column: span 4;
+      }
+
+      .metro-col-3 {
+        grid-column: span 3;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: var(--metro-white);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: rgba(0, 61, 165, 0.6);
+        box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15);
+      }
+
+      .metro-help {
+        font-size: 11px;
+        color: var(--metro-slate);
+        margin-top: 6px;
+      }
+
+      .metro-status {
+        font-size: 12px;
+        color: var(--metro-slate);
+        margin-top: 8px;
+      }
+
+      @media (max-width: 900px) {
+        .metro-col-6,
+        .metro-col-4,
+        .metro-col-3 {
+          grid-column: span 12;
+        }
+
+        .metro-banner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .metro-logo {
+          width: 110px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="metro-banner">
+      <img
+        class="metro-logo"
+        src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+        alt="Metro logo"
+      />
+      <div class="metro-banner-text">
+        <h1>Metro Transit Infrastructure Fund Application</h1>
+        <p>SORTA OpenGov application fields - organized by category.</p>
+      </div>
+    </header>
+
+    <main class="metro-container">
+      <section class="metro-card">
+        <h2>How to use this page</h2>
+        <p>
+          Complete each section below. Fields are grouped to match the
+          application categories provided in the requirements spreadsheet.
+        </p>
+        <p>
+          Use the buttons to save locally in your browser or export a JSON
+          snapshot for your records.
+        </p>
+        <div class="metro-actions">
+          <button class="metro-button primary" type="button" id="saveDraftButton">
+            Save Draft
+          </button>
+          <button class="metro-button secondary" type="button" id="exportButton">
+            Export JSON
+          </button>
+          <button class="metro-button ghost" type="button" id="clearButton">
+            Clear Draft
+          </button>
+        </div>
+        <div class="metro-status" id="draftStatus">Draft not saved yet.</div>
+        <nav class="metro-nav" id="sectionNav"></nav>
+      </section>
+
+      <form id="mtifForm"></form>
+    </main>
+
+    <script>
+      const fieldData = [
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Jurisdiction name"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Jurisdiction mailing address"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Chief Executive Officer name"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Chief Executive Officer title"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Chief Fiscal Officer name"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Chief Fiscal Officer title"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Project contact person name"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Project contact phone"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Project contact email"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Primary applicant email for notices"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
+          "FieldName": "Applicant role (jurisdiction/county/township/HCTID/CRC/SORTA)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Project name"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Project description (short narrative)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Project ID (SORTA MTIF project ID)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Year project funded"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Date of project award"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Program year / round (e.g. Round 5 - 2025)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Project type/category (Road/Bridge/Sidewalk/Multimodal/ITS/Transit facility)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Large vs small project category (>= $1M vs < $1M)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Emergency project indicator (Yes/No)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Project street name(s)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Municipality/township/county"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Project limits description"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Project vicinity map file"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Project latitude/longitude"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "GIS shapefile upload"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Distance to nearest fixed-route transit (miles)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Within 3/4 mile of fixed-route transit (Yes/No)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Weekday fixed-route trips using project corridor (count)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "On BRT corridor (Yes/No)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Local funds budgeted (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "SORTA MTIF funds awarded (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Other funds budgeted (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Total project budget (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Local funds share (%)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "MTIF funds share (%)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Other funds share (%)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Max grant % (<= 90% of construction cost)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Local minimum 10% match flag"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Multi-year project funding years (1-5)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Detailed cost estimate file upload"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Construction contingency %"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Useful life estimate (years)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Engineer's stamp / PE license file"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Certification of funds letter upload"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Authorizing legislation upload"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Construction award date"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Anticipated construction start date"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Anticipated construction completion date"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Construction start within 1 year flag"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Right-of-way status (all/partial/none)"
+        },
+        {
+          "Category": "Schedule & ROW",
+          "FieldName": "Design/engineering status (complete/in process/not started)"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Physical condition narrative"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Safety issues narrative"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Project priority ranking (1st/2nd/3rd/etc.)"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Economic growth & connectivity narrative"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Match % (calculated from budget)"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Regional impact narrative"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Average Daily Traffic (ADT)"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Relative Economic Strength score"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Transit impact narrative"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Multimodal infrastructure details"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Sustainability measures checklist"
+        },
+        {
+          "Category": "Scoring / Criteria",
+          "FieldName": "Past performance score"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Quarterly report date"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Quarterly report prepared by"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Quarterly jurisdiction"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Quarterly address"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Project name (reporting)"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Project ID (reporting)"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Owner (reporting)"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Contractor (reporting)"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Owner's Project Manager (reporting)"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Last report % completion"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Current report % completion"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Overall project % completion"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Payment status"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Payment status explanation"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Amount expended - MTIF grant only"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Total grant award"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Potential risks narrative"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Schedule update narrative"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Issues / concerns narrative"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Site documentation photos"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual report date"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual report prepared by"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual % project completion"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual potential risks"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual schedule update"
+        },
+        {
+          "Category": "Progress Reporting",
+          "FieldName": "Annual issues / concerns"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Reimbursement request date"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Reimbursement request ID"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Reimbursement form upload"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Invoices included (list)"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Total amount requested (this submission)"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "MTIF-eligible amount (based on ratio)"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Cumulative reimbursed amount"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Remaining grant balance"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "Two reimbursements per month rule flag"
+        },
+        {
+          "Category": "Reimbursement",
+          "FieldName": "ACH form on file (Yes/No)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Jurisdiction (closeout)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Project name (closeout)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Project number (closeout)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Year project funded (closeout)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Date of project award (closeout)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Initial local funds budgeted (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Initial MTIF funds budgeted (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Initial other funds budgeted (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Initial total project budget (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Actual local funds expended (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Actual MTIF funds expended (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Actual other funds expended (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Total funds expended (dollars/%)"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Construction completion date"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Final completion photos"
+        },
+        {
+          "Category": "Closeout",
+          "FieldName": "Residual/unexpended funds note"
+        }
+      ];
+
+      const storageKey = "sorta_mtif_application_draft_v1";
+      const sectionNav = document.getElementById("sectionNav");
+      const formEl = document.getElementById("mtifForm");
+      const draftStatus = document.getElementById("draftStatus");
+
+      const slugify = (value) =>
+        value
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+      const getSelectOptionsFromField = (fieldName) => {
+        const match = fieldName.match(/\(([^)]+)\)/);
+        if (!match) return null;
+        const content = match[1];
+        if (content.includes("/")) {
+          return content.split("/").map((item) => item.trim());
+        }
+        if (content.includes(" vs ")) {
+          return content.split(" vs ").map((item) => item.trim());
+        }
+        if (content.includes("Yes/No")) {
+          return ["Yes", "No"];
+        }
+        return null;
+      };
+
+      const getFieldConfig = (fieldName) => {
+        const lower = fieldName.toLowerCase();
+        const options = getSelectOptionsFromField(fieldName);
+
+        if (options) {
+          return { type: "select", options };
+        }
+
+        if (lower.includes("yes/no") || lower.includes("flag") || lower.includes("indicator")) {
+          return { type: "select", options: ["Yes", "No"] };
+        }
+
+        if (lower.includes("status") && lower.includes("all/partial/none")) {
+          return { type: "select", options: ["All", "Partial", "None"] };
+        }
+
+        if (lower.includes("status") && lower.includes("complete/in process/not started")) {
+          return { type: "select", options: ["Complete", "In process", "Not started"] };
+        }
+
+        if (lower.includes("priority ranking")) {
+          return { type: "select", options: ["1st", "2nd", "3rd", "4th", "5th", "Other"] };
+        }
+
+        if (lower.includes("email")) {
+          return { type: "email" };
+        }
+
+        if (lower.includes("phone")) {
+          return { type: "tel", placeholder: "(xxx) xxx-xxxx" };
+        }
+
+        if (lower.includes("date")) {
+          return { type: "date" };
+        }
+
+        if (lower.includes("year")) {
+          return { type: "number", min: 2000, max: 2100, step: 1 };
+        }
+
+        if (lower.includes("dollars") || lower.includes("amount") || lower.includes("budget")) {
+          return { type: "number", step: 0.01, min: 0 };
+        }
+
+        if (lower.includes("%") || lower.includes("percent") || lower.includes("share")) {
+          return { type: "number", step: 0.01, min: 0, max: 100 };
+        }
+
+        if (lower.includes("count") || lower.includes("estimate") || lower.includes("miles")) {
+          return { type: "number", step: 1, min: 0 };
+        }
+
+        if (lower.includes("upload") || lower.includes("file") || lower.includes("photos")) {
+          return { type: "file" };
+        }
+
+        if (
+          lower.includes("narrative") ||
+          lower.includes("description") ||
+          lower.includes("details") ||
+          lower.includes("checklist") ||
+          lower.includes("note") ||
+          lower.includes("list")
+        ) {
+          return { type: "textarea" };
+        }
+
+        if (lower.includes("latitude/longitude")) {
+          return { type: "text", placeholder: "39.1031, -84.5120" };
+        }
+
+        if (lower.includes("multi-year project funding years")) {
+          return { type: "number", min: 1, max: 5, step: 1 };
+        }
+
+        return { type: "text" };
+      };
+
+      const buildSections = () => {
+        const grouped = fieldData.reduce((acc, item) => {
+          if (!acc[item.Category]) {
+            acc[item.Category] = [];
+          }
+          acc[item.Category].push(item.FieldName);
+          return acc;
+        }, {});
+
+        Object.keys(grouped).forEach((category, index) => {
+          const sectionId = `section-${index}-${slugify(category)}`;
+
+          const navLink = document.createElement("a");
+          navLink.href = `#${sectionId}`;
+          navLink.textContent = category;
+          sectionNav.appendChild(navLink);
+
+          const section = document.createElement("section");
+          section.className = "metro-section";
+          section.id = sectionId;
+
+          const title = document.createElement("h3");
+          title.textContent = category;
+          section.appendChild(title);
+
+          const grid = document.createElement("div");
+          grid.className = "metro-grid";
+
+          grouped[category].forEach((fieldName) => {
+            const config = getFieldConfig(fieldName);
+            const fieldId = `field-${slugify(category)}-${slugify(fieldName)}`;
+
+            const fieldWrap = document.createElement("div");
+            fieldWrap.className =
+              config.type === "textarea" ? "metro-col-12" : "metro-col-6";
+
+            const label = document.createElement("label");
+            label.setAttribute("for", fieldId);
+            label.textContent = fieldName;
+
+            let input;
+            if (config.type === "textarea") {
+              input = document.createElement("textarea");
+            } else if (config.type === "select") {
+              input = document.createElement("select");
+              const placeholderOption = document.createElement("option");
+              placeholderOption.value = "";
+              placeholderOption.textContent = "Select an option";
+              input.appendChild(placeholderOption);
+              config.options.forEach((opt) => {
+                const optionEl = document.createElement("option");
+                optionEl.value = opt;
+                optionEl.textContent = opt;
+                input.appendChild(optionEl);
+              });
+            } else {
+              input = document.createElement("input");
+              input.type = config.type;
+            }
+
+            input.id = fieldId;
+            input.name = fieldId;
+            input.dataset.fieldId = fieldId;
+            input.dataset.fieldLabel = fieldName;
+            input.dataset.category = category;
+
+            if (config.placeholder) {
+              input.placeholder = config.placeholder;
+            }
+            if (config.min !== undefined) input.min = config.min;
+            if (config.max !== undefined) input.max = config.max;
+            if (config.step !== undefined) input.step = config.step;
+
+            fieldWrap.appendChild(label);
+            fieldWrap.appendChild(input);
+
+            if (config.type === "file") {
+              const help = document.createElement("div");
+              help.className = "metro-help";
+              help.textContent = "Upload files when submitting in OpenGov.";
+              fieldWrap.appendChild(help);
+            }
+
+            grid.appendChild(fieldWrap);
+          });
+
+          section.appendChild(grid);
+          formEl.appendChild(section);
+        });
+      };
+
+      const collectFormData = () => {
+        const data = {};
+        document.querySelectorAll("[data-field-id]").forEach((field) => {
+          const category = field.dataset.category;
+          const label = field.dataset.fieldLabel;
+
+          if (!data[category]) {
+            data[category] = {};
+          }
+
+          if (field.type === "file") {
+            data[category][label] = field.files.length
+              ? Array.from(field.files).map((file) => file.name)
+              : "";
+            return;
+          }
+
+          data[category][label] = field.value;
+        });
+        return data;
+      };
+
+      const saveDraft = () => {
+        const data = {};
+        document.querySelectorAll("[data-field-id]").forEach((field) => {
+          if (field.type === "file") return;
+          data[field.dataset.fieldId] = field.value;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+      };
+
+      const loadDraft = () => {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return;
+        try {
+          const data = JSON.parse(saved);
+          document.querySelectorAll("[data-field-id]").forEach((field) => {
+            if (field.type === "file") return;
+            const value = data[field.dataset.fieldId];
+            if (value !== undefined) {
+              field.value = value;
+            }
+          });
+          draftStatus.textContent = "Draft loaded from browser storage.";
+        } catch (error) {
+          draftStatus.textContent = "Draft found but could not be loaded.";
+        }
+      };
+
+      const clearDraft = () => {
+        localStorage.removeItem(storageKey);
+        document.getElementById("mtifForm").reset();
+        draftStatus.textContent = "Draft cleared.";
+      };
+
+      const exportJson = () => {
+        const data = collectFormData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sorta_mtif_application.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      buildSections();
+      loadDraft();
+
+      document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
+      document.getElementById("exportButton").addEventListener("click", exportJson);
+      document.getElementById("clearButton").addEventListener("click", clearDraft);
+    </script>
+  </body>
+</html>

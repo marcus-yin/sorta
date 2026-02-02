@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SORTA Metro - MTIF Closeout Report</title>
+    <style>
+      :root {
+        --metro-blue: #003da5;
+        --metro-red: #e4002b;
+        --metro-navy: #0b1f3a;
+        --metro-ink: #111827;
+        --metro-slate: #475569;
+        --metro-border: #e2e8f0;
+        --metro-panel: #f8fafc;
+        --metro-white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--metro-ink);
+        background: #f3f5f9;
+      }
+
+      .metro-banner {
+        background: linear-gradient(120deg, var(--metro-blue), #1b4fbf);
+        padding: 24px 18px;
+        color: var(--metro-white);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 4px solid var(--metro-red);
+      }
+
+      .metro-logo {
+        width: 140px;
+        height: auto;
+        background: var(--metro-white);
+        padding: 8px 12px;
+        border-radius: 10px;
+      }
+
+      .metro-banner-text h1 {
+        font-size: 22px;
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .metro-banner-text p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .metro-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+
+      .metro-card {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .metro-card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-left: 4px solid var(--metro-red);
+        padding-left: 10px;
+      }
+
+      .metro-card p {
+        margin: 0 0 8px;
+        color: var(--metro-slate);
+        font-size: 14px;
+      }
+
+      .metro-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .metro-button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .metro-button.primary {
+        background: var(--metro-red);
+        color: var(--metro-white);
+      }
+
+      .metro-button.secondary {
+        background: var(--metro-blue);
+        color: var(--metro-white);
+      }
+
+      .metro-button.ghost {
+        background: transparent;
+        border: 1px solid var(--metro-border);
+        color: var(--metro-ink);
+      }
+
+      .metro-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      }
+
+      .metro-section {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .metro-section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: var(--metro-navy);
+        border-left: 4px solid var(--metro-blue);
+        padding-left: 10px;
+      }
+
+      .metro-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+
+      .metro-col-12 {
+        grid-column: span 12;
+      }
+
+      .metro-col-6 {
+        grid-column: span 6;
+      }
+
+      .metro-col-4 {
+        grid-column: span 4;
+      }
+
+      .metro-col-3 {
+        grid-column: span 3;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: var(--metro-white);
+      }
+
+      input:focus {
+        border-color: rgba(0, 61, 165, 0.6);
+        box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15);
+      }
+
+      input[readonly] {
+        background: var(--metro-panel);
+        color: var(--metro-slate);
+      }
+
+      .metro-help {
+        font-size: 11px;
+        color: var(--metro-slate);
+        margin-top: 6px;
+      }
+
+      .metro-status {
+        font-size: 12px;
+        color: var(--metro-slate);
+        margin-top: 8px;
+      }
+
+      .metro-address {
+        background: var(--metro-panel);
+        border-radius: 12px;
+        padding: 12px;
+        border: 1px solid var(--metro-border);
+        font-size: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .metro-col-6,
+        .metro-col-4,
+        .metro-col-3 {
+          grid-column: span 12;
+        }
+
+        .metro-banner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .metro-logo {
+          width: 110px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="metro-banner">
+      <img
+        class="metro-logo"
+        src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+        alt="Metro logo"
+      />
+      <div class="metro-banner-text">
+        <h1>2025 MTIF Closeout Report</h1>
+        <p>Southwest Ohio Regional Transportation Authority (SORTA)</p>
+      </div>
+    </header>
+
+    <main class="metro-container">
+      <section class="metro-card">
+        <h2>Closeout Report Instructions</h2>
+        <p>Filing of this report is mandatory for project accounting.</p>
+        <p>
+          Please complete this report upon completion of construction for project
+          accounting. Failure to complete and file this report could result in
+          the loss of future TIF awards.
+        </p>
+        <div class="metro-actions">
+          <button class="metro-button primary" type="button" id="saveDraftButton">
+            Save Draft
+          </button>
+          <button class="metro-button secondary" type="button" id="exportButton">
+            Export JSON
+          </button>
+          <button class="metro-button ghost" type="button" id="clearButton">
+            Clear Draft
+          </button>
+        </div>
+        <div class="metro-status" id="draftStatus">Draft not saved yet.</div>
+      </section>
+
+      <form id="closeoutForm">
+        <section class="metro-section">
+          <h3>Project Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="jurisdiction">Jurisdiction</label>
+              <input type="text" id="jurisdiction" name="jurisdiction" />
+            </div>
+            <div class="metro-col-6">
+              <label for="projectName">Project Name</label>
+              <input type="text" id="projectName" name="projectName" />
+            </div>
+            <div class="metro-col-6">
+              <label for="projectNumber">Project Number</label>
+              <input type="text" id="projectNumber" name="projectNumber" />
+            </div>
+            <div class="metro-col-6">
+              <label for="contactPerson">Project Contact Person</label>
+              <input type="text" id="contactPerson" name="contactPerson" />
+            </div>
+            <div class="metro-col-6">
+              <label for="contactPhone">Phone</label>
+              <input type="tel" id="contactPhone" name="contactPhone" />
+            </div>
+            <div class="metro-col-3">
+              <label for="yearFunded">Year Project Funded</label>
+              <input type="number" id="yearFunded" name="yearFunded" min="2000" max="2100" />
+            </div>
+            <div class="metro-col-3">
+              <label for="awardDate">Date of Project Award</label>
+              <input type="date" id="awardDate" name="awardDate" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Initial Project Budget (Use Whole Numbers Only)</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="initialLocalAmount">Local funds budgeted for project ($)</label>
+              <input
+                type="number"
+                id="initialLocalAmount"
+                name="initialLocalAmount"
+                min="0"
+                step="1"
+                data-group="initial"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="initialLocalPercent">Local funds share (%)</label>
+              <input
+                type="number"
+                id="initialLocalPercent"
+                name="initialLocalPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="initialSortaAmount">SORTA's TIF funds awarded ($)</label>
+              <input
+                type="number"
+                id="initialSortaAmount"
+                name="initialSortaAmount"
+                min="0"
+                step="1"
+                data-group="initial"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="initialSortaPercent">SORTA's TIF share (%)</label>
+              <input
+                type="number"
+                id="initialSortaPercent"
+                name="initialSortaPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="initialOtherAmount">Other funds budgeted for project ($)</label>
+              <input
+                type="number"
+                id="initialOtherAmount"
+                name="initialOtherAmount"
+                min="0"
+                step="1"
+                data-group="initial"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="initialOtherPercent">Other funds share (%)</label>
+              <input
+                type="number"
+                id="initialOtherPercent"
+                name="initialOtherPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="initialTotalAmount">Total Project Budget (A thru C) ($)</label>
+              <input
+                type="number"
+                id="initialTotalAmount"
+                name="initialTotalAmount"
+                min="0"
+                step="1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="initialTotalPercent">Total (%)</label>
+              <input
+                type="number"
+                id="initialTotalPercent"
+                name="initialTotalPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Actual Project Expenses (Use Whole Numbers Only)</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="actualLocalAmount">Amount of local funds expended ($)</label>
+              <input
+                type="number"
+                id="actualLocalAmount"
+                name="actualLocalAmount"
+                min="0"
+                step="1"
+                data-group="actual"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="actualLocalPercent">Local funds share (%)</label>
+              <input
+                type="number"
+                id="actualLocalPercent"
+                name="actualLocalPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="actualSortaAmount">Amount of SORTA's TIF funds expended ($)</label>
+              <input
+                type="number"
+                id="actualSortaAmount"
+                name="actualSortaAmount"
+                min="0"
+                step="1"
+                data-group="actual"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="actualSortaPercent">SORTA's TIF share (%)</label>
+              <input
+                type="number"
+                id="actualSortaPercent"
+                name="actualSortaPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="actualOtherAmount">Other funds expended ($)</label>
+              <input
+                type="number"
+                id="actualOtherAmount"
+                name="actualOtherAmount"
+                min="0"
+                step="1"
+                data-group="actual"
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="actualOtherPercent">Other funds share (%)</label>
+              <input
+                type="number"
+                id="actualOtherPercent"
+                name="actualOtherPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="actualTotalAmount">Total funds expended (D thru F) ($)</label>
+              <input
+                type="number"
+                id="actualTotalAmount"
+                name="actualTotalAmount"
+                min="0"
+                step="1"
+                readonly
+              />
+            </div>
+            <div class="metro-col-3">
+              <label for="actualTotalPercent">Total (%)</label>
+              <input
+                type="number"
+                id="actualTotalPercent"
+                name="actualTotalPercent"
+                min="0"
+                max="100"
+                step="0.1"
+                readonly
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Submit the Completion Report</h3>
+          <p>Please mail the Completion Report to:</p>
+          <div class="metro-address">
+            SORTA (Attention - Jason Roe)<br />
+            525 Vine St, Suite 500<br />
+            Cincinnati, Ohio 45202
+          </div>
+          <p class="metro-help">
+            Failure to complete and file could result in loss of future funds.
+          </p>
+        </section>
+      </form>
+    </main>
+
+    <script>
+      const storageKey = "sorta_mtif_closeout_report_draft_v1";
+      const draftStatus = document.getElementById("draftStatus");
+
+      const parseAmount = (value) => {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : 0;
+      };
+
+      const formatPercent = (value) => {
+        if (!Number.isFinite(value)) return "";
+        return value === 0 ? 0 : Number(value.toFixed(1));
+      };
+
+      const updateGroupTotals = (group) => {
+        const localAmount = parseAmount(
+          document.getElementById(`${group}LocalAmount`).value
+        );
+        const sortaAmount = parseAmount(
+          document.getElementById(`${group}SortaAmount`).value
+        );
+        const otherAmount = parseAmount(
+          document.getElementById(`${group}OtherAmount`).value
+        );
+        const total = localAmount + sortaAmount + otherAmount;
+
+        document.getElementById(`${group}TotalAmount`).value =
+          total > 0 ? total : "";
+        document.getElementById(`${group}TotalPercent`).value =
+          total > 0 ? 100 : "";
+
+        const localPercent = total ? (localAmount / total) * 100 : 0;
+        const sortaPercent = total ? (sortaAmount / total) * 100 : 0;
+        const otherPercent = total ? (otherAmount / total) * 100 : 0;
+
+        document.getElementById(`${group}LocalPercent`).value =
+          total ? formatPercent(localPercent) : "";
+        document.getElementById(`${group}SortaPercent`).value =
+          total ? formatPercent(sortaPercent) : "";
+        document.getElementById(`${group}OtherPercent`).value =
+          total ? formatPercent(otherPercent) : "";
+      };
+
+      const saveDraft = () => {
+        const data = {};
+        document.querySelectorAll("input").forEach((input) => {
+          data[input.id] = input.value;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+      };
+
+      const loadDraft = () => {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return;
+        try {
+          const data = JSON.parse(saved);
+          document.querySelectorAll("input").forEach((input) => {
+            if (data[input.id] !== undefined) {
+              input.value = data[input.id];
+            }
+          });
+          updateGroupTotals("initial");
+          updateGroupTotals("actual");
+          draftStatus.textContent = "Draft loaded from browser storage.";
+        } catch (error) {
+          draftStatus.textContent = "Draft found but could not be loaded.";
+        }
+      };
+
+      const clearDraft = () => {
+        localStorage.removeItem(storageKey);
+        document.getElementById("closeoutForm").reset();
+        updateGroupTotals("initial");
+        updateGroupTotals("actual");
+        draftStatus.textContent = "Draft cleared.";
+      };
+
+      const exportJson = () => {
+        const data = {};
+        document.querySelectorAll("input").forEach((input) => {
+          data[input.id] = input.value;
+        });
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sorta_mtif_closeout_report.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      document.querySelectorAll("[data-group]").forEach((input) => {
+        const group = input.dataset.group;
+        input.addEventListener("input", () => updateGroupTotals(group));
+      });
+
+      document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
+      document.getElementById("exportButton").addEventListener("click", exportJson);
+      document.getElementById("clearButton").addEventListener("click", clearDraft);
+
+      loadDraft();
+      updateGroupTotals("initial");
+      updateGroupTotals("actual");
+    </script>
+  </body>
+</html>

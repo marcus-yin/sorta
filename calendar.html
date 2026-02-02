@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar with Agenda</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --border: #e2e8f0;
+        --muted: #64748b;
+        --text: #0f172a;
+        --accent: #2563eb;
+        --accent-soft: rgba(37, 99, 235, 0.12);
+        --chip: #eef2ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      .page {
+        padding: 18px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .calendar-app {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 16px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+        padding: 14px;
+      }
+      .panel h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .agenda-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .agenda-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        color: var(--text);
+      }
+      .btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .agenda-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: calc(100vh - 220px);
+        overflow: auto;
+        padding-right: 6px;
+      }
+      .filters {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .filter-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .filter-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .filter-group input,
+      .filter-group select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 12px;
+        background: #ffffff;
+        color: var(--text);
+      }
+      .filter-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .agenda-date {
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      .agenda-item {
+        border-left: 3px solid var(--accent);
+        padding: 6px 8px;
+        background: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 6px;
+      }
+      .agenda-time {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .agenda-title-text {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .calendar-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .calendar-title {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border-top: 1px solid var(--border);
+        border-left: 1px solid var(--border);
+      }
+      .calendar-cell {
+        min-height: 110px;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 8px;
+        position: relative;
+        background: #ffffff;
+        cursor: pointer;
+      }
+      .calendar-cell.is-outside {
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: default;
+      }
+      .calendar-cell.is-selected {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+        background: var(--accent-soft);
+      }
+      .day-number {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .weekday {
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 0;
+        background: #f8fafc;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+      .event-chip {
+        display: block;
+        font-size: 11px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        background: var(--chip);
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .event-more {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .empty-state {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        padding: 18px 0;
+      }
+      @media (max-width: 980px) {
+        .calendar-app {
+          grid-template-columns: 1fr;
+        }
+        .agenda-list {
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div class="title">Calendar</div>
+      </div>
+
+      <div class="calendar-app">
+        <aside class="panel">
+          <h3>Agenda</h3>
+          <div class="agenda-header">
+            <div id="agenda-title" class="agenda-title">Agenda</div>
+            <button id="agenda-clear" class="btn" type="button">Show month</button>
+          </div>
+          <div class="filters">
+            <div class="filter-group">
+              <label for="filter-search">Search</label>
+              <input id="filter-search" type="text" placeholder="Search titles" />
+            </div>
+            <div class="filter-row">
+              <div class="filter-group">
+                <label for="filter-range">Date range</label>
+                <select id="filter-range">
+                  <option value="all">All</option>
+                  <option value="today">Today</option>
+                  <option value="week">This week</option>
+                  <option value="month">This month</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-type">Event type</label>
+                <select id="filter-type"></select>
+              </div>
+            </div>
+            <div class="filter-row">
+              <div class="filter-group">
+                <label for="filter-status">Status</label>
+                <select id="filter-status"></select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-location">Location</label>
+                <select id="filter-location"></select>
+              </div>
+            </div>
+            <div class="filter-row">
+              <div class="filter-group">
+                <label for="filter-department">Department</label>
+                <select id="filter-department"></select>
+              </div>
+              <div class="filter-group">
+                <label>&nbsp;</label>
+                <div class="filter-actions">
+                  <button id="filter-reset" class="btn" type="button">Reset filters</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="agenda-list" class="agenda-list"></div>
+        </aside>
+
+        <main class="panel">
+          <div class="calendar-toolbar">
+            <div class="calendar-title" id="calendar-title"></div>
+            <div>
+              <button id="prev-month" class="btn" type="button">Prev</button>
+              <button id="today" class="btn" type="button">Today</button>
+              <button id="next-month" class="btn" type="button">Next</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // ============================================
+      // API Configuration (based on reference page)
+      // ============================================
+      const IS_LOCALHOST = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      const AES_KEY = "UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9";
+      const API_CONFIG = {
+        baseURL: IS_LOCALHOST ? "/proxy" : "https://api.ignatius.io",
+        aesKey: AES_KEY,
+        appointmentsReportId: "YOUR_APPOINTMENTS_REPORT_ID_HERE",
+        titleFieldKey: "title",
+        startFieldKey: "start_time",
+        endFieldKey: "end_time",
+        dateFieldKey: "date"
+      };
+
+      const FALLBACK_EVENTS = [
+        {
+          id: 1,
+          title: "Budget Review",
+          start: "2026-02-04T09:00:00",
+          type: "Meeting",
+          status: "Confirmed",
+          location: "Civic Center - Room 201",
+          department: "Finance"
+        },
+        {
+          id: 2,
+          title: "Parks Committee",
+          start: "2026-02-04T13:30:00",
+          type: "Hearing",
+          status: "Confirmed",
+          location: "Council Chambers",
+          department: "Parks & Recreation"
+        },
+        {
+          id: 3,
+          title: "Capital Projects Sync",
+          start: "2026-02-06T10:00:00",
+          type: "Meeting",
+          status: "Tentative",
+          location: "Virtual",
+          department: "Public Works"
+        },
+        {
+          id: 4,
+          title: "Grant Application Review",
+          start: "2026-02-10T15:00:00",
+          type: "Deadline",
+          status: "Confirmed",
+          location: "Online",
+          department: "Grants"
+        },
+        {
+          id: 5,
+          title: "Community Outreach",
+          start: "2026-02-17T11:30:00",
+          type: "Site Visit",
+          status: "Confirmed",
+          location: "Westside Park",
+          department: "Community Development"
+        },
+        {
+          id: 6,
+          title: "Council Meeting",
+          start: "2026-02-24T18:00:00",
+          type: "Meeting",
+          status: "Confirmed",
+          location: "Council Chambers",
+          department: "City Clerk"
+        }
+      ];
+
+      const state = {
+        year: new Date().getFullYear(),
+        month: new Date().getMonth(),
+        events: [],
+        selectedDate: null,
+        filters: {
+          search: "",
+          dateRange: "all",
+          type: "all",
+          status: "all",
+          location: "all",
+          department: "all"
+        }
+      };
+
+      function safeJsonParse(value) {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return null;
+        }
+      }
+
+      function extractAccessTokenFromDecryptedString(decrypted) {
+        if (typeof decrypted !== "string") return "";
+        const trimmed = decrypted.trim();
+        if (!trimmed) return "";
+        const maybeJson = safeJsonParse(trimmed);
+        if (maybeJson && typeof maybeJson === "object") {
+          if (maybeJson.access_token) return String(maybeJson.access_token);
+          if (maybeJson.token) return String(maybeJson.token);
+        }
+        return trimmed;
+      }
+
+      function getAuthToken() {
+        let encryptedToken = "";
+        try {
+          encryptedToken = localStorage.getItem("token") || "";
+        } catch {
+          encryptedToken = "";
+        }
+
+        if (!encryptedToken || typeof CryptoJS === "undefined") {
+          return "";
+        }
+
+        try {
+          const decrypted = CryptoJS.AES.decrypt(encryptedToken, API_CONFIG.aesKey).toString(
+            CryptoJS.enc.Utf8
+          );
+          return extractAccessTokenFromDecryptedString(decrypted);
+        } catch {
+          return "";
+        }
+      }
+
+      async function fetchAppointments() {
+        if (API_CONFIG.appointmentsReportId.includes("YOUR_")) {
+          return FALLBACK_EVENTS;
+        }
+
+        const token = getAuthToken();
+        if (!token) {
+          return FALLBACK_EVENTS;
+        }
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseURL}/api/Report/queryreport`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              reportId: API_CONFIG.appointmentsReportId
+            })
+          });
+
+          if (!response.ok) {
+            return FALLBACK_EVENTS;
+          }
+
+          const result = await response.json();
+          const records = Array.isArray(result?.records)
+            ? result.records
+            : Array.isArray(result?.data)
+            ? result.data
+            : Array.isArray(result)
+            ? result
+            : [];
+
+          const mapped = records
+            .map((record, index) => ({
+              id: record.id || record.rid || `api-${index}`,
+              title: record[API_CONFIG.titleFieldKey] || "Untitled appointment",
+              start: record[API_CONFIG.startFieldKey] || record[API_CONFIG.dateFieldKey],
+              end: record[API_CONFIG.endFieldKey] || "",
+              type: record.type || record.event_type || record.category || "Meeting",
+              status: record.status || record.state || "Confirmed",
+              location: record.location || record.room || record.venue || "TBD",
+              department: record.department || record.team || record.owner || "General"
+            }))
+            .filter((item) => item.start);
+
+          return mapped.length ? mapped : FALLBACK_EVENTS;
+        } catch {
+          return FALLBACK_EVENTS;
+        }
+      }
+
+      function toDateKey(date) {
+        return date.toISOString().slice(0, 10);
+      }
+
+      function formatMonthYear(year, month) {
+        return new Date(year, month, 1).toLocaleDateString(undefined, {
+          month: "long",
+          year: "numeric"
+        });
+      }
+
+      function formatAgendaDate(date) {
+        return date.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+      }
+
+      function formatTimeRange(startIso, endIso) {
+        const start = new Date(startIso);
+        if (!endIso) {
+          return start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        }
+        const end = new Date(endIso);
+        return `${start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} - ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      }
+
+      function getMonthMatrix(year, month) {
+        const firstDay = new Date(year, month, 1);
+        const startWeekday = firstDay.getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        const matrix = [];
+
+        for (let i = 0; i < startWeekday; i += 1) {
+          matrix.push({ day: daysInPrevMonth - startWeekday + i + 1, offset: -1 });
+        }
+        for (let day = 1; day <= daysInMonth; day += 1) {
+          matrix.push({ day, offset: 0 });
+        }
+        while (matrix.length % 7 !== 0) {
+          matrix.push({ day: matrix.length % 7, offset: 1 });
+        }
+        return matrix;
+      }
+
+      function groupEventsByDate(events) {
+        return events.reduce((acc, event) => {
+          const dateKey = toDateKey(new Date(event.start));
+          if (!acc[dateKey]) acc[dateKey] = [];
+          acc[dateKey].push(event);
+          return acc;
+        }, {});
+      }
+
+      function normalizeValue(value) {
+        return String(value || "")
+          .trim()
+          .toLowerCase();
+      }
+
+      function hasActiveFilters() {
+        const filters = state.filters;
+        return (
+          filters.search ||
+          filters.dateRange !== "all" ||
+          filters.type !== "all" ||
+          filters.status !== "all" ||
+          filters.location !== "all" ||
+          filters.department !== "all"
+        );
+      }
+
+      function getDateRangeBounds(rangeKey) {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (rangeKey === "today") {
+          return {
+            start: startOfDay,
+            end: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+          };
+        }
+        if (rangeKey === "week") {
+          const day = startOfDay.getDay();
+          const start = new Date(startOfDay);
+          start.setDate(start.getDate() - day);
+          const end = new Date(start);
+          end.setDate(end.getDate() + 7);
+          return { start, end };
+        }
+        if (rangeKey === "month") {
+          const start = new Date(state.year, state.month, 1);
+          const end = new Date(state.year, state.month + 1, 1);
+          return { start, end };
+        }
+        return null;
+      }
+
+      function getFilteredEvents(includeSelectedDate = true) {
+        const { search, dateRange, type, status, location, department } = state.filters;
+        const normalizedSearch = normalizeValue(search);
+        const range = getDateRangeBounds(dateRange);
+
+        return state.events.filter((event) => {
+          const eventDate = new Date(event.start);
+          if (Number.isNaN(eventDate.getTime())) return false;
+
+          if (range) {
+            if (eventDate < range.start || eventDate >= range.end) return false;
+          }
+
+          if (type !== "all" && normalizeValue(event.type) !== normalizeValue(type)) return false;
+          if (status !== "all" && normalizeValue(event.status) !== normalizeValue(status)) return false;
+          if (location !== "all" && normalizeValue(event.location) !== normalizeValue(location)) return false;
+          if (department !== "all" && normalizeValue(event.department) !== normalizeValue(department))
+            return false;
+
+          if (normalizedSearch) {
+            const haystack = normalizeValue(
+              `${event.title} ${event.type} ${event.status} ${event.location} ${event.department}`
+            );
+            if (!haystack.includes(normalizedSearch)) return false;
+          }
+
+          if (includeSelectedDate && state.selectedDate) {
+            return toDateKey(eventDate) === state.selectedDate;
+          }
+
+          return true;
+        });
+      }
+
+      function uniqueSorted(values) {
+        return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+      }
+
+      function renderFilterOptions() {
+        const types = uniqueSorted(state.events.map((event) => event.type));
+        const statuses = uniqueSorted(state.events.map((event) => event.status));
+        const locations = uniqueSorted(state.events.map((event) => event.location));
+        const departments = uniqueSorted(state.events.map((event) => event.department));
+
+        const configs = [
+          { id: "filter-type", values: types, key: "type" },
+          { id: "filter-status", values: statuses, key: "status" },
+          { id: "filter-location", values: locations, key: "location" },
+          { id: "filter-department", values: departments, key: "department" }
+        ];
+
+        configs.forEach((config) => {
+          const select = document.getElementById(config.id);
+          if (!select) return;
+          select.innerHTML = "";
+          const allOption = document.createElement("option");
+          allOption.value = "all";
+          allOption.textContent = "All";
+          select.appendChild(allOption);
+
+          config.values.forEach((value) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+          });
+
+          const current = state.filters[config.key];
+          if (current && current !== "all") {
+            select.value = current;
+          }
+        });
+      }
+
+      function renderCalendar() {
+        const grid = document.getElementById("calendar-grid");
+        const title = document.getElementById("calendar-title");
+        const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const monthMatrix = getMonthMatrix(state.year, state.month);
+        const eventMap = groupEventsByDate(getFilteredEvents(false));
+
+        title.textContent = formatMonthYear(state.year, state.month);
+        grid.innerHTML = "";
+
+        weekdays.forEach((day) => {
+          const header = document.createElement("div");
+          header.className = "weekday";
+          header.textContent = day;
+          grid.appendChild(header);
+        });
+
+        monthMatrix.forEach((cell) => {
+          const cellDate = new Date(state.year, state.month + cell.offset, cell.day);
+          const dateKey = toDateKey(cellDate);
+          const events = eventMap[dateKey] || [];
+          const cellEl = document.createElement("div");
+          cellEl.className = "calendar-cell";
+
+          if (cell.offset !== 0) {
+            cellEl.classList.add("is-outside");
+          } else if (state.selectedDate === dateKey) {
+            cellEl.classList.add("is-selected");
+          }
+
+          cellEl.innerHTML = `<div class="day-number">${cell.day}</div>`;
+
+          events.slice(0, 2).forEach((event) => {
+            const chip = document.createElement("span");
+            chip.className = "event-chip";
+            chip.textContent = event.title;
+            cellEl.appendChild(chip);
+          });
+
+          if (events.length > 2) {
+            const more = document.createElement("div");
+            more.className = "event-more";
+            more.textContent = `+${events.length - 2} more`;
+            cellEl.appendChild(more);
+          }
+
+          if (cell.offset === 0) {
+            cellEl.addEventListener("click", () => {
+              state.selectedDate = dateKey;
+              renderCalendar();
+              renderAgenda();
+            });
+          }
+
+          grid.appendChild(cellEl);
+        });
+      }
+
+      function renderAgenda() {
+        const list = document.getElementById("agenda-list");
+        const title = document.getElementById("agenda-title");
+        const dateFilter = state.selectedDate;
+        const events = getFilteredEvents(true).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        if (dateFilter) {
+          title.textContent = `Agenda - ${formatAgendaDate(new Date(dateFilter))}`;
+        } else {
+          const label = formatMonthYear(state.year, state.month);
+          title.textContent = hasActiveFilters() ? `Agenda - ${label} (filtered)` : `Agenda - ${label}`;
+        }
+
+        const grouped = groupEventsByDate(events);
+        const dates = Object.keys(grouped).sort();
+
+        list.innerHTML = "";
+
+        if (!events.length) {
+          list.innerHTML = `<div class="empty-state">No appointments scheduled.</div>`;
+          return;
+        }
+
+        dates.forEach((dateKey) => {
+          const section = document.createElement("div");
+          const dateLabel = document.createElement("div");
+          dateLabel.className = "agenda-date";
+          dateLabel.textContent = formatAgendaDate(new Date(dateKey));
+          section.appendChild(dateLabel);
+
+          grouped[dateKey].forEach((event) => {
+            const item = document.createElement("div");
+            item.className = "agenda-item";
+            item.innerHTML = `
+              <div class="agenda-time">${formatTimeRange(event.start, event.end)}</div>
+              <div class="agenda-title-text">${event.title}</div>
+            `;
+            section.appendChild(item);
+          });
+
+          list.appendChild(section);
+        });
+      }
+
+      function attachControls() {
+        const searchInput = document.getElementById("filter-search");
+        const rangeSelect = document.getElementById("filter-range");
+        const typeSelect = document.getElementById("filter-type");
+        const statusSelect = document.getElementById("filter-status");
+        const locationSelect = document.getElementById("filter-location");
+        const departmentSelect = document.getElementById("filter-department");
+        const resetBtn = document.getElementById("filter-reset");
+
+        if (searchInput) {
+          searchInput.addEventListener("input", (event) => {
+            state.filters.search = event.target.value || "";
+            renderCalendar();
+            renderAgenda();
+          });
+        }
+
+        if (rangeSelect) {
+          rangeSelect.addEventListener("change", (event) => {
+            state.filters.dateRange = event.target.value;
+            renderCalendar();
+            renderAgenda();
+          });
+        }
+
+        [typeSelect, statusSelect, locationSelect, departmentSelect].forEach((select) => {
+          if (!select) return;
+          select.addEventListener("change", (event) => {
+            const { id, value } = event.target;
+            if (id === "filter-type") state.filters.type = value;
+            if (id === "filter-status") state.filters.status = value;
+            if (id === "filter-location") state.filters.location = value;
+            if (id === "filter-department") state.filters.department = value;
+            renderCalendar();
+            renderAgenda();
+          });
+        });
+
+        if (resetBtn) {
+          resetBtn.addEventListener("click", () => {
+            state.filters = {
+              search: "",
+              dateRange: "all",
+              type: "all",
+              status: "all",
+              location: "all",
+              department: "all"
+            };
+            if (searchInput) searchInput.value = "";
+            if (rangeSelect) rangeSelect.value = "all";
+            renderFilterOptions();
+            renderCalendar();
+            renderAgenda();
+          });
+        }
+
+        document.getElementById("prev-month").addEventListener("click", () => {
+          state.month -= 1;
+          if (state.month < 0) {
+            state.month = 11;
+            state.year -= 1;
+          }
+          state.selectedDate = null;
+          renderCalendar();
+          renderAgenda();
+        });
+
+        document.getElementById("next-month").addEventListener("click", () => {
+          state.month += 1;
+          if (state.month > 11) {
+            state.month = 0;
+            state.year += 1;
+          }
+          state.selectedDate = null;
+          renderCalendar();
+          renderAgenda();
+        });
+
+        document.getElementById("today").addEventListener("click", () => {
+          const today = new Date();
+          state.year = today.getFullYear();
+          state.month = today.getMonth();
+          state.selectedDate = toDateKey(today);
+          renderCalendar();
+          renderAgenda();
+        });
+
+        document.getElementById("agenda-clear").addEventListener("click", () => {
+          state.selectedDate = null;
+          renderCalendar();
+          renderAgenda();
+        });
+      }
+
+      async function init() {
+        state.events = await fetchAppointments();
+        renderFilterOptions();
+        attachControls();
+        renderCalendar();
+        renderAgenda();
+      }
+
+      init();
+    </script>
+  </body>
+</html>

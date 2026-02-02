@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SORTA Metro - Quarterly Progress Report</title>
+    <style>
+      :root {
+        --metro-blue: #003da5;
+        --metro-red: #e4002b;
+        --metro-navy: #0b1f3a;
+        --metro-ink: #111827;
+        --metro-slate: #475569;
+        --metro-border: #e2e8f0;
+        --metro-panel: #f8fafc;
+        --metro-white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--metro-ink);
+        background: #f3f5f9;
+      }
+
+      .metro-banner {
+        background: linear-gradient(120deg, var(--metro-blue), #1b4fbf);
+        padding: 24px 18px;
+        color: var(--metro-white);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 4px solid var(--metro-red);
+      }
+
+      .metro-logo {
+        width: 140px;
+        height: auto;
+        background: var(--metro-white);
+        padding: 8px 12px;
+        border-radius: 10px;
+      }
+
+      .metro-banner-text h1 {
+        font-size: 22px;
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .metro-banner-text p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .metro-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+
+      .metro-card {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .metro-card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-left: 4px solid var(--metro-red);
+        padding-left: 10px;
+      }
+
+      .metro-card p {
+        margin: 0 0 8px;
+        color: var(--metro-slate);
+        font-size: 14px;
+      }
+
+      .metro-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .metro-button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .metro-button.primary {
+        background: var(--metro-red);
+        color: var(--metro-white);
+      }
+
+      .metro-button.secondary {
+        background: var(--metro-blue);
+        color: var(--metro-white);
+      }
+
+      .metro-button.ghost {
+        background: transparent;
+        border: 1px solid var(--metro-border);
+        color: var(--metro-ink);
+      }
+
+      .metro-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      }
+
+      .metro-section {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .metro-section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: var(--metro-navy);
+        border-left: 4px solid var(--metro-blue);
+        padding-left: 10px;
+      }
+
+      .metro-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+
+      .metro-col-12 {
+        grid-column: span 12;
+      }
+
+      .metro-col-6 {
+        grid-column: span 6;
+      }
+
+      .metro-col-4 {
+        grid-column: span 4;
+      }
+
+      .metro-col-3 {
+        grid-column: span 3;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: var(--metro-white);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: rgba(0, 61, 165, 0.6);
+        box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15);
+      }
+
+      .metro-help {
+        font-size: 11px;
+        color: var(--metro-slate);
+        margin-top: 6px;
+      }
+
+      .metro-status {
+        font-size: 12px;
+        color: var(--metro-slate);
+        margin-top: 8px;
+      }
+
+      @media (max-width: 900px) {
+        .metro-col-6,
+        .metro-col-4,
+        .metro-col-3 {
+          grid-column: span 12;
+        }
+
+        .metro-banner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .metro-logo {
+          width: 110px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="metro-banner">
+      <img
+        class="metro-logo"
+        src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+        alt="Metro logo"
+      />
+      <div class="metro-banner-text">
+        <h1>Quarterly Progress Report</h1>
+        <p>Transit Infrastructure Fund Program - SORTA Metro</p>
+      </div>
+    </header>
+
+    <main class="metro-container">
+      <section class="metro-card">
+        <h2>Report Details</h2>
+        <p>Use this form to submit the quarterly progress update.</p>
+        <div class="metro-actions">
+          <button class="metro-button primary" type="button" id="saveDraftButton">
+            Save Draft
+          </button>
+          <button class="metro-button secondary" type="button" id="exportButton">
+            Export JSON
+          </button>
+          <button class="metro-button ghost" type="button" id="clearButton">
+            Clear Draft
+          </button>
+        </div>
+        <div class="metro-status" id="draftStatus">Draft not saved yet.</div>
+      </section>
+
+      <form id="quarterlyForm">
+        <section class="metro-section">
+          <h3>Report Basics</h3>
+          <div class="metro-grid">
+            <div class="metro-col-4">
+              <label for="reportDate">Report Date</label>
+              <input type="date" id="reportDate" name="reportDate" />
+            </div>
+            <div class="metro-col-4">
+              <label for="preparedBy">Prepared By</label>
+              <input type="text" id="preparedBy" name="preparedBy" />
+            </div>
+            <div class="metro-col-4">
+              <label for="jurisdiction">Jurisdiction</label>
+              <input type="text" id="jurisdiction" name="jurisdiction" />
+            </div>
+            <div class="metro-col-12">
+              <label for="address">Address</label>
+              <input type="text" id="address" name="address" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Project Description</h3>
+          <div class="metro-grid">
+            <div class="metro-col-12">
+              <label for="projectDescription">Project Description</label>
+              <textarea id="projectDescription" name="projectDescription"></textarea>
+            </div>
+            <div class="metro-col-6">
+              <label for="contractor">Contractor</label>
+              <input type="text" id="contractor" name="contractor" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Project Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="owner">Owner</label>
+              <input type="text" id="owner" name="owner" />
+            </div>
+            <div class="metro-col-6">
+              <label for="ownerManager">Owner's Project Manager</label>
+              <input type="text" id="ownerManager" name="ownerManager" />
+            </div>
+            <div class="metro-col-4">
+              <label for="lastReportPercent">Last Report (% Completion)</label>
+              <input
+                type="number"
+                id="lastReportPercent"
+                name="lastReportPercent"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+            </div>
+            <div class="metro-col-4">
+              <label for="currentReportPercent">Current Report (% Completion)</label>
+              <input
+                type="number"
+                id="currentReportPercent"
+                name="currentReportPercent"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+            </div>
+            <div class="metro-col-4">
+              <label for="paymentStatus">Payment Status</label>
+              <input type="text" id="paymentStatus" name="paymentStatus" />
+            </div>
+            <div class="metro-col-12">
+              <label for="paymentExplain">Explain</label>
+              <textarea id="paymentExplain" name="paymentExplain"></textarea>
+            </div>
+            <div class="metro-col-6">
+              <label for="amountExpended">Amount Expended</label>
+              <input
+                type="number"
+                id="amountExpended"
+                name="amountExpended"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div class="metro-col-6">
+              <label for="totalProjectCost">Total Project Cost</label>
+              <input
+                type="number"
+                id="totalProjectCost"
+                name="totalProjectCost"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>Risks, Issues, and Schedule</h3>
+          <div class="metro-grid">
+            <div class="metro-col-12">
+              <label for="potentialRisks">Potential Risks</label>
+              <textarea id="potentialRisks" name="potentialRisks"></textarea>
+            </div>
+            <div class="metro-col-12">
+              <label for="issuesConcerns">Issues / Concerns</label>
+              <textarea id="issuesConcerns" name="issuesConcerns"></textarea>
+            </div>
+            <div class="metro-col-12">
+              <label for="scheduleUpdate">Schedule Update</label>
+              <textarea id="scheduleUpdate" name="scheduleUpdate"></textarea>
+            </div>
+            <div class="metro-col-12">
+              <label for="siteDocumentation">Site Documentation (Include Pictures)</label>
+              <input type="file" id="siteDocumentation" name="siteDocumentation" multiple />
+              <div class="metro-help">
+                Upload site photos when submitting in OpenGov.
+              </div>
+            </div>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <script>
+      const storageKey = "sorta_quarterly_progress_report_draft_v1";
+      const draftStatus = document.getElementById("draftStatus");
+
+      const saveDraft = () => {
+        const data = {};
+        document.querySelectorAll("input, textarea, select").forEach((field) => {
+          if (field.type === "file") return;
+          data[field.id] = field.value;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+      };
+
+      const loadDraft = () => {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return;
+        try {
+          const data = JSON.parse(saved);
+          document.querySelectorAll("input, textarea, select").forEach((field) => {
+            if (field.type === "file") return;
+            if (data[field.id] !== undefined) {
+              field.value = data[field.id];
+            }
+          });
+          draftStatus.textContent = "Draft loaded from browser storage.";
+        } catch (error) {
+          draftStatus.textContent = "Draft found but could not be loaded.";
+        }
+      };
+
+      const clearDraft = () => {
+        localStorage.removeItem(storageKey);
+        document.getElementById("quarterlyForm").reset();
+        draftStatus.textContent = "Draft cleared.";
+      };
+
+      const exportJson = () => {
+        const data = {};
+        document.querySelectorAll("input, textarea, select").forEach((field) => {
+          if (field.type === "file") {
+            data[field.id] = field.files.length
+              ? Array.from(field.files).map((file) => file.name)
+              : "";
+            return;
+          }
+          data[field.id] = field.value;
+        });
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sorta_quarterly_progress_report.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
+      document.getElementById("exportButton").addEventListener("click", exportJson);
+      document.getElementById("clearButton").addEventListener("click", clearDraft);
+
+      loadDraft();
+    </script>
+  </body>
+</html>
