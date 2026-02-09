@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SORTA Metro - Request for Reimbursement</title>
+    <style>
+      :root {
+        --metro-blue: #003da5;
+        --metro-red: #e4002b;
+        --metro-navy: #0b1f3a;
+        --metro-ink: #111827;
+        --metro-slate: #475569;
+        --metro-border: #e2e8f0;
+        --metro-panel: #f8fafc;
+        --metro-white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--metro-ink);
+        background: #f3f5f9;
+      }
+
+      .metro-banner {
+        background: linear-gradient(120deg, var(--metro-blue), #1b4fbf);
+        padding: 24px 18px;
+        color: var(--metro-white);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 4px solid var(--metro-red);
+      }
+
+      .metro-logo {
+        width: 140px;
+        height: auto;
+        background: var(--metro-white);
+        padding: 8px 12px;
+        border-radius: 10px;
+      }
+
+      .metro-banner-text h1 {
+        font-size: 22px;
+        margin: 0 0 6px;
+        font-weight: 700;
+      }
+
+      .metro-banner-text p {
+        margin: 0;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .metro-container {
+        max-width: 1050px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+
+      .metro-card {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .metro-card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-left: 4px solid var(--metro-red);
+        padding-left: 10px;
+      }
+
+      .metro-card p {
+        margin: 0 0 8px;
+        color: var(--metro-slate);
+        font-size: 14px;
+      }
+
+      .metro-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .metro-button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .metro-button.primary {
+        background: var(--metro-red);
+        color: var(--metro-white);
+      }
+
+      .metro-button.secondary {
+        background: var(--metro-blue);
+        color: var(--metro-white);
+      }
+
+      .metro-button.ghost {
+        background: transparent;
+        border: 1px solid var(--metro-border);
+        color: var(--metro-ink);
+      }
+
+      .metro-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+      }
+
+      .metro-section {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .metro-section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: var(--metro-navy);
+        border-left: 4px solid var(--metro-blue);
+        padding-left: 10px;
+      }
+
+      .metro-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+
+      .metro-col-12 {
+        grid-column: span 12;
+      }
+
+      .metro-col-6 {
+        grid-column: span 6;
+      }
+
+      .metro-col-4 {
+        grid-column: span 4;
+      }
+
+      .metro-col-3 {
+        grid-column: span 3;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      textarea,
+      select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: var(--metro-white);
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: rgba(0, 61, 165, 0.6);
+        box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15);
+      }
+
+      .metro-help {
+        font-size: 11px;
+        color: var(--metro-slate);
+        margin-top: 6px;
+      }
+
+      .metro-status {
+        font-size: 12px;
+        color: var(--metro-slate);
+        margin-top: 8px;
+      }
+
+      .metro-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .metro-table thead {
+        background: var(--metro-panel);
+      }
+
+      .metro-table th,
+      .metro-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--metro-border);
+        text-align: left;
+        font-size: 13px;
+      }
+
+      .metro-table td input {
+        font-size: 13px;
+      }
+
+      .metro-inline {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .metro-inline label {
+        margin: 0;
+      }
+
+      .metro-cert {
+        font-size: 13px;
+        color: var(--metro-slate);
+        background: var(--metro-panel);
+        border-radius: 12px;
+        padding: 12px;
+        border: 1px solid var(--metro-border);
+        margin-bottom: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .metro-col-6,
+        .metro-col-4,
+        .metro-col-3 {
+          grid-column: span 12;
+        }
+
+        .metro-banner {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .metro-logo {
+          width: 110px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="metro-banner">
+      <img
+        class="metro-logo"
+        src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+        alt="Metro logo"
+      />
+      <div class="metro-banner-text">
+        <h1>Applicant Request for Reimbursement</h1>
+        <p>Transit Infrastructure Fund Project Spending</p>
+      </div>
+    </header>
+
+    <main class="metro-container">
+      <section class="metro-card">
+        <h2>Reimbursement Request</h2>
+        <p>
+          Complete this form to request reimbursement for eligible project
+          spending. Attach invoice detail and supporting documentation.
+        </p>
+        <div class="metro-actions">
+          <button class="metro-button primary" type="button" id="saveDraftButton">
+            Save Draft
+          </button>
+          <button class="metro-button secondary" type="button" id="exportButton">
+            Export JSON
+          </button>
+          <button class="metro-button ghost" type="button" id="clearButton">
+            Clear Draft
+          </button>
+        </div>
+        <div class="metro-status" id="draftStatus">Draft not saved yet.</div>
+      </section>
+
+      <form id="reimbursementForm">
+        <section class="metro-section">
+          <h3>1. Applicant Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="applicantName">Name</label>
+              <input type="text" id="applicantName" name="applicantName" />
+            </div>
+            <div class="metro-col-6">
+              <label for="streetAddress">Street Address</label>
+              <input type="text" id="streetAddress" name="streetAddress" />
+            </div>
+            <div class="metro-col-4">
+              <label for="cityStateZip">City, State, Zip</label>
+              <input type="text" id="cityStateZip" name="cityStateZip" />
+            </div>
+            <div class="metro-col-4">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" />
+            </div>
+            <div class="metro-col-4">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" name="phone" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>2. Type of Request</h3>
+          <div class="metro-grid">
+            <div class="metro-col-12">
+              <div class="metro-inline">
+                <label>
+                  <input type="radio" name="requestType" value="Final" />
+                  Final
+                </label>
+                <label>
+                  <input type="radio" name="requestType" value="Partial" />
+                  Partial
+                </label>
+              </div>
+            </div>
+            <div class="metro-col-6">
+              <label for="projectName">Project Name</label>
+              <input type="text" id="projectName" name="projectName" />
+            </div>
+            <div class="metro-col-6">
+              <label for="contractor">Contractor / Subcontractor(s)</label>
+              <input type="text" id="contractor" name="contractor" />
+            </div>
+            <div class="metro-col-6">
+              <label for="projectId">Project ID #</label>
+              <input type="text" id="projectId" name="projectId" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>3. Project Timeline</h3>
+          <div class="metro-grid">
+            <div class="metro-col-4">
+              <label for="startDate">Start Date</label>
+              <input type="date" id="startDate" name="startDate" />
+            </div>
+            <div class="metro-col-4">
+              <label for="endDate">End / Completion Date</label>
+              <input type="date" id="endDate" name="endDate" />
+            </div>
+            <div class="metro-col-4">
+              <label for="totalDays">Total # Days</label>
+              <input type="number" id="totalDays" name="totalDays" min="0" step="1" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>4. Project Cost</h3>
+          <div class="metro-grid">
+            <div class="metro-col-4">
+              <label for="grantAwarded">Amount of Grant Awarded</label>
+              <input type="number" id="grantAwarded" name="grantAwarded" min="0" step="0.01" />
+            </div>
+            <div class="metro-col-4">
+              <label for="requestAmount">Reimbursement Request Amount</label>
+              <input type="number" id="requestAmount" name="requestAmount" min="0" step="0.01" />
+            </div>
+            <div class="metro-col-4">
+              <label for="currentBalance">Current Balance</label>
+              <input type="number" id="currentBalance" name="currentBalance" min="0" step="0.01" />
+            </div>
+            <div class="metro-col-4">
+              <label for="requestDate">Date of Request</label>
+              <input type="date" id="requestDate" name="requestDate" />
+            </div>
+            <div class="metro-col-4">
+              <label for="workCompleted">Work Completed (%)</label>
+              <input
+                type="number"
+                id="workCompleted"
+                name="workCompleted"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>5. Invoice Detail</h3>
+          <div class="metro-help">
+            Attach invoice detail list and supporting documentation with this form.
+          </div>
+          <div class="metro-table-wrapper">
+            <table class="metro-table">
+              <thead>
+                <tr>
+                  <th>Invoice Date</th>
+                  <th>Invoice #</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceTableBody">
+                <tr>
+                  <td><input type="date" name="invoiceDate_1" /></td>
+                  <td><input type="text" name="invoiceNumber_1" /></td>
+                  <td><input type="text" name="invoiceDescription_1" /></td>
+                  <td><input type="number" name="invoiceAmount_1" min="0" step="0.01" /></td>
+                </tr>
+                <tr>
+                  <td><input type="date" name="invoiceDate_2" /></td>
+                  <td><input type="text" name="invoiceNumber_2" /></td>
+                  <td><input type="text" name="invoiceDescription_2" /></td>
+                  <td><input type="number" name="invoiceAmount_2" min="0" step="0.01" /></td>
+                </tr>
+                <tr>
+                  <td><input type="date" name="invoiceDate_3" /></td>
+                  <td><input type="text" name="invoiceNumber_3" /></td>
+                  <td><input type="text" name="invoiceDescription_3" /></td>
+                  <td><input type="number" name="invoiceAmount_3" min="0" step="0.01" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="metro-actions">
+            <button class="metro-button ghost" type="button" id="addInvoiceRow">
+              Add Invoice Row
+            </button>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>6. Summary</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="totalInvoiceAmount">Total Invoice Amount</label>
+              <input type="number" id="totalInvoiceAmount" name="totalInvoiceAmount" readonly />
+            </div>
+            <div class="metro-col-6">
+              <label for="amountRequested">Amount Requested (this submission)</label>
+              <input type="number" id="amountRequested" name="amountRequested" min="0" step="0.01" />
+            </div>
+            <div class="metro-col-12">
+              <label for="summaryNotes">Notes</label>
+              <textarea id="summaryNotes" name="summaryNotes"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
+          <h3>7. Certification</h3>
+          <div class="metro-cert">
+            The undersigned certifies that to the best of their knowledge and
+            belief, the work described above is in accordance with the contract
+            documents and that the costs are correct and were incurred for the
+            project identified.
+          </div>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="applicantOfficer">Applicant / Authorized Officer</label>
+              <input type="text" id="applicantOfficer" name="applicantOfficer" />
+            </div>
+            <div class="metro-col-6">
+              <label for="applicantTitle">Title</label>
+              <input type="text" id="applicantTitle" name="applicantTitle" />
+            </div>
+            <div class="metro-col-6">
+              <label for="applicantSignature">Signature (typed)</label>
+              <input type="text" id="applicantSignature" name="applicantSignature" />
+            </div>
+            <div class="metro-col-6">
+              <label for="applicantDate">Date</label>
+              <input type="date" id="applicantDate" name="applicantDate" />
+            </div>
+            <div class="metro-col-6">
+              <label for="sortaOfficer">SORTA Authorized Officer</label>
+              <input type="text" id="sortaOfficer" name="sortaOfficer" />
+            </div>
+            <div class="metro-col-6">
+              <label for="sortaTitle">Title</label>
+              <input type="text" id="sortaTitle" name="sortaTitle" />
+            </div>
+            <div class="metro-col-6">
+              <label for="sortaSignature">Signature (typed)</label>
+              <input type="text" id="sortaSignature" name="sortaSignature" />
+            </div>
+            <div class="metro-col-6">
+              <label for="sortaDate">Date</label>
+              <input type="date" id="sortaDate" name="sortaDate" />
+            </div>
+          </div>
+        </section>
+      </form>
+    </main>
+
+    <script>
+      const storageKey = "sorta_reimbursement_request_draft_v1";
+      const draftStatus = document.getElementById("draftStatus");
+      const invoiceTableBody = document.getElementById("invoiceTableBody");
+
+      const updateInvoiceTotal = () => {
+        let total = 0;
+        invoiceTableBody.querySelectorAll('input[type="number"]').forEach((input) => {
+          const value = Number(input.value);
+          if (Number.isFinite(value)) {
+            total += value;
+          }
+        });
+        document.getElementById("totalInvoiceAmount").value =
+          total > 0 ? total.toFixed(2) : "";
+      };
+
+      const addInvoiceRow = () => {
+        const rowCount = invoiceTableBody.querySelectorAll("tr").length + 1;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input type="date" name="invoiceDate_${rowCount}" /></td>
+          <td><input type="text" name="invoiceNumber_${rowCount}" /></td>
+          <td><input type="text" name="invoiceDescription_${rowCount}" /></td>
+          <td><input type="number" name="invoiceAmount_${rowCount}" min="0" step="0.01" /></td>
+        `;
+        invoiceTableBody.appendChild(row);
+      };
+
+      const saveDraft = () => {
+        const data = {};
+        document.querySelectorAll("input, textarea, select").forEach((field) => {
+          if (field.type === "radio") {
+            if (field.checked) {
+              data[field.name] = field.value;
+            }
+            return;
+          }
+          data[field.name || field.id] = field.value;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+      };
+
+      const loadDraft = () => {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return;
+        try {
+          const data = JSON.parse(saved);
+          document.querySelectorAll("input, textarea, select").forEach((field) => {
+            if (field.type === "radio") {
+              field.checked = data[field.name] === field.value;
+              return;
+            }
+            const key = field.name || field.id;
+            if (data[key] !== undefined) {
+              field.value = data[key];
+            }
+          });
+          updateInvoiceTotal();
+          draftStatus.textContent = "Draft loaded from browser storage.";
+        } catch (error) {
+          draftStatus.textContent = "Draft found but could not be loaded.";
+        }
+      };
+
+      const clearDraft = () => {
+        localStorage.removeItem(storageKey);
+        document.getElementById("reimbursementForm").reset();
+        updateInvoiceTotal();
+        draftStatus.textContent = "Draft cleared.";
+      };
+
+      const exportJson = () => {
+        const data = {};
+        document.querySelectorAll("input, textarea, select").forEach((field) => {
+          if (field.type === "radio") {
+            if (field.checked) {
+              data[field.name] = field.value;
+            }
+            return;
+          }
+          data[field.name || field.id] = field.value;
+        });
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sorta_reimbursement_request.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+
+      invoiceTableBody.addEventListener("input", (event) => {
+        if (event.target.type === "number") {
+          updateInvoiceTotal();
+        }
+      });
+
+      document.getElementById("addInvoiceRow").addEventListener("click", addInvoiceRow);
+      document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
+      document.getElementById("exportButton").addEventListener("click", exportJson);
+      document.getElementById("clearButton").addEventListener("click", clearDraft);
+
+      loadDraft();
+    </script>
+  </body>
+</html>
