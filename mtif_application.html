@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SORTA Metro - MTIF Application</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
       :root {
         --metro-blue: #003da5;
@@ -283,10 +284,236 @@
         <nav class="metro-nav" id="sectionNav"></nav>
       </section>
 
-      <form id="mtifForm"></form>
+      <form id="mtifForm">
+        <section class="metro-section" style="margin-bottom:20px;">
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="mtif_record_id">Application Record ID</label>
+              <input type="text" id="mtif_record_id" name="mtif_record_id" readonly style="background-color: var(--metro-panel); cursor: not-allowed;" />
+              <div class="metro-help">Unique Record ID assigned by the system.</div>
+            </div>
+          </div>
+        </section>
+      </form>
     </main>
 
     <script>
+(function() {
+  'use strict';
+
+  // ============================================================
+  // API Configuration
+  // ============================================================
+  const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+  const API_CONFIG = {
+    baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+    aesKey: AES_KEY,
+    applicationTableKey: 'iw3twwkw2',
+    applicationsReportId: 'tn3omkcq4',
+    applicationsIdFieldKey: 'dyd4osqa5'
+  };
+
+  // ============================================================
+  // Token Decryption (ported from reference)
+  // ============================================================
+  let authToken = null;
+  let userToken = '';
+
+  function looksLikeCryptoJsSaltedCiphertext(s) {
+    return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+  }
+
+  function safeJsonParse(s) {
+    try { return JSON.parse(s); } catch { return null; }
+  }
+
+  function extractAccessTokenFromDecryptedString(decrypted) {
+    if (typeof decrypted !== 'string') return '';
+    const trimmed = decrypted.trim();
+    if (!trimmed) return '';
+    const maybeJson = safeJsonParse(trimmed);
+    if (maybeJson && typeof maybeJson === 'object') {
+      if (maybeJson.access_token) return String(maybeJson.access_token);
+      if (maybeJson.token) return String(maybeJson.token);
+    }
+    return trimmed;
+  }
+
+  function bootstrapUserTokenFromLocalStorage() {
+    let encryptedToken = '';
+    try { encryptedToken = localStorage.getItem('token') || ''; } catch { encryptedToken = ''; }
+    if (!encryptedToken) {
+      console.log('[MTIF] token: no localStorage("token") found');
+      return '';
+    }
+    console.log('[MTIF] token: found localStorage("token") (len=' + encryptedToken.length + ')');
+
+    if (typeof CryptoJS === 'undefined') {
+      console.warn('[MTIF] token: CryptoJS not available; cannot decrypt');
+      return '';
+    }
+
+    const keysToTry = [API_CONFIG.aesKey].filter(Boolean).map(function(k) { return String(k); });
+    if (!keysToTry.length) {
+      console.warn('[MTIF] token: missing AES key(s); cannot decrypt');
+      return '';
+    }
+
+    for (var ki = 0; ki < keysToTry.length; ki++) {
+      var key = keysToTry[ki];
+      try {
+        var decrypted = CryptoJS.AES.decrypt(encryptedToken, key).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) { continue; }
+        var extracted = extractAccessTokenFromDecryptedString(decrypted);
+        var best = String((extracted || decrypted || '')).trim();
+        if (!best) { continue; }
+        if (looksLikeCryptoJsSaltedCiphertext(best)) { continue; }
+        console.log('[MTIF] token: decrypted successfully');
+        return best;
+      } catch (e) {
+        console.warn('[MTIF] token: decrypt failed:', e && e.message ? e.message : e);
+      }
+    }
+    console.warn('[MTIF] token: unable to decrypt token with configured key(s)');
+    return '';
+  }
+
+  userToken = bootstrapUserTokenFromLocalStorage();
+
+  async function getAuthToken() {
+    if (authToken) return authToken;
+    if (!userToken) { userToken = bootstrapUserTokenFromLocalStorage(); }
+    if (userToken) { authToken = userToken; return authToken; }
+    return null;
+  }
+
+  // ============================================================
+  // Field Mapping: form field ID -> DB column name
+  // ============================================================
+  const FIELD_MAPPING = {
+    'field-applicant-jurisdiction-jurisdiction-name': { name: 'jurisdiction_name' },
+    'field-applicant-jurisdiction-jurisdiction-mailing-address': { name: 'jurisdiction_mailing_address' },
+    'field-applicant-jurisdiction-chief-executive-officer-name': { name: 'ceo_name' },
+    'field-applicant-jurisdiction-chief-executive-officer-title': { name: 'ceo_title' },
+    'field-applicant-jurisdiction-chief-fiscal-officer-name': { name: 'cfo_name' },
+    'field-applicant-jurisdiction-chief-fiscal-officer-title': { name: 'cfo_title' },
+    'field-applicant-jurisdiction-project-contact-person-name': { name: 'project_contact_name' },
+    'field-applicant-jurisdiction-project-contact-phone': { name: 'project_contact_phone' },
+    'field-applicant-jurisdiction-project-contact-email': { name: 'project_contact_email' },
+    'field-applicant-jurisdiction-primary-applicant-email-for-notices': { name: 'primary_applicant_email' },
+    'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta': { name: 'applicant_role' },
+    'field-project-header-project-name': { name: 'project_name' },
+    'field-project-header-project-description-short-narrative': { name: 'project_description' },
+    'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
+    'field-project-header-year-project-funded': { name: 'year_project_funded' },
+    'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
+    'field-project-header-program-year-round-e-g-round-5-2025': { name: 'program_year_round' },
+    'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
+    'field-project-header-large-vs-small-project-category-1m-vs-1m': { name: 'project_size_category' },
+    'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
+    'field-location-transit-project-street-name-s': { name: 'project_street_names' },
+    'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
+    'field-location-transit-project-limits-description': { name: 'project_limits_description' },
+    'field-location-transit-project-vicinity-map-file': { name: 'vicinity_map_file' },
+    'field-location-transit-project-latitude-longitude': { name: 'project_lat_long' },
+    'field-location-transit-gis-shapefile-upload': { name: 'gis_shapefile' },
+    'field-location-transit-distance-to-nearest-fixed-route-transit-miles': { name: 'distance_to_transit_miles' },
+    'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no': { name: 'within_three_quarter_mile_transit' },
+    'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count': { name: 'weekday_transit_trip_count' },
+    'field-location-transit-on-brt-corridor-yes-no': { name: 'on_brt_corridor' },
+    'field-budget-funding-local-funds-budgeted-dollars': { name: 'local_funds_budgeted' },
+    'field-budget-funding-sorta-mtif-funds-awarded-dollars': { name: 'mtif_funds_awarded' },
+    'field-budget-funding-other-funds-budgeted-dollars': { name: 'other_funds_budgeted' },
+    'field-budget-funding-total-project-budget-dollars': { name: 'total_project_budget' },
+    'field-budget-funding-local-funds-share': { name: 'local_funds_share_pct' },
+    'field-budget-funding-mtif-funds-share': { name: 'mtif_funds_share_pct' },
+    'field-budget-funding-other-funds-share': { name: 'other_funds_share_pct' },
+    'field-budget-funding-max-grant-90-of-construction-cost': { name: 'max_grant_pct' },
+    'field-budget-funding-local-minimum-10-match-flag': { name: 'local_min_match_flag' },
+    'field-budget-funding-multi-year-project-funding-years-1-5': { name: 'multi_year_funding_years' },
+    'field-budget-funding-detailed-cost-estimate-file-upload': { name: 'cost_estimate_file' },
+    'field-budget-funding-construction-contingency': { name: 'construction_contingency_pct' },
+    'field-budget-funding-useful-life-estimate-years': { name: 'useful_life_years' },
+    'field-budget-funding-engineer-s-stamp-pe-license-file': { name: 'pe_license_file' },
+    'field-budget-funding-certification-of-funds-letter-upload': { name: 'certification_funds_file' },
+    'field-budget-funding-authorizing-legislation-upload': { name: 'authorizing_legislation_file' },
+    'field-schedule-row-construction-award-date': { name: 'construction_award_date' },
+    'field-schedule-row-anticipated-construction-start-date': { name: 'anticipated_start_date' },
+    'field-schedule-row-anticipated-construction-completion-date': { name: 'anticipated_completion_date' },
+    'field-schedule-row-construction-start-within-1-year-flag': { name: 'start_within_one_year_flag' },
+    'field-schedule-row-right-of-way-status-all-partial-none': { name: 'row_status' },
+    'field-schedule-row-design-engineering-status-complete-in-process-not-started': { name: 'design_engineering_status' },
+    'field-scoring-criteria-physical-condition-narrative': { name: 'physical_condition_narrative' },
+    'field-scoring-criteria-safety-issues-narrative': { name: 'safety_issues_narrative' },
+    'field-scoring-criteria-project-priority-ranking-1st-2nd-3rd-etc': { name: 'project_priority_ranking' },
+    'field-scoring-criteria-economic-growth-connectivity-narrative': { name: 'economic_growth_narrative' },
+    'field-scoring-criteria-match-calculated-from-budget': { name: 'match_pct' },
+    'field-scoring-criteria-regional-impact-narrative': { name: 'regional_impact_narrative' },
+    'field-scoring-criteria-average-daily-traffic-adt': { name: 'average_daily_traffic' },
+    'field-scoring-criteria-relative-economic-strength-score': { name: 'relative_economic_strength' },
+    'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative' },
+    'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details' },
+    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' },
+    'field-scoring-criteria-past-performance-score': { name: 'past_performance_score' },
+    'field-progress-reporting-quarterly-report-date': { name: 'quarterly_report_date' },
+    'field-progress-reporting-quarterly-report-prepared-by': { name: 'quarterly_prepared_by' },
+    'field-progress-reporting-quarterly-jurisdiction': { name: 'quarterly_jurisdiction' },
+    'field-progress-reporting-quarterly-address': { name: 'quarterly_address' },
+    'field-progress-reporting-project-name-reporting': { name: 'reporting_project_name' },
+    'field-progress-reporting-project-id-reporting': { name: 'reporting_project_id' },
+    'field-progress-reporting-owner-reporting': { name: 'reporting_owner' },
+    'field-progress-reporting-contractor-reporting': { name: 'reporting_contractor' },
+    'field-progress-reporting-owner-s-project-manager-reporting': { name: 'reporting_project_manager' },
+    'field-progress-reporting-last-report-completion': { name: 'last_report_completion_pct' },
+    'field-progress-reporting-current-report-completion': { name: 'current_report_completion_pct' },
+    'field-progress-reporting-overall-project-completion': { name: 'overall_completion_pct' },
+    'field-progress-reporting-payment-status': { name: 'payment_status' },
+    'field-progress-reporting-payment-status-explanation': { name: 'payment_status_explanation' },
+    'field-progress-reporting-amount-expended-mtif-grant-only': { name: 'amount_expended_mtif' },
+    'field-progress-reporting-total-grant-award': { name: 'total_grant_award' },
+    'field-progress-reporting-potential-risks-narrative': { name: 'potential_risks_narrative' },
+    'field-progress-reporting-schedule-update-narrative': { name: 'schedule_update_narrative' },
+    'field-progress-reporting-issues-concerns-narrative': { name: 'issues_concerns_narrative' },
+    'field-progress-reporting-site-documentation-photos': { name: 'site_documentation_photos' },
+    'field-progress-reporting-annual-report-date': { name: 'annual_report_date' },
+    'field-progress-reporting-annual-report-prepared-by': { name: 'annual_prepared_by' },
+    'field-progress-reporting-annual-project-completion': { name: 'annual_completion_pct' },
+    'field-progress-reporting-annual-potential-risks': { name: 'annual_potential_risks' },
+    'field-progress-reporting-annual-schedule-update': { name: 'annual_schedule_update' },
+    'field-progress-reporting-annual-issues-concerns': { name: 'annual_issues_concerns' },
+    'field-reimbursement-reimbursement-request-date': { name: 'reimbursement_request_date' },
+    'field-reimbursement-reimbursement-request-id': { name: 'reimbursement_request_id' },
+    'field-reimbursement-reimbursement-form-upload': { name: 'reimbursement_form_file' },
+    'field-reimbursement-invoices-included-list': { name: 'invoices_included' },
+    'field-reimbursement-total-amount-requested-this-submission': { name: 'total_amount_requested' },
+    'field-reimbursement-mtif-eligible-amount-based-on-ratio': { name: 'mtif_eligible_amount' },
+    'field-reimbursement-cumulative-reimbursed-amount': { name: 'cumulative_reimbursed_amount' },
+    'field-reimbursement-remaining-grant-balance': { name: 'remaining_grant_balance' },
+    'field-reimbursement-two-reimbursements-per-month-rule-flag': { name: 'two_per_month_flag' },
+    'field-reimbursement-ach-form-on-file-yes-no': { name: 'ach_form_on_file' },
+    'field-closeout-jurisdiction-closeout': { name: 'closeout_jurisdiction' },
+    'field-closeout-project-name-closeout': { name: 'closeout_project_name' },
+    'field-closeout-project-number-closeout': { name: 'closeout_project_number' },
+    'field-closeout-year-project-funded-closeout': { name: 'closeout_year_funded' },
+    'field-closeout-date-of-project-award-closeout': { name: 'closeout_award_date' },
+    'field-closeout-initial-local-funds-budgeted-dollars': { name: 'closeout_initial_local_funds' },
+    'field-closeout-initial-mtif-funds-budgeted-dollars': { name: 'closeout_initial_mtif_funds' },
+    'field-closeout-initial-other-funds-budgeted-dollars': { name: 'closeout_initial_other_funds' },
+    'field-closeout-initial-total-project-budget-dollars': { name: 'closeout_initial_total_budget' },
+    'field-closeout-actual-local-funds-expended-dollars': { name: 'closeout_actual_local_funds' },
+    'field-closeout-actual-mtif-funds-expended-dollars': { name: 'closeout_actual_mtif_funds' },
+    'field-closeout-actual-other-funds-expended-dollars': { name: 'closeout_actual_other_funds' },
+    'field-closeout-total-funds-expended-dollars': { name: 'closeout_total_funds_expended' },
+    'field-closeout-construction-completion-date': { name: 'closeout_completion_date' },
+    'field-closeout-final-completion-photos': { name: 'closeout_completion_photos' },
+    'field-closeout-residual-unexpended-funds-note': { name: 'closeout_residual_funds_note' }
+  };
+
+  // ============================================================
+  // Field Data (for dynamic section building)
+  // ============================================================
       const fieldData = [
         {
           "Category": "Applicant / Jurisdiction",
@@ -754,277 +981,477 @@
         }
       ];
 
-      const storageKey = "sorta_mtif_application_draft_v1";
-      const sectionNav = document.getElementById("sectionNav");
-      const formEl = document.getElementById("mtifForm");
-      const draftStatus = document.getElementById("draftStatus");
+  const STORAGE_KEY = 'sorta_mtif_application_draft_v1';
+  const sectionNav = document.getElementById('sectionNav');
+  const formEl = document.getElementById('mtifForm');
+  const draftStatus = document.getElementById('draftStatus');
 
-      const slugify = (value) =>
-        value
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
+  const slugify = function(value) {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  };
 
-      const getSelectOptionsFromField = (fieldName) => {
-        const match = fieldName.match(/\(([^)]+)\)/);
-        if (!match) return null;
-        const content = match[1];
-        if (content.includes("/")) {
-          return content.split("/").map((item) => item.trim());
+  // ============================================================
+  // Field type detection helpers
+  // ============================================================
+  const getSelectOptionsFromField = function(fieldName) {
+    const match = fieldName.match(/\(([^)]+)\)/);
+    if (!match) return null;
+    const content = match[1];
+    if (content.includes('/')) return content.split('/').map(function(item) { return item.trim(); });
+    if (content.includes(' vs ')) return content.split(' vs ').map(function(item) { return item.trim(); });
+    return null;
+  };
+
+  const getFieldConfig = function(fieldName) {
+    const lower = fieldName.toLowerCase();
+    const options = getSelectOptionsFromField(fieldName);
+    if (options) return { type: 'select', options: options };
+    if (lower.includes('yes/no') || lower.includes('flag') || lower.includes('indicator')) return { type: 'select', options: ['Yes', 'No'] };
+    if (lower.includes('status') && lower.includes('all/partial/none')) return { type: 'select', options: ['All', 'Partial', 'None'] };
+    if (lower.includes('status') && lower.includes('complete/in process/not started')) return { type: 'select', options: ['Complete', 'In process', 'Not started'] };
+    if (lower.includes('priority ranking')) return { type: 'select', options: ['1st', '2nd', '3rd', '4th', '5th', 'Other'] };
+    if (lower.includes('email')) return { type: 'email' };
+    if (lower.includes('phone')) return { type: 'tel', placeholder: '(xxx) xxx-xxxx' };
+    if (lower.includes('date')) return { type: 'date' };
+    if (lower.includes('year')) return { type: 'number', min: 2000, max: 2100, step: 1 };
+    if (lower.includes('dollars') || lower.includes('amount') || lower.includes('budget')) return { type: 'number', step: 0.01, min: 0 };
+    if (lower.includes('%') || lower.includes('percent') || lower.includes('share')) return { type: 'number', step: 0.01, min: 0, max: 100 };
+    if (lower.includes('count') || lower.includes('estimate') || lower.includes('miles')) return { type: 'number', step: 1, min: 0 };
+    if (lower.includes('upload') || lower.includes('file') || lower.includes('photos')) return { type: 'file' };
+    if (lower.includes('narrative') || lower.includes('description') || lower.includes('details') || lower.includes('checklist') || lower.includes('note') || lower.includes('list')) return { type: 'textarea' };
+    if (lower.includes('latitude/longitude')) return { type: 'text', placeholder: '39.1031, -84.5120' };
+    if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
+    return { type: 'text' };
+  };
+
+  // ============================================================
+  // Build form sections dynamically
+  // ============================================================
+  const buildSections = function() {
+    const grouped = fieldData.reduce(function(acc, item) {
+      if (!acc[item.Category]) acc[item.Category] = [];
+      acc[item.Category].push(item.FieldName);
+      return acc;
+    }, {});
+
+    Object.keys(grouped).forEach(function(category, index) {
+      const sectionId = 'section-' + index + '-' + slugify(category);
+      const navLink = document.createElement('a');
+      navLink.href = '#' + sectionId;
+      navLink.textContent = category;
+      sectionNav.appendChild(navLink);
+
+      const section = document.createElement('section');
+      section.className = 'metro-section';
+      section.id = sectionId;
+
+      const title = document.createElement('h3');
+      title.textContent = category;
+      section.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'metro-grid';
+
+      grouped[category].forEach(function(fieldName) {
+        const config = getFieldConfig(fieldName);
+        const fieldId = 'field-' + slugify(category) + '-' + slugify(fieldName);
+        const fieldWrap = document.createElement('div');
+        fieldWrap.className = config.type === 'textarea' ? 'metro-col-12' : 'metro-col-6';
+
+        const label = document.createElement('label');
+        label.setAttribute('for', fieldId);
+        label.textContent = fieldName;
+
+        var input;
+        if (config.type === 'textarea') {
+          input = document.createElement('textarea');
+        } else if (config.type === 'select') {
+          input = document.createElement('select');
+          var ph = document.createElement('option');
+          ph.value = '';
+          ph.textContent = 'Select an option';
+          input.appendChild(ph);
+          config.options.forEach(function(opt) {
+            var o = document.createElement('option');
+            o.value = opt;
+            o.textContent = opt;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = config.type;
         }
-        if (content.includes(" vs ")) {
-          return content.split(" vs ").map((item) => item.trim());
+
+        input.id = fieldId;
+        input.name = fieldId;
+        input.dataset.fieldId = fieldId;
+        input.dataset.fieldLabel = fieldName;
+        input.dataset.category = category;
+        if (config.placeholder) input.placeholder = config.placeholder;
+        if (config.min !== undefined) input.min = config.min;
+        if (config.max !== undefined) input.max = config.max;
+        if (config.step !== undefined) input.step = config.step;
+
+        fieldWrap.appendChild(label);
+        fieldWrap.appendChild(input);
+
+        if (config.type === 'file') {
+          var help = document.createElement('div');
+          help.className = 'metro-help';
+          help.textContent = 'Upload files when submitting in OpenGov.';
+          fieldWrap.appendChild(help);
         }
-        if (content.includes("Yes/No")) {
-          return ["Yes", "No"];
+        grid.appendChild(fieldWrap);
+      });
+
+      section.appendChild(grid);
+      formEl.appendChild(section);
+    });
+  };
+
+  // ============================================================
+  // Collect all form field values
+  // ============================================================
+  const getAllFields = function() {
+    const fields = {};
+    document.querySelectorAll('[data-field-id]').forEach(function(field) {
+      if (field.type === 'file') return;
+      fields[field.dataset.fieldId] = field.value;
+    });
+    return fields;
+  };
+
+  const collectFormData = function() {
+    const data = {};
+    document.querySelectorAll('[data-field-id]').forEach(function(field) {
+      const category = field.dataset.category;
+      const label = field.dataset.fieldLabel;
+      if (!data[category]) data[category] = {};
+      if (field.type === 'file') {
+        data[category][label] = field.files.length ? Array.from(field.files).map(function(f) { return f.name; }) : '';
+        return;
+      }
+      data[category][label] = field.value;
+    });
+    return data;
+  };
+
+  // ============================================================
+  // localStorage draft save / load / clear
+  // ============================================================
+  const saveDraftLocal = function() {
+    try {
+      const fields = getAllFields();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fields));
+    } catch (e) {
+      console.error('[MTIF] Error saving draft:', e);
+    }
+  };
+
+  const loadDraft = function() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const fields = JSON.parse(saved);
+      Object.keys(fields).forEach(function(key) {
+        if (key === 'mtif_record_id') return;
+        const input = document.getElementById(key);
+        if (input && input.type !== 'file') {
+          input.value = fields[key] || '';
+        }
+      });
+      draftStatus.textContent = 'Draft loaded from browser storage.';
+    } catch (e) {
+      console.error('[MTIF] Error loading draft:', e);
+      draftStatus.textContent = 'Draft found but could not be loaded.';
+    }
+  };
+
+  const clearDraft = function() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('mtif_current_application_id');
+    document.getElementById('mtifForm').reset();
+    var recIdField = document.getElementById('mtif_record_id');
+    if (recIdField) recIdField.value = '';
+    draftStatus.textContent = 'Draft cleared.';
+  };
+
+  const exportJson = function() {
+    const data = collectFormData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'sorta_mtif_application.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ============================================================
+  // API: Submit application (POST new / PUT update)
+  // ============================================================
+  async function submitApplication(fieldsData, isUpdate) {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        console.log('[MTIF] API not configured or token unavailable. Skipping API submission.');
+        return null;
+      }
+
+      var payload, method, endpoint;
+
+      if (isUpdate) {
+        var applicationRecordId = localStorage.getItem('mtif_current_application_id');
+        if (!applicationRecordId) throw new Error('Missing application record ID for update.');
+        var rid = Number(applicationRecordId);
+        if (Number.isNaN(rid)) throw new Error('Invalid application record ID.');
+
+        payload = {
+          ApplicationTableKey: API_CONFIG.applicationTableKey,
+          Where: { Rid: rid },
+          FieldsList: fieldsData
+        };
+        method = 'PUT';
+        endpoint = API_CONFIG.baseURL + '/api/FormAction/putdata';
+      } else {
+        payload = {
+          ApplicationTableKey: API_CONFIG.applicationTableKey,
+          FieldsList: fieldsData
+        };
+        method = 'POST';
+        endpoint = API_CONFIG.baseURL + '/api/formaction/postdata';
+      }
+
+      console.log('[MTIF] Submitting application (' + method + '):', payload);
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        var errorText = await response.text();
+        throw new Error('API ' + response.status + ': ' + errorText);
+      }
+
+      const result = await response.json();
+
+      if (!isUpdate && result.recordId) {
+        localStorage.setItem('mtif_current_application_id', result.recordId);
+        console.log('[MTIF] New application record created:', result.recordId);
+        var recIdField = document.getElementById('mtif_record_id');
+        if (recIdField) recIdField.value = result.recordId;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('[MTIF] Error submitting application:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================
+  // API: Load application from API (queryreport)
+  // ============================================================
+  const loadFromAPI = async function() {
+    try {
+      var recordId = localStorage.getItem('mtif_current_application_id');
+      if (!recordId) {
+        console.log('[MTIF] No record ID found. Skipping API load.');
+        return false;
+      }
+
+      console.log('[MTIF] Loading application from API, record ID:', recordId);
+
+      const token = await getAuthToken();
+      if (!token || !API_CONFIG.applicationsReportId) {
+        console.log('[MTIF] API not configured. Falling back to localStorage.');
+        return false;
+      }
+
+      const url = API_CONFIG.baseURL + '/api/Report/queryreport';
+      const payload = {
+        ReportId: API_CONFIG.applicationsReportId,
+        ConditionGroups: [{
+          Type: 'all',
+          Conditions: [{
+            ConditionField: { Key: API_CONFIG.applicationsIdFieldKey },
+            OperationType: 'is equal',
+            Value: String(recordId)
+          }]
+        }]
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('API returned ' + response.status + ': ' + response.statusText);
+      }
+
+      const result = await response.json();
+      var applications = Array.isArray(result) ? result : (result.data || result.Data || []);
+
+      if (!applications || applications.length === 0) {
+        console.log('[MTIF] No application found with ID:', recordId);
+        return false;
+      }
+
+      // Helper: extract field value from API data (handles table-prefixed keys)
+      var extractFieldValue = function(data, fieldName) {
+        if (data[fieldName] !== undefined) return data[fieldName];
+        for (var key in data) {
+          if (key.endsWith('_' + fieldName)) return data[key];
         }
         return null;
       };
 
-      const getFieldConfig = (fieldName) => {
-        const lower = fieldName.toLowerCase();
-        const options = getSelectOptionsFromField(fieldName);
+      var appData = applications[0];
+      console.log('[MTIF] Found application in API. Populating fields...');
 
-        if (options) {
-          return { type: "select", options };
-        }
+      // Map API fields back to form fields using FIELD_MAPPING
+      Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
+        var mapping = FIELD_MAPPING[formFieldId];
+        var value = extractFieldValue(appData, mapping.name);
 
-        if (lower.includes("yes/no") || lower.includes("flag") || lower.includes("indicator")) {
-          return { type: "select", options: ["Yes", "No"] };
-        }
-
-        if (lower.includes("status") && lower.includes("all/partial/none")) {
-          return { type: "select", options: ["All", "Partial", "None"] };
-        }
-
-        if (lower.includes("status") && lower.includes("complete/in process/not started")) {
-          return { type: "select", options: ["Complete", "In process", "Not started"] };
-        }
-
-        if (lower.includes("priority ranking")) {
-          return { type: "select", options: ["1st", "2nd", "3rd", "4th", "5th", "Other"] };
-        }
-
-        if (lower.includes("email")) {
-          return { type: "email" };
-        }
-
-        if (lower.includes("phone")) {
-          return { type: "tel", placeholder: "(xxx) xxx-xxxx" };
-        }
-
-        if (lower.includes("date")) {
-          return { type: "date" };
-        }
-
-        if (lower.includes("year")) {
-          return { type: "number", min: 2000, max: 2100, step: 1 };
-        }
-
-        if (lower.includes("dollars") || lower.includes("amount") || lower.includes("budget")) {
-          return { type: "number", step: 0.01, min: 0 };
-        }
-
-        if (lower.includes("%") || lower.includes("percent") || lower.includes("share")) {
-          return { type: "number", step: 0.01, min: 0, max: 100 };
-        }
-
-        if (lower.includes("count") || lower.includes("estimate") || lower.includes("miles")) {
-          return { type: "number", step: 1, min: 0 };
-        }
-
-        if (lower.includes("upload") || lower.includes("file") || lower.includes("photos")) {
-          return { type: "file" };
-        }
-
-        if (
-          lower.includes("narrative") ||
-          lower.includes("description") ||
-          lower.includes("details") ||
-          lower.includes("checklist") ||
-          lower.includes("note") ||
-          lower.includes("list")
-        ) {
-          return { type: "textarea" };
-        }
-
-        if (lower.includes("latitude/longitude")) {
-          return { type: "text", placeholder: "39.1031, -84.5120" };
-        }
-
-        if (lower.includes("multi-year project funding years")) {
-          return { type: "number", min: 1, max: 5, step: 1 };
-        }
-
-        return { type: "text" };
-      };
-
-      const buildSections = () => {
-        const grouped = fieldData.reduce((acc, item) => {
-          if (!acc[item.Category]) {
-            acc[item.Category] = [];
-          }
-          acc[item.Category].push(item.FieldName);
-          return acc;
-        }, {});
-
-        Object.keys(grouped).forEach((category, index) => {
-          const sectionId = `section-${index}-${slugify(category)}`;
-
-          const navLink = document.createElement("a");
-          navLink.href = `#${sectionId}`;
-          navLink.textContent = category;
-          sectionNav.appendChild(navLink);
-
-          const section = document.createElement("section");
-          section.className = "metro-section";
-          section.id = sectionId;
-
-          const title = document.createElement("h3");
-          title.textContent = category;
-          section.appendChild(title);
-
-          const grid = document.createElement("div");
-          grid.className = "metro-grid";
-
-          grouped[category].forEach((fieldName) => {
-            const config = getFieldConfig(fieldName);
-            const fieldId = `field-${slugify(category)}-${slugify(fieldName)}`;
-
-            const fieldWrap = document.createElement("div");
-            fieldWrap.className =
-              config.type === "textarea" ? "metro-col-12" : "metro-col-6";
-
-            const label = document.createElement("label");
-            label.setAttribute("for", fieldId);
-            label.textContent = fieldName;
-
-            let input;
-            if (config.type === "textarea") {
-              input = document.createElement("textarea");
-            } else if (config.type === "select") {
-              input = document.createElement("select");
-              const placeholderOption = document.createElement("option");
-              placeholderOption.value = "";
-              placeholderOption.textContent = "Select an option";
-              input.appendChild(placeholderOption);
-              config.options.forEach((opt) => {
-                const optionEl = document.createElement("option");
-                optionEl.value = opt;
-                optionEl.textContent = opt;
-                input.appendChild(optionEl);
-              });
+        if (value !== null && value !== undefined && value !== '') {
+          var field = document.getElementById(formFieldId);
+          if (field) {
+            if (field.tagName === 'TEXTAREA') {
+              field.value = value;
+              field.dispatchEvent(new Event('input'));
             } else {
-              input = document.createElement("input");
-              input.type = config.type;
-            }
-
-            input.id = fieldId;
-            input.name = fieldId;
-            input.dataset.fieldId = fieldId;
-            input.dataset.fieldLabel = fieldName;
-            input.dataset.category = category;
-
-            if (config.placeholder) {
-              input.placeholder = config.placeholder;
-            }
-            if (config.min !== undefined) input.min = config.min;
-            if (config.max !== undefined) input.max = config.max;
-            if (config.step !== undefined) input.step = config.step;
-
-            fieldWrap.appendChild(label);
-            fieldWrap.appendChild(input);
-
-            if (config.type === "file") {
-              const help = document.createElement("div");
-              help.className = "metro-help";
-              help.textContent = "Upload files when submitting in OpenGov.";
-              fieldWrap.appendChild(help);
-            }
-
-            grid.appendChild(fieldWrap);
-          });
-
-          section.appendChild(grid);
-          formEl.appendChild(section);
-        });
-      };
-
-      const collectFormData = () => {
-        const data = {};
-        document.querySelectorAll("[data-field-id]").forEach((field) => {
-          const category = field.dataset.category;
-          const label = field.dataset.fieldLabel;
-
-          if (!data[category]) {
-            data[category] = {};
-          }
-
-          if (field.type === "file") {
-            data[category][label] = field.files.length
-              ? Array.from(field.files).map((file) => file.name)
-              : "";
-            return;
-          }
-
-          data[category][label] = field.value;
-        });
-        return data;
-      };
-
-      const saveDraft = () => {
-        const data = {};
-        document.querySelectorAll("[data-field-id]").forEach((field) => {
-          if (field.type === "file") return;
-          data[field.dataset.fieldId] = field.value;
-        });
-        localStorage.setItem(storageKey, JSON.stringify(data));
-        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
-      };
-
-      const loadDraft = () => {
-        const saved = localStorage.getItem(storageKey);
-        if (!saved) return;
-        try {
-          const data = JSON.parse(saved);
-          document.querySelectorAll("[data-field-id]").forEach((field) => {
-            if (field.type === "file") return;
-            const value = data[field.dataset.fieldId];
-            if (value !== undefined) {
               field.value = value;
             }
-          });
-          draftStatus.textContent = "Draft loaded from browser storage.";
-        } catch (error) {
-          draftStatus.textContent = "Draft found but could not be loaded.";
+            console.log('[MTIF] Set field:', formFieldId, '=', value);
+          }
         }
-      };
+      });
 
-      const clearDraft = () => {
-        localStorage.removeItem(storageKey);
-        document.getElementById("mtifForm").reset();
-        draftStatus.textContent = "Draft cleared.";
-      };
+      console.log('[MTIF] Successfully loaded application from API');
+      return true;
 
-      const exportJson = () => {
-        const data = collectFormData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "sorta_mtif_application.json";
-        link.click();
-        URL.revokeObjectURL(url);
-      };
+    } catch (error) {
+      console.error('[MTIF] Error loading from API:', error);
+      return false;
+    }
+  };
 
-      buildSections();
+  // ============================================================
+  // Save Draft handler: localStorage + API
+  // ============================================================
+  const handleSaveDraft = async function() {
+    // Save to localStorage first
+    saveDraftLocal();
+
+    var saveDraftBtn = document.getElementById('saveDraftButton');
+    var originalText = saveDraftBtn ? saveDraftBtn.textContent : '';
+    if (saveDraftBtn) {
+      saveDraftBtn.disabled = true;
+      saveDraftBtn.textContent = 'Saving...';
+    }
+
+    try {
+      // Build FieldsList from form data + FIELD_MAPPING
+      var formData = getAllFields();
+      var fieldsList = [];
+
+      Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
+        var mapping = FIELD_MAPPING[formFieldId];
+        var value = formData[formFieldId];
+        if (value !== undefined && value !== null && value !== '') {
+          fieldsList.push({ Name: mapping.name, Value: value });
+        }
+      });
+
+      // Set application status
+      fieldsList.push({ Name: 'application_status', Value: 'Draft' });
+
+      console.log('[MTIF] Submitting', fieldsList.length, 'fields to API');
+
+      var applicationRecordId = localStorage.getItem('mtif_current_application_id');
+      var isUpdate = !!applicationRecordId;
+
+      var result = await submitApplication(fieldsList, isUpdate);
+
+      if (saveDraftBtn) {
+        saveDraftBtn.disabled = false;
+        saveDraftBtn.textContent = originalText;
+      }
+
+      if (result) {
+        draftStatus.textContent = 'Saved to API and browser at ' + new Date().toLocaleString() + '.';
+        alert('Draft saved successfully!');
+      } else {
+        draftStatus.textContent = 'Draft saved to browser at ' + new Date().toLocaleString() + '. (API unavailable)';
+        alert('Draft saved to your browser. API connection not available.');
+      }
+
+    } catch (error) {
+      if (saveDraftBtn) {
+        saveDraftBtn.disabled = false;
+        saveDraftBtn.textContent = originalText;
+      }
+      console.error('[MTIF] Error saving draft to API:', error);
+      draftStatus.textContent = 'Saved locally. API error: ' + error.message;
+      alert('Draft saved locally. There was an error saving to the API, but your data is safe.');
+    }
+  };
+
+  // ============================================================
+  // Initialization
+  // ============================================================
+  const init = async function() {
+    // Check for recordId in URL parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlRecordId = urlParams.get('recordId');
+    if (urlRecordId) {
+      localStorage.setItem('mtif_current_application_id', urlRecordId);
+      console.log('[MTIF] Record ID from URL:', urlRecordId);
+    }
+
+    // Populate Record ID field from localStorage
+    var recordId = localStorage.getItem('mtif_current_application_id');
+    if (recordId) {
+      var recIdField = document.getElementById('mtif_record_id');
+      if (recIdField) recIdField.value = recordId;
+    }
+
+    // Build form sections
+    buildSections();
+
+    // Load from API first, then localStorage as fallback
+    var loadedFromAPI = await loadFromAPI();
+    if (!loadedFromAPI) {
+      console.log('[MTIF] Loading from localStorage as fallback');
       loadDraft();
+    } else {
+      console.log('[MTIF] Data loaded from API - skipping localStorage');
+    }
 
-      document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
-      document.getElementById("exportButton").addEventListener("click", exportJson);
-      document.getElementById("clearButton").addEventListener("click", clearDraft);
+    // Attach button handlers
+    document.getElementById('saveDraftButton').addEventListener('click', handleSaveDraft);
+    document.getElementById('exportButton').addEventListener('click', exportJson);
+    document.getElementById('clearButton').addEventListener('click', clearDraft);
+  };
+
+  // Run init when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
     </script>
   </body>
 </html>
