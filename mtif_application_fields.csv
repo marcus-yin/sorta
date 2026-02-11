@@ -1,0 +1,117 @@
+Category,Field Name,DB Column Name,Data Type,Max Length / Range,Input Type,Required
+Applicant / Jurisdiction,Jurisdiction name,jurisdiction_name,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Jurisdiction mailing address,jurisdiction_mailing_address,VARCHAR,500,text,Yes
+Applicant / Jurisdiction,Chief Executive Officer name,ceo_name,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Chief Executive Officer title,ceo_title,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Chief Fiscal Officer name,cfo_name,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Chief Fiscal Officer title,cfo_title,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Project contact person name,project_contact_name,VARCHAR,255,text,Yes
+Applicant / Jurisdiction,Project contact phone,project_contact_phone,VARCHAR,20,tel,Yes
+Applicant / Jurisdiction,Project contact email,project_contact_email,VARCHAR,255,email,Yes
+Applicant / Jurisdiction,Primary applicant email for notices,primary_applicant_email,VARCHAR,255,email,Yes
+Applicant / Jurisdiction,Applicant role,applicant_role,VARCHAR,100,select,Yes
+Project Header,Project name,project_name,VARCHAR,255,text,Yes
+Project Header,Project description (short narrative),project_description,TEXT,,textarea,Yes
+Project Header,Project ID (SORTA MTIF project ID),project_id,VARCHAR,50,text,Yes
+Project Header,Year project funded,year_project_funded,INTEGER,2000-2100,number,Yes
+Project Header,Date of project award,date_of_project_award,DATE,,date,Yes
+Project Header,Program year / round,program_year_round,VARCHAR,100,text,Yes
+Project Header,Project type/category,project_type_category,VARCHAR,100,select,Yes
+Project Header,Large vs small project category,project_size_category,VARCHAR,50,select,Yes
+Project Header,Emergency project indicator,emergency_project_flag,BOOLEAN,,select,No
+Location / Transit,Project street name(s),project_street_names,VARCHAR,500,text,Yes
+Location / Transit,Municipality/township/county,municipality_township_county,VARCHAR,255,text,Yes
+Location / Transit,Project limits description,project_limits_description,TEXT,,textarea,Yes
+Location / Transit,Project vicinity map file,vicinity_map_file,VARCHAR,500,file,No
+Location / Transit,Project latitude/longitude,project_lat_long,VARCHAR,100,text,No
+Location / Transit,GIS shapefile upload,gis_shapefile,VARCHAR,500,file,No
+Location / Transit,Distance to nearest fixed-route transit (miles),distance_to_transit_miles,DECIMAL(8:2),,number,No
+Location / Transit,Within 3/4 mile of fixed-route transit,within_three_quarter_mile_transit,BOOLEAN,,select,No
+Location / Transit,Weekday fixed-route trips using project corridor,weekday_transit_trip_count,INTEGER,,number,No
+Location / Transit,On BRT corridor,on_brt_corridor,BOOLEAN,,select,No
+Budget / Funding,Local funds budgeted (dollars),local_funds_budgeted,DECIMAL(14:2),,number,Yes
+Budget / Funding,SORTA MTIF funds awarded (dollars),mtif_funds_awarded,DECIMAL(14:2),,number,Yes
+Budget / Funding,Other funds budgeted (dollars),other_funds_budgeted,DECIMAL(14:2),,number,No
+Budget / Funding,Total project budget (dollars),total_project_budget,DECIMAL(14:2),,number,Yes
+Budget / Funding,Local funds share (%),local_funds_share_pct,DECIMAL(5:2),0-100,number,No
+Budget / Funding,MTIF funds share (%),mtif_funds_share_pct,DECIMAL(5:2),0-100,number,No
+Budget / Funding,Other funds share (%),other_funds_share_pct,DECIMAL(5:2),0-100,number,No
+Budget / Funding,Max grant % (<= 90% of construction cost),max_grant_pct,DECIMAL(5:2),0-100,number,No
+Budget / Funding,Local minimum 10% match flag,local_min_match_flag,BOOLEAN,,select,No
+Budget / Funding,Multi-year project funding years (1-5),multi_year_funding_years,INTEGER,1-5,number,No
+Budget / Funding,Detailed cost estimate file upload,cost_estimate_file,VARCHAR(500),,file,No
+Budget / Funding,Construction contingency %,construction_contingency_pct,DECIMAL(5:2),0-100,number,No
+Budget / Funding,Useful life estimate (years),useful_life_years,INTEGER,,number,No
+Budget / Funding,Engineer's stamp / PE license file,pe_license_file,VARCHAR(500),,file,No
+Budget / Funding,Certification of funds letter upload,certification_funds_file,VARCHAR(500),,file,No
+Budget / Funding,Authorizing legislation upload,authorizing_legislation_file,VARCHAR(500),,file,No
+Schedule & ROW,Construction award date,construction_award_date,DATE,,date,No
+Schedule & ROW,Anticipated construction start date,anticipated_start_date,DATE,,date,Yes
+Schedule & ROW,Anticipated construction completion date,anticipated_completion_date,DATE,,date,Yes
+Schedule & ROW,Construction start within 1 year flag,start_within_one_year_flag,BOOLEAN,,select,No
+Schedule & ROW,Right-of-way status,row_status,VARCHAR(50),,select,No
+Schedule & ROW,Design/engineering status,design_engineering_status,VARCHAR(50),,select,No
+Scoring / Criteria,Physical condition narrative,physical_condition_narrative,TEXT,,textarea,No
+Scoring / Criteria,Safety issues narrative,safety_issues_narrative,TEXT,,textarea,No
+Scoring / Criteria,Project priority ranking,project_priority_ranking,VARCHAR(20),,select,No
+Scoring / Criteria,Economic growth & connectivity narrative,economic_growth_narrative,TEXT,,textarea,No
+Scoring / Criteria,Match % (calculated from budget),match_pct,DECIMAL(5:2),0-100,number,No
+Scoring / Criteria,Regional impact narrative,regional_impact_narrative,TEXT,,textarea,No
+Scoring / Criteria,Average Daily Traffic (ADT),average_daily_traffic,INTEGER,,number,No
+Scoring / Criteria,Relative Economic Strength score,relative_economic_strength,DECIMAL(8:2),,number,No
+Scoring / Criteria,Transit impact narrative,transit_impact_narrative,TEXT,,textarea,No
+Scoring / Criteria,Multimodal infrastructure details,multimodal_infrastructure_details,TEXT,,textarea,No
+Scoring / Criteria,Sustainability measures checklist,sustainability_measures,TEXT,,textarea,No
+Scoring / Criteria,Past performance score,past_performance_score,DECIMAL(5:2),,number,No
+Progress Reporting,Quarterly report date,quarterly_report_date,DATE,,date,No
+Progress Reporting,Quarterly report prepared by,quarterly_prepared_by,VARCHAR(255),,text,No
+Progress Reporting,Quarterly jurisdiction,quarterly_jurisdiction,VARCHAR(255),,text,No
+Progress Reporting,Quarterly address,quarterly_address,VARCHAR(500),,text,No
+Progress Reporting,Project name (reporting),reporting_project_name,VARCHAR(255),,text,No
+Progress Reporting,Project ID (reporting),reporting_project_id,VARCHAR(50),,text,No
+Progress Reporting,Owner (reporting),reporting_owner,VARCHAR(255),,text,No
+Progress Reporting,Contractor (reporting),reporting_contractor,VARCHAR(255),,text,No
+Progress Reporting,Owner's Project Manager (reporting),reporting_project_manager,VARCHAR(255),,text,No
+Progress Reporting,Last report % completion,last_report_completion_pct,DECIMAL(5:2),0-100,number,No
+Progress Reporting,Current report % completion,current_report_completion_pct,DECIMAL(5:2),0-100,number,No
+Progress Reporting,Overall project % completion,overall_completion_pct,DECIMAL(5:2),0-100,number,No
+Progress Reporting,Payment status,payment_status,VARCHAR(100),,text,No
+Progress Reporting,Payment status explanation,payment_status_explanation,TEXT,,textarea,No
+Progress Reporting,Amount expended - MTIF grant only,amount_expended_mtif,DECIMAL(14:2),,number,No
+Progress Reporting,Total grant award,total_grant_award,DECIMAL(14:2),,number,No
+Progress Reporting,Potential risks narrative,potential_risks_narrative,TEXT,,textarea,No
+Progress Reporting,Schedule update narrative,schedule_update_narrative,TEXT,,textarea,No
+Progress Reporting,Issues / concerns narrative,issues_concerns_narrative,TEXT,,textarea,No
+Progress Reporting,Site documentation photos,site_documentation_photos,VARCHAR(500),,file,No
+Progress Reporting,Annual report date,annual_report_date,DATE,,date,No
+Progress Reporting,Annual report prepared by,annual_prepared_by,VARCHAR(255),,text,No
+Progress Reporting,Annual % project completion,annual_completion_pct,DECIMAL(5:2),0-100,number,No
+Progress Reporting,Annual potential risks,annual_potential_risks,TEXT,,textarea,No
+Progress Reporting,Annual schedule update,annual_schedule_update,TEXT,,textarea,No
+Progress Reporting,Annual issues / concerns,annual_issues_concerns,TEXT,,textarea,No
+Reimbursement,Reimbursement request date,reimbursement_request_date,DATE,,date,No
+Reimbursement,Reimbursement request ID,reimbursement_request_id,VARCHAR(50),,text,No
+Reimbursement,Reimbursement form upload,reimbursement_form_file,VARCHAR(500),,file,No
+Reimbursement,Invoices included (list),invoices_included,TEXT,,textarea,No
+Reimbursement,Total amount requested (this submission),total_amount_requested,DECIMAL(14:2),,number,No
+Reimbursement,MTIF-eligible amount (based on ratio),mtif_eligible_amount,DECIMAL(14:2),,number,No
+Reimbursement,Cumulative reimbursed amount,cumulative_reimbursed_amount,DECIMAL(14:2),,number,No
+Reimbursement,Remaining grant balance,remaining_grant_balance,DECIMAL(14:2),,number,No
+Reimbursement,Two reimbursements per month rule flag,two_per_month_flag,BOOLEAN,,select,No
+Reimbursement,ACH form on file,ach_form_on_file,BOOLEAN,,select,No
+Closeout,Jurisdiction (closeout),closeout_jurisdiction,VARCHAR(255),,text,No
+Closeout,Project name (closeout),closeout_project_name,VARCHAR(255),,text,No
+Closeout,Project number (closeout),closeout_project_number,VARCHAR(50),,text,No
+Closeout,Year project funded (closeout),closeout_year_funded,INTEGER,2000-2100,number,No
+Closeout,Date of project award (closeout),closeout_award_date,DATE,,date,No
+Closeout,Initial local funds budgeted (dollars/%),closeout_initial_local_funds,DECIMAL(14:2),,number,No
+Closeout,Initial MTIF funds budgeted (dollars/%),closeout_initial_mtif_funds,DECIMAL(14:2),,number,No
+Closeout,Initial other funds budgeted (dollars/%),closeout_initial_other_funds,DECIMAL(14:2),,number,No
+Closeout,Initial total project budget (dollars/%),closeout_initial_total_budget,DECIMAL(14:2),,number,No
+Closeout,Actual local funds expended (dollars/%),closeout_actual_local_funds,DECIMAL(14:2),,number,No
+Closeout,Actual MTIF funds expended (dollars/%),closeout_actual_mtif_funds,DECIMAL(14:2),,number,No
+Closeout,Actual other funds expended (dollars/%),closeout_actual_other_funds,DECIMAL(14:2),,number,No
+Closeout,Total funds expended (dollars/%),closeout_total_funds_expended,DECIMAL(14:2),,number,No
+Closeout,Construction completion date,closeout_completion_date,DATE,,date,No
+Closeout,Final completion photos,closeout_completion_photos,VARCHAR(500),,file,No
+Closeout,Residual/unexpended funds note,closeout_residual_funds_note,TEXT,,textarea,No
