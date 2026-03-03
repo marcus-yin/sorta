@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SORTA Metro - MTIF Application</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCCOeRTHAvIZeQqGl-lvqgfv-ZsDTroltU&libraries=places" async defer></script>
     <style>
       :root {
         --metro-blue: #003da5;
@@ -1002,8 +1003,25 @@
     return null;
   };
 
+  // Jurisdiction name dropdown values
+  const JURISDICTION_NAMES = [
+    'Addyston','Anderson Township','Cincinnati','Colerain Township','Columbia Township',
+    'Deer Park','Delhi Township','Forest Park','Glendale','Golf Manor','Greenhills',
+    'Hamilton County','Harrison','Lincoln Heights','Madeira','Mt. Healthy',
+    'North College Hill','Norwood','Sharonville','Silverton','Springdale',
+    'Sycamore Township','Wyoming','Blue Ash','Cheviot','Elmwood','Green Township',
+    'Lockland','Montgomery','Reading','Springfield Township','Symmes Township',
+    'Woodlawn','Mariemont'
+  ];
+
   const getFieldConfig = function(fieldName) {
     const lower = fieldName.toLowerCase();
+
+    // Special case: Jurisdiction name is a single-select dropdown
+    if (fieldName === 'Jurisdiction name') {
+      return { type: 'select', options: JURISDICTION_NAMES.slice().sort() };
+    }
+
     const options = getSelectOptionsFromField(fieldName);
     if (options) return { type: 'select', options: options };
     if (lower.includes('yes/no') || lower.includes('flag') || lower.includes('indicator')) return { type: 'select', options: ['Yes', 'No'] };
@@ -1443,7 +1461,59 @@
     document.getElementById('saveDraftButton').addEventListener('click', handleSaveDraft);
     document.getElementById('exportButton').addEventListener('click', exportJson);
     document.getElementById('clearButton').addEventListener('click', clearDraft);
+
+    // Initialize Google Places Autocomplete on Jurisdiction mailing address
+    initAddressAutocomplete();
   };
+
+  // ============================================================
+  // Google Places Autocomplete for mailing address
+  // ============================================================
+  function initAddressAutocomplete() {
+    var addressInput = document.getElementById('field-applicant-jurisdiction-jurisdiction-mailing-address');
+    if (!addressInput) {
+      console.warn('[MTIF] Address input not found for autocomplete.');
+      return;
+    }
+
+    // Wait for Google Maps Places API to load
+    if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+      console.log('[MTIF] Google Maps not loaded yet, retrying...');
+      setTimeout(initAddressAutocomplete, 200);
+      return;
+    }
+
+    if (addressInput.dataset.autocompleteInitialized === 'true') return;
+
+    // Create autocomplete biased to Hamilton County, OH
+    var autocomplete = new google.maps.places.Autocomplete(addressInput, {
+      types: ['address'],
+      componentRestrictions: { country: 'us' },
+      fields: ['formatted_address', 'geometry', 'address_components'],
+      bounds: new google.maps.LatLngBounds(
+        new google.maps.LatLng(39.07, -84.82),  // SW corner of Hamilton County
+        new google.maps.LatLng(39.32, -84.26)   // NE corner of Hamilton County
+      ),
+      strictBounds: false
+    });
+
+    addressInput.dataset.autocompleteInitialized = 'true';
+    console.log('[MTIF] Google Places Autocomplete initialized on mailing address field.');
+
+    autocomplete.addListener('place_changed', function() {
+      var place = autocomplete.getPlace();
+      if (!place.geometry) {
+        console.warn('[MTIF] No geometry data for selected place');
+        return;
+      }
+
+      // Set the formatted address
+      addressInput.value = place.formatted_address;
+
+      // Save draft after selection
+      saveDraftLocal();
+    });
+  }
 
   // Run init when DOM is ready
   if (document.readyState === 'loading') {
