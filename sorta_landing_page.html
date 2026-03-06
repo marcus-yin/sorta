@@ -219,6 +219,34 @@
       font-weight: 600;
     }
 
+    .sorta-button-child {
+      padding: 5px 10px;
+      font-size: 11px;
+      margin: 2px 3px 2px 0;
+      font-weight: 600;
+      background: #1a5276;
+      color: #fff;
+      border: 1px solid #1a5276;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .sorta-button-child:hover {
+      background: #154360;
+      border-color: #154360;
+    }
+    .sorta-button-child:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    .sorta-actions-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+    }
+
     /* Applications Section */
     .sorta-section {
       background: #ffffff;
@@ -432,34 +460,6 @@
       </div>
     </div>
 
-    <!-- Quick-link Tiles -->
-    <div class="sorta-tiles">
-      <a class="sorta-tile" id="tile_new_app">
-        <div class="sorta-tile-icon red">+</div>
-        <span class="sorta-tile-label">New Application</span>
-        <span class="sorta-tile-desc">Start a new MTIF grant application</span>
-      </a>
-      <a class="sorta-tile" id="tile_quarterly">
-        <div class="sorta-tile-icon blue">Q</div>
-        <span class="sorta-tile-label">Quarterly Report</span>
-        <span class="sorta-tile-desc">Submit a progress update</span>
-      </a>
-      <a class="sorta-tile" id="tile_reimbursement">
-        <div class="sorta-tile-icon green">$</div>
-        <span class="sorta-tile-label">Reimbursement</span>
-        <span class="sorta-tile-desc">Request grant reimbursement</span>
-      </a>
-      <a class="sorta-tile" id="tile_closeout">
-        <div class="sorta-tile-icon amber">C</div>
-        <span class="sorta-tile-label">Closeout Report</span>
-        <span class="sorta-tile-desc">File a project closeout</span>
-      </a>
-      <a class="sorta-tile" id="tile_calendar">
-        <div class="sorta-tile-icon purple">&#x1F4C5;</div>
-        <span class="sorta-tile-label">Calendar</span>
-        <span class="sorta-tile-desc">Deadlines &amp; milestones</span>
-      </a>
-    </div>
 
     <!-- Actions Bar -->
     <div class="sorta-actions">
@@ -535,16 +535,20 @@
       applicationTableKey: 'iw3twwkw2',
       applicationsReportId: 'tn3omkcq4',
       applicationsIdFieldKey: 'dyd4osqa5',
-      applicationsCreatedByFieldKey: 'dfz9fb2g2'
+      applicationsCreatedByFieldKey: 'dfz9fb2g2',
+      reimbursementTableKey: 'qo5o45ww5',
+      reimbursementRelFieldKey: 'yfvsvw4a7',
+      quarterlyTableKey: 'q4zsuxna5',
+      quarterlyRelFieldKey: 'f00heabg2',
+      closeoutTableKey: 'iyrj5cna7',
+      closeoutRelFieldKey: 'fytqdkkw6'
     };
 
-    // OpenGov page URLs (update these to your deployed page IDs)
     var PAGES = {
       application:    'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/ywp8tpwa5',
-      quarterly:      'quarterly_progress_report.html',
-      reimbursement:  'request_reimbursement.html',
-      closeout:       'mtif_closeout_report.html',
-      calendar:       'calendar.html'
+      reimbursement:  'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/fuxa1j1a1',
+      quarterly:      'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/yyofa3ca6',
+      closeout:       'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/3wzuflka3'
     };
 
     // ============================================================
@@ -680,6 +684,51 @@
     }
 
     // ============================================================
+    // Create child record (Reimbursement / Quarterly / Closeout)
+    // ============================================================
+    var CHILD_TYPES = {
+      reimbursement: {
+        tableKey: API_CONFIG.reimbursementTableKey,
+        relFieldKey: API_CONFIG.reimbursementRelFieldKey,
+        page: 'reimbursement',
+        label: 'Reimbursement Request'
+      },
+      quarterly: {
+        tableKey: API_CONFIG.quarterlyTableKey,
+        relFieldKey: API_CONFIG.quarterlyRelFieldKey,
+        page: 'quarterly',
+        label: 'Quarterly Report'
+      },
+      closeout: {
+        tableKey: API_CONFIG.closeoutTableKey,
+        relFieldKey: API_CONFIG.closeoutRelFieldKey,
+        page: 'closeout',
+        label: 'Closeout Report'
+      }
+    };
+
+    function createChildRecord(token, childType, parentRecordId) {
+      var cfg = CHILD_TYPES[childType];
+      if (!cfg) return Promise.reject(new Error('Unknown child type: ' + childType));
+
+      var payload = {
+        ApplicationTableKey: cfg.tableKey,
+        FieldsList: [
+          { Name: 'related_applications', Value: String(parentRecordId), Key: cfg.relFieldKey }
+        ]
+      };
+
+      return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Create child record ' + r.status);
+        return r.json();
+      });
+    }
+
+    // ============================================================
     // UI helpers
     // ============================================================
     function $(id) { return document.getElementById(id); }
@@ -783,11 +832,14 @@
           '<td>' + formatCurrency(grantAmt) + '</td>' +
           '<td>' + formatCurrency(mtifAmt) + '</td>' +
           '<td>' + status + '</td>' +
-          '<td>' +
-            '<button class="sorta-button sorta-button-small" data-rid="' + rid + '">Edit</button>' +
+          '<td class="sorta-actions-cell">' +
+            '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">Edit</button>' +
+            '<button class="sorta-button-child" data-action="reimbursement" data-rid="' + rid + '">Reimbursement</button>' +
+            '<button class="sorta-button-child" data-action="quarterly" data-rid="' + rid + '">Quarterly Report</button>' +
+            '<button class="sorta-button-child" data-action="closeout" data-rid="' + rid + '">Closeout Report</button>' +
           '</td>';
 
-        var editBtn = tr.querySelector('[data-rid]');
+        var editBtn = tr.querySelector('[data-action="edit"]');
         if (status === 'Submitted') {
           editBtn.disabled = true;
           editBtn.style.opacity = '0.4';
@@ -800,32 +852,33 @@
           });
         }
 
+        ['reimbursement', 'quarterly', 'closeout'].forEach(function (childType) {
+          var btn = tr.querySelector('[data-action="' + childType + '"]');
+          btn.addEventListener('click', function () {
+            var self = this;
+            var origText = self.textContent;
+            self.disabled = true;
+            self.textContent = 'Creating...';
+
+            getAuthToken().then(function (token) {
+              if (!token) throw new Error('Not authenticated');
+              return createChildRecord(token, childType, rid);
+            }).then(function (result) {
+              var childRid = result.recordId || result.Rid;
+              console.log('[SORTA] Created ' + childType + ' child record:', childRid, 'linked to application:', rid);
+              navigateTo(CHILD_TYPES[childType].page, childRid);
+            }).catch(function (err) {
+              console.error('[SORTA] Create ' + childType + ' error:', err);
+              showError('Could not create ' + CHILD_TYPES[childType].label + '. Please try again.');
+              self.disabled = false;
+              self.textContent = origText;
+            });
+          });
+        });
+
         tbody.appendChild(tr);
       });
     }
-
-    // ============================================================
-    // Tile click handlers
-    // ============================================================
-    $('tile_new_app').addEventListener('click', function () {
-      $('sorta_create_btn').click();
-    });
-
-    $('tile_quarterly').addEventListener('click', function () {
-      navigateTo('quarterly');
-    });
-
-    $('tile_reimbursement').addEventListener('click', function () {
-      navigateTo('reimbursement');
-    });
-
-    $('tile_closeout').addEventListener('click', function () {
-      navigateTo('closeout');
-    });
-
-    $('tile_calendar').addEventListener('click', function () {
-      navigateTo('calendar');
-    });
 
     // ============================================================
     // Resume & Create handlers
