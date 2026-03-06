@@ -464,9 +464,6 @@
     <!-- Actions Bar -->
     <div class="sorta-actions">
       <div class="sorta-actions-inner">
-        <button id="sorta_resume_btn" class="sorta-button" disabled>
-          Resume Latest Application
-        </button>
         <button id="sorta_create_btn" class="sorta-button sorta-button-primary">
           + Create New Application
         </button>
@@ -744,12 +741,9 @@
       var tbody  = $('sorta_tbody');
       var wrap   = $('sorta_table_wrap');
       var empty  = $('sorta_empty');
-      var resume = $('sorta_resume_btn');
-
       if (!apps || apps.length === 0) {
         wrap.style.display = 'none';
         empty.style.display = 'block';
-        if (resume) resume.disabled = true;
         return;
       }
 
@@ -763,7 +757,6 @@
       });
 
       latestApp = sorted[0];
-      if (resume) resume.disabled = false;
 
       wrap.style.display = 'block';
       empty.style.display = 'none';
@@ -827,14 +820,6 @@
     // ============================================================
     // Resume & Create handlers
     // ============================================================
-    $('sorta_resume_btn').addEventListener('click', function () {
-      if (!latestApp) { showError('No application to resume.'); return; }
-      var rid = getRecordId(latestApp);
-      if (!rid) { showError('Record ID not found.'); return; }
-      localStorage.setItem('mtif_current_application_id', rid);
-      navigateTo('application', rid);
-    });
-
     $('sorta_create_btn').addEventListener('click', function () {
       var btn = this;
       var orig = btn.textContent;
