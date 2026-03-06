@@ -492,13 +492,13 @@
           <table class="sorta-table">
             <thead>
               <tr>
-                <th>Record ID</th>
-                <th>Project Name</th>
+                <th>Record Id</th>
+                <th>Project Title</th>
+                <th>Grant Number</th>
                 <th>Jurisdiction</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Date Created</th>
-                <th>Last Modified</th>
+                <th>Grantee Contact</th>
+                <th>Grant Funds</th>
+                <th>MTIF Assistance</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -536,12 +536,13 @@
       aesKey: AES_KEY,
       applicationTableKey: 'iw3twwkw2',
       applicationsReportId: 'tn3omkcq4',
-      applicationsIdFieldKey: 'dyd4osqa5'
+      applicationsIdFieldKey: 'dyd4osqa5',
+      applicationsCreatedByFieldKey: 'dfz9fb2g2'
     };
 
     // OpenGov page URLs (update these to your deployed page IDs)
     var PAGES = {
-      application:    'mtif_application.html',
+      application:    'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/ywp8tpwa5',
       quarterly:      'quarterly_progress_report.html',
       reimbursement:  'request_reimbursement.html',
       closeout:       'mtif_closeout_report.html',
@@ -614,6 +615,10 @@
       return null;
     }
 
+    function getRecordId(app) {
+      return app.id || extractFieldValue(app, 'id') || app.Rid || '';
+    }
+
     // ============================================================
     // User profile
     // ============================================================
@@ -635,6 +640,7 @@
         ReportId: API_CONFIG.applicationsReportId,
         Filters: []
       };
+
       return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
         method: 'POST',
         headers: apiHeaders(token),
@@ -644,13 +650,16 @@
         return r.json();
       }).then(function (result) {
         var rows = Array.isArray(result) ? result : (result.data || result.Data || []);
+        console.log('[SORTA] API returned', rows.length, 'total rows');
+
         if (!email) return rows;
-        return rows.filter(function (app) {
-          var creator = extractFieldValue(app, 'createdby') || '';
-          var jur = extractFieldValue(app, 'primary_applicant_email') || '';
-          return creator.toLowerCase() === email.toLowerCase() ||
-                 jur.toLowerCase() === email.toLowerCase();
+
+        var filtered = rows.filter(function (app) {
+          var creator = (app.tbl12027_createdby || extractFieldValue(app, 'createdby') || '').toLowerCase();
+          return creator === email.toLowerCase();
         });
+        console.log('[SORTA] Filtered to', filtered.length, 'rows for', email);
+        return filtered;
       });
     }
 
@@ -699,6 +708,12 @@
       } catch (_) { return d; }
     }
 
+    function formatCurrency(val) {
+      var n = parseFloat(val);
+      if (isNaN(n) || n === 0) return '-';
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function statusBadge(status) {
       if (!status) return '<span class="sorta-badge sorta-badge-draft">Draft</span>';
       var s = status.toLowerCase();
@@ -738,10 +753,13 @@
         return;
       }
 
+      if (apps.length > 0) {
+        console.log('[SORTA] Sample app keys:', Object.keys(apps[0]));
+        console.log('[SORTA] Sample app data:', apps[0]);
+      }
+
       var sorted = apps.slice().sort(function (a, b) {
-        var da = new Date(extractFieldValue(a, 'datecreated') || 0);
-        var db = new Date(extractFieldValue(b, 'datecreated') || 0);
-        return db - da;
+        return Number(getRecordId(b) || 0) - Number(getRecordId(a) || 0);
       });
 
       latestApp = sorted[0];
@@ -752,27 +770,23 @@
       tbody.innerHTML = '';
 
       sorted.forEach(function (app) {
-        var rid     = extractFieldValue(app, 'record_id') || extractFieldValue(app, 'id') || app.Rid || '';
-        var name    = extractFieldValue(app, 'project_name') || 'Untitled Project';
-        var jur     = extractFieldValue(app, 'jurisdiction_name') || '-';
-        var ptype   = extractFieldValue(app, 'project_type_category') || '-';
-        var status  = extractFieldValue(app, 'application_status') || 'Draft';
-        var created = extractFieldValue(app, 'datecreated');
-        var modified = extractFieldValue(app, 'datemodified');
-
-        if (status && (status.startsWith('http://') || status.startsWith('https://'))) {
-          status = 'Draft';
-        }
+        var rid      = getRecordId(app);
+        var title    = extractFieldValue(app, 'Project Title') || extractFieldValue(app, 'project_title') || '-';
+        var grantNum = extractFieldValue(app, 'Grant Number') || extractFieldValue(app, 'grant_number') || '-';
+        var jur      = extractFieldValue(app, 'Project Local Jurisdiction') || extractFieldValue(app, 'project_local_jurisdiction') || '-';
+        var contact  = extractFieldValue(app, 'Grantee Contact') || extractFieldValue(app, 'grantee_contact') || '-';
+        var grantAmt = extractFieldValue(app, 'Grant Funds') || extractFieldValue(app, 'grant_funds') || 0;
+        var mtifAmt  = extractFieldValue(app, 'Transit Infrastructure Fund Assistnace') || extractFieldValue(app, 'transit_infrastructure_fund_assistnace') || 0;
 
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>' + (rid || '-') + '</td>' +
-          '<td><strong>' + name + '</strong></td>' +
+          '<td><strong>' + title + '</strong></td>' +
+          '<td>' + grantNum + '</td>' +
           '<td>' + jur + '</td>' +
-          '<td>' + ptype + '</td>' +
-          '<td>' + statusBadge(status) + '</td>' +
-          '<td>' + formatDate(created) + '</td>' +
-          '<td>' + formatDate(modified) + '</td>' +
+          '<td>' + contact + '</td>' +
+          '<td>' + formatCurrency(grantAmt) + '</td>' +
+          '<td>' + formatCurrency(mtifAmt) + '</td>' +
           '<td>' +
             '<button class="sorta-button sorta-button-small" data-rid="' + rid + '">Edit</button>' +
           '</td>';
@@ -815,9 +829,7 @@
     // ============================================================
     $('sorta_resume_btn').addEventListener('click', function () {
       if (!latestApp) { showError('No application to resume.'); return; }
-      var rid = extractFieldValue(latestApp, 'record_id') ||
-                extractFieldValue(latestApp, 'id') ||
-                latestApp.Rid;
+      var rid = getRecordId(latestApp);
       if (!rid) { showError('Record ID not found.'); return; }
       localStorage.setItem('mtif_current_application_id', rid);
       navigateTo('application', rid);
@@ -865,7 +877,8 @@
           $('sorta_loading').style.display = 'none';
 
           if (apps && apps.length > 0) {
-            var firstJur = extractFieldValue(apps[0], 'jurisdiction_name');
+            var firstJur = extractFieldValue(apps[0], 'Project Local Jurisdiction') ||
+                           extractFieldValue(apps[0], 'project_local_jurisdiction');
             if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
           }
 
