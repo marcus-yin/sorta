@@ -385,7 +385,13 @@
     projectHeaderReportId: 's3derd1q7',
     locationTransitReportId: '6tvmwupw6',
     vicinityMapFileFieldKey: 'v8yhpiia7',
-    gisShapefileFieldKey: '4wia8wlq4'
+    gisShapefileFieldKey: '4wia8wlq4',
+    costEstimateFieldKey: 'gqqeo7zw8',
+    peLicenseFieldKey: 'foa75uhw1',
+    certificationFundsFieldKey: '6qt3coma3',
+    authorizingLegislationFieldKey: 'aw5i0xuq4',
+    budgetFundingReportId: 'tvp6ny9w7',
+    scheduleRowReportId: 'fz3k5d5q2'
   };
 
   // ============================================================
@@ -506,12 +512,12 @@
     'field-budget-funding-max-grant-90-of-construction-cost': { name: 'max_grant_pct' },
     'field-budget-funding-local-minimum-10-match-flag': { name: 'local_min_match_flag' },
     'field-budget-funding-multi-year-project-funding-years-1-5': { name: 'multi_year_funding_years' },
-    'field-budget-funding-detailed-cost-estimate-file-upload': { name: 'cost_estimate_file' },
+    'field-budget-funding-detailed-cost-estimate-file-upload': { name: 'cost_estimate_file', fieldKey: 'gqqeo7zw8' },
     'field-budget-funding-construction-contingency': { name: 'construction_contingency_pct' },
     'field-budget-funding-useful-life-estimate-years': { name: 'useful_life_years' },
-    'field-budget-funding-engineer-s-stamp-pe-license-file': { name: 'pe_license_file' },
-    'field-budget-funding-certification-of-funds-letter-upload': { name: 'certification_funds_file' },
-    'field-budget-funding-authorizing-legislation-upload': { name: 'authorizing_legislation_file' },
+    'field-budget-funding-engineer-s-stamp-pe-license-file': { name: 'pe_license_file', fieldKey: 'foa75uhw1' },
+    'field-budget-funding-certification-of-funds-letter-upload': { name: 'certification_funds_file', fieldKey: '6qt3coma3' },
+    'field-budget-funding-authorizing-legislation-upload': { name: 'authorizing_legislation_file', fieldKey: 'aw5i0xuq4' },
     'field-schedule-row-construction-award-date': { name: 'construction_award_date' },
     'field-schedule-row-anticipated-construction-start-date': { name: 'anticipated_start_date' },
     'field-schedule-row-anticipated-construction-completion-date': { name: 'anticipated_completion_date' },
@@ -1107,15 +1113,16 @@
     if (lower.includes('priority ranking')) return { type: 'select', options: ['1st', '2nd', '3rd', '4th', '5th', 'Other'] };
     if (lower.includes('email')) return { type: 'email', pattern: '[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}', title: 'Enter a valid email address (e.g. name@example.com)' };
     if (lower.includes('phone')) return { type: 'tel', placeholder: '(555) 555-5555', pattern: '\\(\\d{3}\\)\\s?\\d{3}-\\d{4}', title: 'Enter a 10-digit phone number: (555) 555-5555' };
+    if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
+    if (lower.includes('useful life estimate')) return { type: 'number', min: 1, max: 100, step: 1 };
+    if (lower.includes('upload') || /\bfile\b/.test(lower) || lower.includes('photos')) return { type: 'file' };
     if (lower.includes('date')) return { type: 'date' };
     if (lower.includes('year')) return { type: 'number', min: 2000, max: 2100, step: 1 };
     if (lower.includes('dollars') || lower.includes('amount') || lower.includes('budget')) return { type: 'number', step: 0.01, min: 0 };
     if (lower.includes('%') || lower.includes('percent') || lower.includes('share')) return { type: 'number', step: 0.01, min: 0, max: 100 };
     if (lower.includes('count') || lower.includes('estimate') || lower.includes('miles')) return { type: 'number', step: 1, min: 0 };
-    if (lower.includes('upload') || lower.includes('file') || lower.includes('photos')) return { type: 'file' };
     if (lower.includes('narrative') || lower.includes('description') || lower.includes('details') || lower.includes('checklist') || lower.includes('note') || lower.includes('list')) return { type: 'textarea' };
     if (lower.includes('latitude/longitude')) return { type: 'text', placeholder: '39.1031, -84.5120' };
-    if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
     return { type: 'text' };
   };
 
@@ -1129,7 +1136,10 @@
       return acc;
     }, {});
 
+    var HIDDEN_SECTIONS = ['Scoring / Criteria', 'Progress Reporting', 'Reimbursement', 'Closeout'];
+
     Object.keys(grouped).forEach(function(category, index) {
+      if (HIDDEN_SECTIONS.indexOf(category) !== -1) return;
       const sectionId = 'section-' + index + '-' + slugify(category);
       const navLink = document.createElement('a');
       navLink.href = 'javascript:void(0)';
@@ -1768,6 +1778,155 @@
         console.warn('[MTIF] Error loading location/transit data:', ltErr);
       }
 
+      // ---- Load Budget/Funding fields from report tvp6ny9w7 ----
+      try {
+        console.log('[MTIF] Loading budget/funding data from report', API_CONFIG.budgetFundingReportId);
+        var bfResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.budgetFundingReportId, Filters: [] })
+        });
+
+        if (bfResponse.ok) {
+          var bfResult = await bfResponse.json();
+          var bfRows = Array.isArray(bfResult) ? bfResult : (bfResult.data || bfResult.Data || []);
+
+          var bfData = null;
+          for (var bfi = 0; bfi < bfRows.length; bfi++) {
+            if (String(bfRows[bfi].id || bfRows[bfi].Rid || '') === String(recordId)) {
+              bfData = bfRows[bfi];
+              break;
+            }
+          }
+
+          if (bfData) {
+            console.log('[MTIF] Found budget/funding data. Keys:', Object.keys(bfData));
+
+            var BF_COL_TO_FORM = {
+              'local_funds_budgeted':          'field-budget-funding-local-funds-budgeted-dollars',
+              'mtif_funds_awarded':            'field-budget-funding-sorta-mtif-funds-awarded-dollars',
+              'other_funds_budgeted':          'field-budget-funding-other-funds-budgeted-dollars',
+              'total_project_budget':          'field-budget-funding-total-project-budget-dollars',
+              'local_funds_share_pct':         'field-budget-funding-local-funds-share',
+              'mtif_funds_share_pct':          'field-budget-funding-mtif-funds-share',
+              'other_funds_share_pct':         'field-budget-funding-other-funds-share',
+              'max_grant_pct':                 'field-budget-funding-max-grant-90-of-construction-cost',
+              'local_min_match_flag':          'field-budget-funding-local-minimum-10-match-flag',
+              'multi_year_funding_years':      'field-budget-funding-multi-year-project-funding-years-1-5',
+              'cost_estimate_file':            'field-budget-funding-detailed-cost-estimate-file-upload',
+              'construction_contingency_pct':  'field-budget-funding-construction-contingency',
+              'useful_life_years':             'field-budget-funding-useful-life-estimate-years',
+              'pe_license_file':               'field-budget-funding-engineer-s-stamp-pe-license-file',
+              'certification_funds_file':      'field-budget-funding-certification-of-funds-letter-upload',
+              'authorizing_legislation_file':  'field-budget-funding-authorizing-legislation-upload'
+            };
+
+            Object.keys(bfData).forEach(function(bKey) {
+              var val = bfData[bKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(bKey);
+              var formId = BF_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              if (field.type === 'file') {
+                showFileName(field, val);
+                console.log('[MTIF] Set budget file:', formId, '(' + col + ') =', val);
+                return;
+              }
+
+              if (field.value) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else if (field.tagName === 'TEXTAREA') {
+                field.value = val;
+                field.dispatchEvent(new Event('input'));
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set budget field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No budget/funding data found for record:', recordId);
+          }
+        }
+      } catch (bfErr) {
+        console.warn('[MTIF] Error loading budget/funding data:', bfErr);
+      }
+
+      // ---- Load Schedule & ROW fields from report fz3k5d5q2 ----
+      try {
+        console.log('[MTIF] Loading schedule/ROW data from report', API_CONFIG.scheduleRowReportId);
+        var srResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.scheduleRowReportId, Filters: [] })
+        });
+
+        if (srResponse.ok) {
+          var srResult = await srResponse.json();
+          var srRows = Array.isArray(srResult) ? srResult : (srResult.data || srResult.Data || []);
+
+          var srData = null;
+          for (var sri = 0; sri < srRows.length; sri++) {
+            if (String(srRows[sri].id || srRows[sri].Rid || '') === String(recordId)) {
+              srData = srRows[sri];
+              break;
+            }
+          }
+
+          if (srData) {
+            console.log('[MTIF] Found schedule/ROW data. Keys:', Object.keys(srData));
+
+            var SR_COL_TO_FORM = {
+              'construction_award_date':       'field-schedule-row-construction-award-date',
+              'anticipated_start_date':        'field-schedule-row-anticipated-construction-start-date',
+              'anticipated_completion_date':   'field-schedule-row-anticipated-construction-completion-date',
+              'start_within_one_year_flag':    'field-schedule-row-construction-start-within-1-year-flag',
+              'row_status':                    'field-schedule-row-right-of-way-status-all-partial-none',
+              'design_engineering_status':     'field-schedule-row-design-engineering-status-complete-in-process-not-started'
+            };
+
+            Object.keys(srData).forEach(function(sKey) {
+              var val = srData[sKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(sKey);
+              var formId = SR_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              if (field.value) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set schedule field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No schedule/ROW data found for record:', recordId);
+          }
+        }
+      } catch (srErr) {
+        console.warn('[MTIF] Error loading schedule/ROW data:', srErr);
+      }
+
       console.log('[MTIF] Successfully loaded application from API');
       return true;
 
@@ -1909,7 +2068,11 @@
   // Map form field IDs to their OpenGov field keys for file uploads
   var FILE_FIELD_KEYS = {
     'field-location-transit-project-vicinity-map-file': API_CONFIG.vicinityMapFileFieldKey,
-    'field-location-transit-gis-shapefile-upload': API_CONFIG.gisShapefileFieldKey
+    'field-location-transit-gis-shapefile-upload': API_CONFIG.gisShapefileFieldKey,
+    'field-budget-funding-detailed-cost-estimate-file-upload': API_CONFIG.costEstimateFieldKey,
+    'field-budget-funding-engineer-s-stamp-pe-license-file': API_CONFIG.peLicenseFieldKey,
+    'field-budget-funding-certification-of-funds-letter-upload': API_CONFIG.certificationFundsFieldKey,
+    'field-budget-funding-authorizing-legislation-upload': API_CONFIG.authorizingLegislationFieldKey
   };
 
   async function uploadFileToField(file, fieldId) {
