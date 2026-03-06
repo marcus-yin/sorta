@@ -299,6 +299,53 @@
         margin-top: 8px;
       }
 
+      .metro-attestation {
+        background: #f9fbff;
+        border: 1px solid #cfd9e6;
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-top: 12px;
+      }
+      .metro-attestation label {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--metro-ink);
+      }
+      .metro-attestation input[type="checkbox"] {
+        margin-top: 4px;
+        width: auto;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .metro-submit-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+      .metro-button.submit {
+        background: #16a34a;
+        color: #fff;
+        border: none;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 12px 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .metro-button.submit:hover {
+        background: #15803d;
+      }
+      .metro-button.submit:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
+
       @media (max-width: 900px) {
         .metro-col-6,
         .metro-col-4,
@@ -363,6 +410,49 @@
           </div>
         </section>
       </form>
+
+      <!-- Acknowledgment & Attestation Section -->
+      <section class="metro-section" id="attestationSection" style="display:none;">
+        <h3>Acknowledgment &amp; Attestation</h3>
+        <div class="metro-grid">
+          <div class="metro-col-6">
+            <label for="mtif_certification">Certification <span style="color:#dc2626;">*</span></label>
+            <select id="mtif_certification" name="mtif_certification" data-field-id="mtif_certification" data-field-label="Certification" data-category="Attestation">
+              <option value="">Select…</option>
+              <option value="I certify">I certify</option>
+              <option value="I do not certify">I do not certify</option>
+            </select>
+          </div>
+          <div class="metro-col-6">
+            <label for="mtif_signature">Signature (type full name) <span style="color:#dc2626;">*</span></label>
+            <input type="text" id="mtif_signature" name="mtif_signature" data-field-id="mtif_signature" data-field-label="Signature" data-category="Attestation" />
+          </div>
+          <div class="metro-col-6">
+            <label for="mtif_signer_title">Name &amp; Title <span style="color:#dc2626;">*</span></label>
+            <input type="text" id="mtif_signer_title" name="mtif_signer_title" data-field-id="mtif_signer_title" data-field-label="Name & Title" data-category="Attestation" />
+          </div>
+          <div class="metro-col-6">
+            <label for="mtif_signature_date">Date <span style="color:#dc2626;">*</span></label>
+            <input type="date" id="mtif_signature_date" name="mtif_signature_date" data-field-id="mtif_signature_date" data-field-label="Signature Date" data-category="Attestation" />
+          </div>
+          <div class="metro-col-12">
+            <div class="metro-attestation">
+              <label>
+                <input type="checkbox" id="mtif_submit_acknowledgment" />
+                <span>
+                  <strong>I acknowledge</strong> that all information provided in this application is true and accurate to the best of my knowledge. I understand that all application materials and scoring will be made public as part of the SORTA Metro Transit Infrastructure Fund grant selection process. <span style="color:#dc2626;">*</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="metro-submit-actions">
+          <button class="metro-button submit" type="button" id="submitApplicationButton">
+            Submit Application
+          </button>
+        </div>
+      </section>
+
     </main>
 
     <script>
@@ -391,7 +481,9 @@
     certificationFundsFieldKey: '6qt3coma3',
     authorizingLegislationFieldKey: 'aw5i0xuq4',
     budgetFundingReportId: 'tvp6ny9w7',
-    scheduleRowReportId: 'fz3k5d5q2'
+    scheduleRowReportId: 'fz3k5d5q2',
+    attestationReportId: 'xqovqejg3',
+    statusFieldKey: 'caxzgb2w5'
   };
 
   // ============================================================
@@ -587,7 +679,12 @@
     'field-closeout-total-funds-expended-dollars': { name: 'closeout_total_funds_expended' },
     'field-closeout-construction-completion-date': { name: 'closeout_completion_date' },
     'field-closeout-final-completion-photos': { name: 'closeout_completion_photos' },
-    'field-closeout-residual-unexpended-funds-note': { name: 'closeout_residual_funds_note' }
+    'field-closeout-residual-unexpended-funds-note': { name: 'closeout_residual_funds_note' },
+    'mtif_certification': { name: 'certification' },
+    'mtif_signature': { name: 'signature' },
+    'mtif_signer_title': { name: 'signer_title' },
+    'mtif_signature_date': { name: 'signature_date' },
+    'mtif_submit_acknowledgment': { name: 'submit_acknowledgment' }
   };
 
   // ============================================================
@@ -1927,6 +2024,76 @@
         console.warn('[MTIF] Error loading schedule/ROW data:', srErr);
       }
 
+      // ---- Load Attestation fields from report xqovqejg3 ----
+      try {
+        console.log('[MTIF] Loading attestation data from report', API_CONFIG.attestationReportId);
+        var atResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.attestationReportId, Filters: [] })
+        });
+
+        if (atResponse.ok) {
+          var atResult = await atResponse.json();
+          var atRows = Array.isArray(atResult) ? atResult : (atResult.data || atResult.Data || []);
+
+          var atData = null;
+          for (var ati = 0; ati < atRows.length; ati++) {
+            if (String(atRows[ati].id || atRows[ati].Rid || '') === String(recordId)) {
+              atData = atRows[ati];
+              break;
+            }
+          }
+
+          if (atData) {
+            console.log('[MTIF] Found attestation data. Keys:', Object.keys(atData));
+
+            var AT_COL_TO_FORM = {
+              'certification':          'mtif_certification',
+              'signature':              'mtif_signature',
+              'signature_title':        'mtif_signer_title',
+              'signature_date':         'mtif_signature_date',
+              'submit_acknowledgment':  'mtif_submit_acknowledgment'
+            };
+
+            Object.keys(atData).forEach(function(aKey) {
+              var val = atData[aKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(aKey);
+              var formId = AT_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              if (field.type === 'checkbox') {
+                field.checked = (String(val).toLowerCase() === 'true' || String(val).toLowerCase() === 'yes');
+                console.log('[MTIF] Set attestation checkbox:', formId, '=', field.checked);
+                return;
+              }
+
+              if (field.value) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set attestation field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No attestation data found for record:', recordId);
+          }
+        }
+      } catch (atErr) {
+        console.warn('[MTIF] Error loading attestation data:', atErr);
+      }
+
       console.log('[MTIF] Successfully loaded application from API');
       return true;
 
@@ -1972,7 +2139,7 @@
       });
 
       // Set application status
-      fieldsList.push({ Name: 'application_status', Value: 'Draft' });
+      fieldsList.push({ Key: API_CONFIG.statusFieldKey, Name: 'application_status', Value: 'Draft' });
 
       console.log('[MTIF] Submitting', fieldsList.length, 'fields to API');
       console.log('[MTIF] Skipped (empty):', skippedFields.length, 'fields');
@@ -2017,6 +2184,86 @@
   };
 
   // ============================================================
+  // Submit Application handler
+  // ============================================================
+  const handleSubmitApplication = async function() {
+    // Validate required attestation fields
+    var certification = document.getElementById('mtif_certification');
+    var signature = document.getElementById('mtif_signature');
+    var signerTitle = document.getElementById('mtif_signer_title');
+    var signatureDate = document.getElementById('mtif_signature_date');
+    var acknowledgment = document.getElementById('mtif_submit_acknowledgment');
+
+    var missing = [];
+    if (!certification || !certification.value) missing.push('Certification');
+    if (!signature || !signature.value.trim()) missing.push('Signature');
+    if (!signerTitle || !signerTitle.value.trim()) missing.push('Name & Title');
+    if (!signatureDate || !signatureDate.value) missing.push('Date');
+    if (!acknowledgment || !acknowledgment.checked) missing.push('Acknowledgment checkbox');
+
+    if (missing.length > 0) {
+      alert('Please complete the following required fields before submitting:\n\n- ' + missing.join('\n- '));
+      return;
+    }
+
+    if (certification.value === 'I do not certify') {
+      alert('You must select "I certify" to submit this application.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to submit this application? Once submitted, you will not be able to edit it.')) {
+      return;
+    }
+
+    var submitBtn = document.getElementById('submitApplicationButton');
+    var originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+      var formData = getAllFields();
+
+      // Include attestation fields
+      formData['mtif_certification'] = certification.value;
+      formData['mtif_signature'] = signature.value.trim();
+      formData['mtif_signer_title'] = signerTitle.value.trim();
+      formData['mtif_signature_date'] = signatureDate.value;
+      formData['mtif_submit_acknowledgment'] = 'Yes';
+
+      var fieldsList = [];
+      Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
+        var mapping = FIELD_MAPPING[formFieldId];
+        var value = formData[formFieldId];
+        if (value !== undefined && value !== null && value !== '') {
+          fieldsList.push({ Name: mapping.name, Value: value });
+        }
+      });
+
+      // Set application status to Submitted
+      fieldsList.push({ Key: API_CONFIG.statusFieldKey, Name: 'application_status', Value: 'Submitted' });
+
+      console.log('[MTIF] Submitting application with', fieldsList.length, 'fields');
+
+      var result = await submitApplication(fieldsList, true);
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+
+      if (result) {
+        draftStatus.textContent = 'Application submitted at ' + new Date().toLocaleString() + '.';
+        alert('Application submitted successfully!');
+      } else {
+        alert('There was an issue submitting the application. Please try again.');
+      }
+    } catch (error) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      console.error('[MTIF] Error submitting application:', error);
+      alert('Error submitting application: ' + error.message);
+    }
+  };
+
+  // ============================================================
   // Initialization
   // ============================================================
   const init = async function() {
@@ -2047,9 +2294,14 @@
       console.log('[MTIF] Data loaded from API - skipping localStorage');
     }
 
+    // Show attestation section after dynamic sections are built
+    var attestationEl = document.getElementById('attestationSection');
+    if (attestationEl) attestationEl.style.display = '';
+
     // Attach button handlers
     document.getElementById('saveDraftButton').addEventListener('click', handleSaveDraft);
     document.getElementById('clearButton').addEventListener('click', clearDraft);
+    document.getElementById('submitApplicationButton').addEventListener('click', handleSubmitApplication);
 
     // Initialize Google Places Autocomplete on Jurisdiction mailing address
     initAddressAutocomplete();
