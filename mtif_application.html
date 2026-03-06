@@ -1470,7 +1470,7 @@
         endpoint = API_CONFIG.baseURL + '/api/formaction/postdata';
       }
 
-      console.log('[MTIF] Submitting application (' + method + '):', payload);
+      console.log('[MTIF] Submitting application (' + method + '):', JSON.stringify(payload, null, 2));
 
       const response = await fetch(endpoint, {
         method: method,
@@ -2124,11 +2124,16 @@
       var savedFields = [];
       var skippedFields = [];
 
+      // Attestation fields are only sent on Submit, not Save Draft
+      var ATTESTATION_FIELDS = ['mtif_certification', 'mtif_signature', 'mtif_signer_title', 'mtif_signature_date', 'mtif_submit_acknowledgment'];
+
       Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
         var mapping = FIELD_MAPPING[formFieldId];
-        var value = formData[formFieldId];
         var field = document.getElementById(formFieldId);
-        var label = (field && field.dataset.fieldLabel) ? field.dataset.fieldLabel : mapping.name;
+        if (!field) return;
+        if (ATTESTATION_FIELDS.indexOf(formFieldId) !== -1) return;
+        var value = formData[formFieldId];
+        var label = field.dataset.fieldLabel || mapping.name;
 
         if (value !== undefined && value !== null && value !== '') {
           fieldsList.push({ Name: mapping.name, Value: value });
@@ -2139,7 +2144,7 @@
       });
 
       // Set application status
-      fieldsList.push({ Key: API_CONFIG.statusFieldKey, Name: 'application_status', Value: 'Draft' });
+      fieldsList.push({ Name: 'status', Value: 'Draft' });
 
       console.log('[MTIF] Submitting', fieldsList.length, 'fields to API');
       console.log('[MTIF] Skipped (empty):', skippedFields.length, 'fields');
@@ -2154,22 +2159,12 @@
         saveDraftBtn.textContent = originalText;
       }
 
-      // Build summary message
-      var summary = 'Draft saved!\n\n';
-      summary += 'Saved: ' + savedFields.length + ' fields\n';
-      summary += 'Skipped (empty): ' + skippedFields.length + ' fields\n';
-
-      if (skippedFields.length > 0) {
-        summary += '\nFields not saved (no value entered):\n';
-        summary += '- ' + skippedFields.join('\n- ');
-      }
-
       if (result) {
-        draftStatus.textContent = 'Saved to API and browser at ' + new Date().toLocaleString() + '.';
-        alert(summary);
+        draftStatus.textContent = 'Saved at ' + new Date().toLocaleString();
+        alert('Save Successful');
       } else {
-        draftStatus.textContent = 'Draft saved to browser at ' + new Date().toLocaleString() + '. (API unavailable)';
-        alert(summary + '\n\nNote: API connection not available. Saved to browser only.');
+        draftStatus.textContent = 'Saved locally at ' + new Date().toLocaleString();
+        alert('Save Successful');
       }
 
     } catch (error) {
@@ -2178,8 +2173,8 @@
         saveDraftBtn.textContent = originalText;
       }
       console.error('[MTIF] Error saving draft to API:', error);
-      draftStatus.textContent = 'Saved locally. API error: ' + error.message;
-      alert('Draft saved locally. There was an error saving to the API, but your data is safe.');
+      draftStatus.textContent = 'Save error at ' + new Date().toLocaleString();
+      alert('Save Error');
     }
   };
 
@@ -2240,7 +2235,7 @@
       });
 
       // Set application status to Submitted
-      fieldsList.push({ Key: API_CONFIG.statusFieldKey, Name: 'application_status', Value: 'Submitted' });
+      fieldsList.push({ Name: 'status', Value: 'Submitted' });
 
       console.log('[MTIF] Submitting application with', fieldsList.length, 'fields');
 
@@ -2250,8 +2245,8 @@
       submitBtn.textContent = originalText;
 
       if (result) {
-        draftStatus.textContent = 'Application submitted at ' + new Date().toLocaleString() + '.';
         alert('Application submitted successfully!');
+        window.top.location.href = 'https://apps.opengov.com/apps/guuj01sg1';
       } else {
         alert('There was an issue submitting the application. Please try again.');
       }
