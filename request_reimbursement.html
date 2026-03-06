@@ -546,7 +546,16 @@
       var API_CONFIG = {
         baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
         reimbursementTableKey: 'qo5o45ww5',
-        reimbursementReportId: 'oiohxveq2'
+        reimbursementReportId: 'oiohxveq2',
+        applicantReportId: 'zwpv41ow4',
+        requestTypeReportId: 'jndonn3a8',
+        timelineReportId: '4qgqkdla5',
+        projectCostReportId: 'xpasbusq8',
+        invoiceTableKey: 'hiymfudg8',
+        invoiceReportId: '1xf3fhxg8',
+        invoiceRelFieldKey: 'kdlm4sbg3',
+        summaryReportId: 'chiu6d9w1',
+        certificationReportId: '9zjin6eg8'
       };
 
       // ============================================================
@@ -712,8 +721,496 @@
               if (radio) radio.checked = true;
             }
           });
+
+          // Applicant Information report
+          var applicantPayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.applicantReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(applicantPayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Applicant report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Applicant report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No applicant match for ID', recordId);
+              if (rows.length > 0) console.log('[REIMB] Applicant sample keys:', Object.keys(rows[0]));
+              return;
+            }
+
+            console.log('[REIMB] Applicant data:', match);
+
+            var APPLICANT_MAP = {
+              'applicantName':  'applicant name',
+              'streetAddress':  'street address',
+              'cityStateZip':   'city state zip',
+              'email':          'email',
+              'phone':          'phone'
+            };
+
+            var fields = Object.keys(APPLICANT_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = APPLICANT_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+          });
+
+          // Type of Request report
+          var requestPayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.requestTypeReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(requestPayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Request type report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Request type report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No request type match for ID', recordId);
+              return;
+            }
+
+            console.log('[REIMB] Request type data:', match);
+
+            var REQUEST_MAP = {
+              'projectName': 'project name',
+              'contractor':  'contractor',
+              'projectId':   'project id'
+            };
+
+            var fields = Object.keys(REQUEST_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = REQUEST_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+
+            // Handle radio button
+            var reqType = extractFieldValue(match, 'request type');
+            if (reqType) {
+              var radio = document.querySelector('input[name="requestType"][value="' + reqType + '"]');
+              if (radio) radio.checked = true;
+            }
+          });
+
+          // Project Timeline report
+          var timelinePayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.timelineReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(timelinePayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Timeline report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Timeline report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No timeline match for ID', recordId);
+              return;
+            }
+
+            console.log('[REIMB] Timeline data:', match);
+
+            var TIMELINE_MAP = {
+              'startDate':  'start date',
+              'endDate':    'end date',
+              'totalDays':  'total days'
+            };
+
+            var fields = Object.keys(TIMELINE_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = TIMELINE_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+          });
+
+          // Project Cost report
+          var costPayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.projectCostReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(costPayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Project cost report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Project cost report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No project cost match for ID', recordId);
+              return;
+            }
+
+            console.log('[REIMB] Project cost data:', match);
+
+            var COST_MAP = {
+              'grantAwarded':   'grant awarded',
+              'requestAmount':  'request amount',
+              'currentBalance': 'current balance',
+              'requestDate':    'request date',
+              'workCompleted':  'work completed'
+            };
+
+            var fields = Object.keys(COST_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = COST_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+          });
+
+          // Summary report
+          var summaryPayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.summaryReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(summaryPayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Summary report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Summary report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No summary match for ID', recordId);
+              return;
+            }
+
+            console.log('[REIMB] Summary data:', match);
+
+            var SUMMARY_MAP = {
+              'totalInvoiceAmount': 'total invoice amount',
+              'amountRequested':    'amount requested',
+              'summaryNotes':       'summary notes'
+            };
+
+            var fields = Object.keys(SUMMARY_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = SUMMARY_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+          });
+
+          // Certification report
+          var certPayload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.certificationReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(certPayload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Certification report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Certification report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No certification match for ID', recordId);
+              return;
+            }
+
+            console.log('[REIMB] Certification data:', match);
+
+            var CERT_MAP = {
+              'applicantOfficer':   'applicant officer',
+              'applicantTitle':     'applicant title',
+              'applicantSignature': 'applicant signature',
+              'applicantDate':      'applicant date',
+              'sortaOfficer':       'sorta officer',
+              'sortaTitle':         'sorta title',
+              'sortaSignature':     'sorta signature',
+              'sortaDate':          'sorta date'
+            };
+
+            var fields = Object.keys(CERT_MAP);
+            for (var f = 0; f < fields.length; f++) {
+              var formId = fields[f];
+              var dbName = CERT_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) {
+                  if (el.type === 'date' && val) {
+                    try {
+                      var d = new Date(val);
+                      if (!isNaN(d.getTime())) val = d.toISOString().split('T')[0];
+                    } catch (_) {}
+                  }
+                  el.value = val;
+                }
+              }
+            }
+          });
+
         }).catch(function (err) {
           console.error('[REIMB] Load error:', err);
+        });
+      }
+
+      // ============================================================
+      // Load invoice rows from child table
+      // ============================================================
+      function loadInvoices(reimbursementRecordId) {
+        if (!reimbursementRecordId) return;
+
+        getAuthToken().then(function (token) {
+          if (!token) return;
+
+          var payload = {
+            ApplicationTableKeyId: API_CONFIG.invoiceTableKey,
+            ReportId: API_CONFIG.invoiceReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Invoice report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Invoice report returned', rows.length, 'rows');
+
+            var invoices = rows.filter(function (row) {
+              var rel = extractFieldValue(row, 'Related Reimbursement Requests') ||
+                        extractFieldValue(row, 'related_reimbursement_requests') || '';
+              return String(rel) === String(reimbursementRecordId);
+            });
+
+            console.log('[REIMB] Found', invoices.length, 'invoices for reimbursement', reimbursementRecordId);
+            if (invoices.length === 0) return;
+
+            var tbody = document.getElementById('invoiceTableBody');
+            tbody.innerHTML = '';
+
+            invoices.forEach(function (inv, idx) {
+              var rid = inv.id || inv.Rid || extractFieldValue(inv, 'Record Id');
+              var num = idx + 1;
+              var tr = document.createElement('tr');
+              tr.setAttribute('data-invoice-record-id', rid);
+              tr.innerHTML =
+                '<td><input type="date" name="invoiceDate_' + num + '" /></td>' +
+                '<td><input type="text" name="invoiceNumber_' + num + '" /></td>' +
+                '<td><input type="text" name="invoiceDescription_' + num + '" /></td>' +
+                '<td><input type="number" name="invoiceAmount_' + num + '" min="0" step="0.01" /></td>';
+
+              var dateVal = extractFieldValue(inv, 'invoice date') || '';
+              var numVal = extractFieldValue(inv, 'invoice number') || '';
+              var descVal = extractFieldValue(inv, 'invoice description') || '';
+              var amtVal = extractFieldValue(inv, 'invoice amount') || '';
+
+              if (dateVal) {
+                try {
+                  var d = new Date(dateVal);
+                  if (!isNaN(d.getTime())) {
+                    dateVal = d.toISOString().split('T')[0];
+                  }
+                } catch (_) {}
+              }
+
+              tr.querySelector('[name="invoiceDate_' + num + '"]').value = dateVal;
+              tr.querySelector('[name="invoiceNumber_' + num + '"]').value = numVal;
+              tr.querySelector('[name="invoiceDescription_' + num + '"]').value = descVal;
+              tr.querySelector('[name="invoiceAmount_' + num + '"]').value = amtVal;
+
+              tbody.appendChild(tr);
+            });
+
+            updateInvoiceTotal();
+          });
+        }).catch(function (err) {
+          console.error('[REIMB] Load invoices error:', err);
+        });
+      }
+
+      // ============================================================
+      // Save invoice rows to child table
+      // ============================================================
+      function saveInvoices(reimbursementRecordId) {
+        if (!reimbursementRecordId) return Promise.resolve();
+
+        return getAuthToken().then(function (token) {
+          if (!token) throw new Error('Not authenticated');
+
+          var tbody = document.getElementById('invoiceTableBody');
+          var rows = tbody.querySelectorAll('tr');
+          var promises = [];
+
+          rows.forEach(function (tr) {
+            var inputs = tr.querySelectorAll('input');
+            var dateVal = '', numVal = '', descVal = '', amtVal = '';
+            inputs.forEach(function (inp) {
+              var n = inp.name || '';
+              if (n.indexOf('invoiceDate') === 0) dateVal = inp.value;
+              else if (n.indexOf('invoiceNumber') === 0) numVal = inp.value;
+              else if (n.indexOf('invoiceDescription') === 0) descVal = inp.value;
+              else if (n.indexOf('invoiceAmount') === 0) amtVal = inp.value;
+            });
+
+            if (!dateVal && !numVal && !descVal && !amtVal) return;
+
+            var existingId = tr.getAttribute('data-invoice-record-id');
+
+            var fieldsList = [
+              { Name: 'invoice_date', Value: dateVal },
+              { Name: 'invoice_number', Value: numVal },
+              { Name: 'invoice_description', Value: descVal },
+              { Name: 'invoice_amount', Value: amtVal }
+            ];
+
+            if (existingId) {
+              var putPayload = {
+                ApplicationTableKey: API_CONFIG.invoiceTableKey,
+                RecordId: existingId,
+                FieldsList: fieldsList
+              };
+              promises.push(
+                fetch(API_CONFIG.baseURL + '/api/FormAction/putdata', {
+                  method: 'POST',
+                  headers: apiHeaders(token),
+                  body: JSON.stringify(putPayload)
+                }).then(function (r) {
+                  if (!r.ok) throw new Error('Update invoice ' + existingId + ': ' + r.status);
+                  console.log('[REIMB] Updated invoice', existingId);
+                  return r.json();
+                })
+              );
+            } else {
+              fieldsList.push({
+                Name: 'related_reimbursement_requests',
+                Value: String(reimbursementRecordId),
+                Key: API_CONFIG.invoiceRelFieldKey
+              });
+              var postPayload = {
+                ApplicationTableKey: API_CONFIG.invoiceTableKey,
+                FieldsList: fieldsList
+              };
+              promises.push(
+                fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+                  method: 'POST',
+                  headers: apiHeaders(token),
+                  body: JSON.stringify(postPayload)
+                }).then(function (r) {
+                  if (!r.ok) throw new Error('Create invoice: ' + r.status);
+                  return r.json();
+                }).then(function (result) {
+                  var newId = result.recordId || result.Rid;
+                  console.log('[REIMB] Created invoice', newId);
+                  if (newId) tr.setAttribute('data-invoice-record-id', newId);
+                })
+              );
+            }
+          });
+
+          return Promise.all(promises);
         });
       }
 
@@ -757,7 +1254,18 @@
           data[field.name || field.id] = field.value;
         });
         localStorage.setItem(storageKey, JSON.stringify(data));
-        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+
+        var reimbId = document.getElementById('reimbursementRecordId').value;
+        if (reimbId) {
+          saveInvoices(reimbId).then(function () {
+            draftStatus.textContent = 'Draft saved at ' + new Date().toLocaleString() + '.';
+          }).catch(function (err) {
+            console.error('[REIMB] Save invoices error:', err);
+            draftStatus.textContent = 'Draft saved locally but invoice save failed.';
+          });
+        } else {
+          draftStatus.textContent = 'Draft saved at ' + new Date().toLocaleString() + '.';
+        }
       };
 
       const loadDraft = () => {
@@ -811,6 +1319,7 @@
         if (recordId) {
           document.getElementById('reimbursementRecordId').value = recordId;
           loadFromAPI(recordId);
+          loadInvoices(recordId);
         }
         if (relatedAppId) {
           document.getElementById('relatedApplicationId').value = relatedAppId;
