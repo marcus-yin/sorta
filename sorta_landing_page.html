@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - MTIF Portal</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background-color: #f3f5f9;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    .sorta-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Banner */
+    .sorta-banner {
+      background: linear-gradient(135deg, #003da5 0%, #1b4fbf 60%, #0b1f3a 100%);
+      padding: 28px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+      border-bottom: 4px solid #e4002b;
+    }
+
+    .sorta-logo {
+      height: 64px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+
+    .sorta-banner-title {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .sorta-banner-sub {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* Header Card */
+    .sorta-header {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sorta-header h1 {
+      font-size: 24px;
+      color: #0f172a;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .sorta-user-info {
+      font-size: 13px;
+      color: #475569;
+      text-align: right;
+    }
+
+    #sorta_jurisdiction_name {
+      font-weight: 700;
+      color: #003da5;
+      font-size: 14px;
+    }
+
+    /* Quick-link Tiles */
+    .sorta-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .sorta-tile {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 22px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sorta-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(2, 6, 23, 0.1);
+      border-color: #003da5;
+    }
+
+    .sorta-tile-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .sorta-tile-icon.blue   { background: rgba(0, 61, 165, 0.1); color: #003da5; }
+    .sorta-tile-icon.red    { background: rgba(228, 0, 43, 0.1);  color: #e4002b; }
+    .sorta-tile-icon.green  { background: rgba(5, 150, 105, 0.1); color: #059669; }
+    .sorta-tile-icon.amber  { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+    .sorta-tile-icon.purple { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+
+    .sorta-tile-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0b1f3a;
+    }
+
+    .sorta-tile-desc {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    /* Actions Bar */
+    .sorta-actions {
+      margin-bottom: 20px;
+    }
+
+    .sorta-actions-inner {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .sorta-button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 61, 165, 0.25);
+      background: rgba(0, 61, 165, 0.08);
+      color: #003da5;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+
+    .sorta-button:hover {
+      background: rgba(0, 61, 165, 0.14);
+    }
+
+    .sorta-button:active {
+      transform: translateY(1px);
+    }
+
+    .sorta-button:disabled {
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-color: #e2e8f0;
+      opacity: 0.6;
+    }
+
+    .sorta-button-primary {
+      background: #e4002b;
+      border-color: #e4002b;
+      color: #ffffff;
+    }
+
+    .sorta-button-primary:hover {
+      background: #c7002a;
+      border-color: #c7002a;
+    }
+
+    .sorta-button-small {
+      padding: 8px 14px;
+      font-size: 13px;
+      margin-right: 6px;
+      font-weight: 600;
+    }
+
+    /* Applications Section */
+    .sorta-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #0f172a;
+      font-weight: 700;
+      padding-left: 12px;
+      border-left: 4px solid #e4002b;
+    }
+
+    /* Loading Spinner */
+    .sorta-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #475569;
+    }
+
+    .sorta-spinner {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #003da5;
+      border-radius: 50%;
+      animation: sorta-spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes sorta-spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Alerts */
+    .sorta-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .sorta-info {
+      background: #dbeafe;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    /* Table */
+    .sorta-table-wrap {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      margin-top: 20px;
+    }
+
+    .sorta-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sorta-table thead {
+      background: #003da5;
+      color: #ffffff;
+    }
+
+    .sorta-table thead th {
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+    }
+
+    .sorta-table tbody td {
+      padding: 14px 12px;
+      border-top: 1px solid #eef2f7;
+      font-size: 13px;
+      color: #0f172a;
+      vertical-align: middle;
+    }
+
+    .sorta-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .sorta-table tbody td:first-child {
+      font-weight: 600;
+    }
+
+    /* Status Badges */
+    .sorta-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .sorta-badge-draft       { background: #fef3c7; color: #92400e; }
+    .sorta-badge-submitted    { background: #d1fae5; color: #065f46; }
+    .sorta-badge-review       { background: #dbeafe; color: #1e40af; }
+    .sorta-badge-approved     { background: #d1fae5; color: #065f46; }
+    .sorta-badge-rejected     { background: #fee2e2; color: #991b1b; }
+
+    /* Empty State */
+    .sorta-empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94a3b8;
+    }
+
+    .sorta-empty-icon {
+      font-size: 72px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .sorta-empty h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .sorta-empty p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    /* Footer info */
+    .sorta-footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .sorta-footer a {
+      color: #003da5;
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .sorta-banner { padding: 20px 16px; }
+      .sorta-logo { height: 52px; }
+      .sorta-banner-title { font-size: 18px; }
+
+      .sorta-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .sorta-user-info { text-align: left; }
+
+      .sorta-tiles {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sorta-table-wrap { overflow-x: auto; }
+      .sorta-table { min-width: 650px; }
+    }
+
+    @media (max-width: 500px) {
+      .sorta-tiles {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sorta-container">
+
+    <!-- Banner -->
+    <div class="sorta-banner">
+      <img class="sorta-logo"
+           src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+           alt="Metro logo" />
+      <h3 class="sorta-banner-title">Metro Transit Infrastructure Fund</h3>
+      <p class="sorta-banner-sub">SORTA MTIF Grant Management Portal</p>
+    </div>
+
+    <!-- Header -->
+    <div class="sorta-header">
+      <div>
+        <h1>Welcome Back</h1>
+      </div>
+      <div class="sorta-user-info">
+        <div id="sorta_user_email">Loading...</div>
+        <div id="sorta_jurisdiction_name"></div>
+      </div>
+    </div>
+
+    <!-- Quick-link Tiles -->
+    <div class="sorta-tiles">
+      <a class="sorta-tile" id="tile_new_app">
+        <div class="sorta-tile-icon red">+</div>
+        <span class="sorta-tile-label">New Application</span>
+        <span class="sorta-tile-desc">Start a new MTIF grant application</span>
+      </a>
+      <a class="sorta-tile" id="tile_quarterly">
+        <div class="sorta-tile-icon blue">Q</div>
+        <span class="sorta-tile-label">Quarterly Report</span>
+        <span class="sorta-tile-desc">Submit a progress update</span>
+      </a>
+      <a class="sorta-tile" id="tile_reimbursement">
+        <div class="sorta-tile-icon green">$</div>
+        <span class="sorta-tile-label">Reimbursement</span>
+        <span class="sorta-tile-desc">Request grant reimbursement</span>
+      </a>
+      <a class="sorta-tile" id="tile_closeout">
+        <div class="sorta-tile-icon amber">C</div>
+        <span class="sorta-tile-label">Closeout Report</span>
+        <span class="sorta-tile-desc">File a project closeout</span>
+      </a>
+      <a class="sorta-tile" id="tile_calendar">
+        <div class="sorta-tile-icon purple">&#x1F4C5;</div>
+        <span class="sorta-tile-label">Calendar</span>
+        <span class="sorta-tile-desc">Deadlines &amp; milestones</span>
+      </a>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="sorta-actions">
+      <div class="sorta-actions-inner">
+        <button id="sorta_resume_btn" class="sorta-button" disabled>
+          Resume Latest Application
+        </button>
+        <button id="sorta_create_btn" class="sorta-button sorta-button-primary">
+          + Create New Application
+        </button>
+      </div>
+      <div id="sorta_deadline_info"
+           style="text-align:center;margin-top:12px;font-size:14px;color:#64748b;display:none;"></div>
+    </div>
+
+    <!-- Applications List -->
+    <div class="sorta-section">
+      <h2>My Applications</h2>
+
+      <div id="sorta_error" class="sorta-error" style="display:none;"></div>
+      <div id="sorta_info"  class="sorta-info"  style="display:none;"></div>
+
+      <div id="sorta_loading" class="sorta-loading">
+        <div class="sorta-spinner"></div>
+        <p>Loading applications...</p>
+      </div>
+
+      <div id="sorta_table_wrap" style="display:none;">
+        <div class="sorta-table-wrap">
+          <table class="sorta-table">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Project Name</th>
+                <th>Jurisdiction</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sorta_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="sorta_empty" class="sorta-empty" style="display:none;">
+        <div class="sorta-empty-icon">&#x1F4CB;</div>
+        <h3>No Applications Yet</h3>
+        <p>Click "+ Create New Application" above to get started with your first MTIF grant application.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="sorta-footer">
+      Southwest Ohio Regional Transit Authority &middot;
+      <a href="https://www.go-metro.com" target="_blank">go-metro.com</a>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ============================================================
+    // API Configuration
+    // ============================================================
+    var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+    var API_CONFIG = {
+      baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+      aesKey: AES_KEY,
+      applicationTableKey: 'iw3twwkw2',
+      applicationsReportId: 'tn3omkcq4',
+      applicationsIdFieldKey: 'dyd4osqa5'
+    };
+
+    // OpenGov page URLs (update these to your deployed page IDs)
+    var PAGES = {
+      application:    'mtif_application.html',
+      quarterly:      'quarterly_progress_report.html',
+      reimbursement:  'request_reimbursement.html',
+      closeout:       'mtif_closeout_report.html',
+      calendar:       'calendar.html'
+    };
+
+    // ============================================================
+    // Token helpers
+    // ============================================================
+    function looksLikeSaltedCiphertext(s) {
+      return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+    }
+
+    function safeJsonParse(s) {
+      try { return JSON.parse(s); } catch (_) { return null; }
+    }
+
+    function extractAccessToken(decrypted) {
+      if (typeof decrypted !== 'string') return '';
+      var t = decrypted.trim();
+      if (!t) return '';
+      var j = safeJsonParse(t);
+      if (j && typeof j === 'object') {
+        if (j.access_token) return String(j.access_token);
+        if (j.token) return String(j.token);
+      }
+      return t;
+    }
+
+    function bootstrapToken() {
+      var enc = '';
+      try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+      if (!enc || typeof CryptoJS === 'undefined') return '';
+      try {
+        var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+        if (!dec) return '';
+        var tok = extractAccessToken(dec);
+        if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+        return tok;
+      } catch (_) {
+        return '';
+      }
+    }
+
+    var userToken = bootstrapToken();
+
+    function getAuthToken() {
+      if (userToken) return Promise.resolve(userToken);
+      userToken = bootstrapToken();
+      return Promise.resolve(userToken || null);
+    }
+
+    // ============================================================
+    // API helpers
+    // ============================================================
+    function apiHeaders(token) {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      };
+    }
+
+    function extractFieldValue(record, fieldName) {
+      if (record[fieldName] !== undefined) return record[fieldName];
+      var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+      for (var key in record) {
+        var kn = key.toLowerCase().replace(/[\s_]/g, '');
+        if (kn === norm || kn.endsWith(norm)) return record[key];
+      }
+      return null;
+    }
+
+    // ============================================================
+    // User profile
+    // ============================================================
+    function getUserProfile(token) {
+      return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
+        method: 'GET',
+        headers: apiHeaders(token)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Profile ' + r.status);
+        return r.json();
+      });
+    }
+
+    // ============================================================
+    // Query applications
+    // ============================================================
+    function queryApplications(token, email) {
+      var payload = {
+        ReportId: API_CONFIG.applicationsReportId,
+        Filters: []
+      };
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Query ' + r.status);
+        return r.json();
+      }).then(function (result) {
+        var rows = Array.isArray(result) ? result : (result.data || result.Data || []);
+        if (!email) return rows;
+        return rows.filter(function (app) {
+          var creator = extractFieldValue(app, 'createdby') || '';
+          var jur = extractFieldValue(app, 'primary_applicant_email') || '';
+          return creator.toLowerCase() === email.toLowerCase() ||
+                 jur.toLowerCase() === email.toLowerCase();
+        });
+      });
+    }
+
+    // ============================================================
+    // Create application shell
+    // ============================================================
+    function createApplication(token) {
+      var payload = {
+        ApplicationTableKey: API_CONFIG.applicationTableKey,
+        FieldsList: [{ Name: 'application_status', Value: 'Draft' }]
+      };
+      return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Create ' + r.status);
+        return r.json();
+      });
+    }
+
+    // ============================================================
+    // UI helpers
+    // ============================================================
+    function $(id) { return document.getElementById(id); }
+
+    function showError(msg) {
+      var el = $('sorta_error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function showInfo(msg) {
+      var el = $('sorta_info');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(function () { el.style.display = 'none'; }, 5000);
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+      } catch (_) { return d; }
+    }
+
+    function statusBadge(status) {
+      if (!status) return '<span class="sorta-badge sorta-badge-draft">Draft</span>';
+      var s = status.toLowerCase();
+      var cls = 'sorta-badge-draft';
+      if (s.includes('submit'))  cls = 'sorta-badge-submitted';
+      else if (s.includes('review'))  cls = 'sorta-badge-review';
+      else if (s.includes('approv')) cls = 'sorta-badge-approved';
+      else if (s.includes('reject')) cls = 'sorta-badge-rejected';
+      return '<span class="sorta-badge ' + cls + '">' + status + '</span>';
+    }
+
+    function navigateTo(page, recordId) {
+      var url = PAGES[page];
+      if (recordId) url += '?recordId=' + encodeURIComponent(recordId);
+      if (window.top !== window) {
+        window.top.location.href = url;
+      } else {
+        window.location.href = url;
+      }
+    }
+
+    // ============================================================
+    // Render applications table
+    // ============================================================
+    var latestApp = null;
+
+    function renderTable(apps) {
+      var tbody  = $('sorta_tbody');
+      var wrap   = $('sorta_table_wrap');
+      var empty  = $('sorta_empty');
+      var resume = $('sorta_resume_btn');
+
+      if (!apps || apps.length === 0) {
+        wrap.style.display = 'none';
+        empty.style.display = 'block';
+        if (resume) resume.disabled = true;
+        return;
+      }
+
+      var sorted = apps.slice().sort(function (a, b) {
+        var da = new Date(extractFieldValue(a, 'datecreated') || 0);
+        var db = new Date(extractFieldValue(b, 'datecreated') || 0);
+        return db - da;
+      });
+
+      latestApp = sorted[0];
+      if (resume) resume.disabled = false;
+
+      wrap.style.display = 'block';
+      empty.style.display = 'none';
+      tbody.innerHTML = '';
+
+      sorted.forEach(function (app) {
+        var rid     = extractFieldValue(app, 'record_id') || extractFieldValue(app, 'id') || app.Rid || '';
+        var name    = extractFieldValue(app, 'project_name') || 'Untitled Project';
+        var jur     = extractFieldValue(app, 'jurisdiction_name') || '-';
+        var ptype   = extractFieldValue(app, 'project_type_category') || '-';
+        var status  = extractFieldValue(app, 'application_status') || 'Draft';
+        var created = extractFieldValue(app, 'datecreated');
+        var modified = extractFieldValue(app, 'datemodified');
+
+        if (status && (status.startsWith('http://') || status.startsWith('https://'))) {
+          status = 'Draft';
+        }
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (rid || '-') + '</td>' +
+          '<td><strong>' + name + '</strong></td>' +
+          '<td>' + jur + '</td>' +
+          '<td>' + ptype + '</td>' +
+          '<td>' + statusBadge(status) + '</td>' +
+          '<td>' + formatDate(created) + '</td>' +
+          '<td>' + formatDate(modified) + '</td>' +
+          '<td>' +
+            '<button class="sorta-button sorta-button-small" data-rid="' + rid + '">Edit</button>' +
+          '</td>';
+
+        var editBtn = tr.querySelector('[data-rid]');
+        editBtn.addEventListener('click', function () {
+          localStorage.setItem('mtif_current_application_id', rid);
+          navigateTo('application', rid);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ============================================================
+    // Tile click handlers
+    // ============================================================
+    $('tile_new_app').addEventListener('click', function () {
+      $('sorta_create_btn').click();
+    });
+
+    $('tile_quarterly').addEventListener('click', function () {
+      navigateTo('quarterly');
+    });
+
+    $('tile_reimbursement').addEventListener('click', function () {
+      navigateTo('reimbursement');
+    });
+
+    $('tile_closeout').addEventListener('click', function () {
+      navigateTo('closeout');
+    });
+
+    $('tile_calendar').addEventListener('click', function () {
+      navigateTo('calendar');
+    });
+
+    // ============================================================
+    // Resume & Create handlers
+    // ============================================================
+    $('sorta_resume_btn').addEventListener('click', function () {
+      if (!latestApp) { showError('No application to resume.'); return; }
+      var rid = extractFieldValue(latestApp, 'record_id') ||
+                extractFieldValue(latestApp, 'id') ||
+                latestApp.Rid;
+      if (!rid) { showError('Record ID not found.'); return; }
+      localStorage.setItem('mtif_current_application_id', rid);
+      navigateTo('application', rid);
+    });
+
+    $('sorta_create_btn').addEventListener('click', function () {
+      var btn = this;
+      var orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      getAuthToken().then(function (token) {
+        if (!token) throw new Error('Not authenticated');
+        return createApplication(token);
+      }).then(function (result) {
+        var rid = result.recordId || result.Rid;
+        if (rid) localStorage.setItem('mtif_current_application_id', rid);
+        navigateTo('application', rid);
+      }).catch(function (err) {
+        console.error('[SORTA] Create error:', err);
+        showError('Could not create application. Please try again.');
+        btn.disabled = false;
+        btn.textContent = orig;
+      });
+    });
+
+    // ============================================================
+    // Initialise dashboard
+    // ============================================================
+    function init() {
+      getAuthToken().then(function (token) {
+        if (!token) {
+          $('sorta_loading').style.display = 'none';
+          $('sorta_user_email').textContent = 'Not signed in';
+          renderTable([]);
+          return;
+        }
+
+        return getUserProfile(token).then(function (profile) {
+          var email = (profile && profile.Email) || '';
+          $('sorta_user_email').textContent = email || 'Unknown user';
+
+          return queryApplications(token, email);
+        }).then(function (apps) {
+          $('sorta_loading').style.display = 'none';
+
+          if (apps && apps.length > 0) {
+            var firstJur = extractFieldValue(apps[0], 'jurisdiction_name');
+            if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
+          }
+
+          renderTable(apps);
+        });
+      }).catch(function (err) {
+        console.error('[SORTA] Init error:', err);
+        $('sorta_loading').style.display = 'none';
+        renderTable([]);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>
