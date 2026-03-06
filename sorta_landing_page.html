@@ -866,7 +866,11 @@
             }).then(function (result) {
               var childRid = result.recordId || result.Rid;
               console.log('[SORTA] Created ' + childType + ' child record:', childRid, 'linked to application:', rid);
-              navigateTo(CHILD_TYPES[childType].page, childRid);
+              localStorage.setItem('mtif_child_record_id', childRid);
+              localStorage.setItem('mtif_child_related_app_id', rid);
+              var url = PAGES[CHILD_TYPES[childType].page];
+              url += '?recordId=' + encodeURIComponent(childRid) + '&relatedApplicationId=' + encodeURIComponent(rid);
+              if (window.top !== window) { window.top.location.href = url; } else { window.location.href = url; }
             }).catch(function (err) {
               console.error('[SORTA] Create ' + childType + ' error:', err);
               showError('Could not create ' + CHILD_TYPES[childType].label + '. Please try again.');

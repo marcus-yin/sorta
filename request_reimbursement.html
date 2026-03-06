@@ -296,9 +296,6 @@
           <button class="metro-button primary" type="button" id="saveDraftButton">
             Save Draft
           </button>
-          <button class="metro-button secondary" type="button" id="exportButton">
-            Export JSON
-          </button>
           <button class="metro-button ghost" type="button" id="clearButton">
             Clear Draft
           </button>
@@ -307,6 +304,22 @@
       </section>
 
       <form id="reimbursementForm">
+        <section class="metro-section">
+          <h3>Record Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="reimbursementRecordId">Reimbursement Record ID</label>
+              <input type="text" id="reimbursementRecordId" name="reimbursementRecordId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+            <div class="metro-col-6">
+              <label for="relatedApplicationId">Related Application ID</label>
+              <input type="text" id="relatedApplicationId" name="relatedApplicationId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+          </div>
+        </section>
+
         <section class="metro-section">
           <h3>1. Applicant Information</h3>
           <div class="metro-grid">
@@ -522,7 +535,188 @@
       </form>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
+      // ============================================================
+      // API Configuration
+      // ============================================================
+      var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+      var API_CONFIG = {
+        baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+        reimbursementTableKey: 'qo5o45ww5',
+        reimbursementReportId: 'oiohxveq2'
+      };
+
+      // ============================================================
+      // Token helpers
+      // ============================================================
+      function looksLikeSaltedCiphertext(s) {
+        return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+      }
+
+      function safeJsonParse(s) {
+        try { return JSON.parse(s); } catch (_) { return null; }
+      }
+
+      function extractAccessToken(decrypted) {
+        if (typeof decrypted !== 'string') return '';
+        var t = decrypted.trim();
+        if (!t) return '';
+        var j = safeJsonParse(t);
+        if (j && typeof j === 'object') {
+          if (j.access_token) return String(j.access_token);
+          if (j.token) return String(j.token);
+        }
+        return t;
+      }
+
+      function bootstrapToken() {
+        var enc = '';
+        try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+        if (!enc || typeof CryptoJS === 'undefined') return '';
+        try {
+          var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+          if (!dec) return '';
+          var tok = extractAccessToken(dec);
+          if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+          return tok;
+        } catch (_) {
+          return '';
+        }
+      }
+
+      function getAuthToken() {
+        return Promise.resolve(bootstrapToken() || null);
+      }
+
+      function apiHeaders(token) {
+        return {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        };
+      }
+
+      // ============================================================
+      // Extract field value from a report row (handles table-prefixed keys)
+      // ============================================================
+      function extractFieldValue(row, fieldName) {
+        if (!row) return '';
+        var lower = fieldName.toLowerCase().replace(/[\s\/]+/g, '_');
+        var keys = Object.keys(row);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          var normalised = k.toLowerCase().replace(/^tbl[a-z0-9]+_/, '').replace(/[\s\/]+/g, '_');
+          if (normalised === lower) return row[k];
+          if (k.toLowerCase() === lower) return row[k];
+        }
+        if (row[fieldName] !== undefined) return row[fieldName];
+        return '';
+      }
+
+      // ============================================================
+      // Load data from API for this reimbursement record
+      // ============================================================
+      function loadFromAPI(recordId) {
+        if (!recordId) return;
+
+        getAuthToken().then(function (token) {
+          if (!token) { console.warn('[REIMB] No auth token'); return; }
+
+          var payload = {
+            ApplicationTableKeyId: API_CONFIG.reimbursementTableKey,
+            ReportId: API_CONFIG.reimbursementReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[REIMB] Report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No matching record for ID', recordId);
+              if (rows.length > 0) console.log('[REIMB] Sample row keys:', Object.keys(rows[0]));
+              return;
+            }
+
+            console.log('[REIMB] Matched record:', match);
+
+            // Populate Record ID
+            document.getElementById('reimbursementRecordId').value = recordId;
+
+            // Populate Related Application ID
+            var relApp = extractFieldValue(match, 'Related Applications') ||
+                         extractFieldValue(match, 'related_applications') || '';
+            if (relApp) document.getElementById('relatedApplicationId').value = relApp;
+
+            // Map report columns → form field IDs
+            var FIELD_MAP = {
+              'applicantName':       'applicant_name',
+              'streetAddress':       'street_address',
+              'cityStateZip':        'city_state_zip',
+              'email':               'email',
+              'phone':               'phone',
+              'projectName':         'project_name',
+              'contractor':          'contractor',
+              'projectId':           'project_id',
+              'startDate':           'start_date',
+              'endDate':             'end_date',
+              'totalDays':           'total_days',
+              'grantAwarded':        'grant_awarded',
+              'requestAmount':       'request_amount',
+              'currentBalance':      'current_balance',
+              'requestDate':         'request_date',
+              'workCompleted':       'work_completed',
+              'amountRequested':     'amount_requested',
+              'summaryNotes':        'summary_notes',
+              'applicantOfficer':    'applicant_officer',
+              'applicantTitle':      'applicant_title',
+              'applicantSignature':  'applicant_signature',
+              'applicantDate':       'applicant_date',
+              'sortaOfficer':        'sorta_officer',
+              'sortaTitle':          'sorta_title',
+              'sortaSignature':      'sorta_signature',
+              'sortaDate':           'sorta_date'
+            };
+
+            var formFieldIds = Object.keys(FIELD_MAP);
+            for (var f = 0; f < formFieldIds.length; f++) {
+              var formId = formFieldIds[f];
+              var dbName = FIELD_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) el.value = val;
+              }
+            }
+
+            // Handle radio buttons (requestType)
+            var reqType = extractFieldValue(match, 'request_type') || extractFieldValue(match, 'requestType');
+            if (reqType) {
+              var radio = document.querySelector('input[name="requestType"][value="' + reqType + '"]');
+              if (radio) radio.checked = true;
+            }
+          });
+        }).catch(function (err) {
+          console.error('[REIMB] Load error:', err);
+        });
+      }
+
       const storageKey = "sorta_reimbursement_request_draft_v1";
       const draftStatus = document.getElementById("draftStatus");
       const invoiceTableBody = document.getElementById("invoiceTableBody");
@@ -595,28 +789,6 @@
         draftStatus.textContent = "Draft cleared.";
       };
 
-      const exportJson = () => {
-        const data = {};
-        document.querySelectorAll("input, textarea, select").forEach((field) => {
-          if (field.type === "radio") {
-            if (field.checked) {
-              data[field.name] = field.value;
-            }
-            return;
-          }
-          data[field.name || field.id] = field.value;
-        });
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "sorta_reimbursement_request.json";
-        link.click();
-        URL.revokeObjectURL(url);
-      };
-
       invoiceTableBody.addEventListener("input", (event) => {
         if (event.target.type === "number") {
           updateInvoiceTotal();
@@ -625,10 +797,25 @@
 
       document.getElementById("addInvoiceRow").addEventListener("click", addInvoiceRow);
       document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
-      document.getElementById("exportButton").addEventListener("click", exportJson);
+
       document.getElementById("clearButton").addEventListener("click", clearDraft);
 
       loadDraft();
+
+      // Load record from localStorage (set by landing page) or URL params as fallback
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var recordId = localStorage.getItem('mtif_child_record_id') || params.get('recordId') || '';
+        var relatedAppId = localStorage.getItem('mtif_child_related_app_id') || params.get('relatedApplicationId') || '';
+
+        if (recordId) {
+          document.getElementById('reimbursementRecordId').value = recordId;
+          loadFromAPI(recordId);
+        }
+        if (relatedAppId) {
+          document.getElementById('relatedApplicationId').value = relatedAppId;
+        }
+      })();
     </script>
   </body>
 </html>
