@@ -239,6 +239,60 @@
         display: block;
       }
 
+      .metro-file-name {
+        font-size: 12px;
+        color: #003da5;
+        margin-top: 6px;
+        font-weight: 600;
+        word-break: break-all;
+      }
+
+      .metro-file-status {
+        font-size: 12px;
+        margin-top: 6px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        display: none;
+      }
+      .metro-file-status.uploading {
+        display: block;
+        background: #eff6ff;
+        color: #1e40af;
+      }
+      .metro-file-status.success {
+        display: block;
+        background: #f0fdf4;
+        color: #166534;
+      }
+      .metro-file-status.error {
+        display: block;
+        background: #fef2f2;
+        color: #991b1b;
+      }
+
+      .metro-map-container {
+        grid-column: 1 / -1;
+        margin-bottom: 12px;
+      }
+      .metro-map-container p {
+        font-size: 13px;
+        color: var(--metro-slate);
+        margin: 0 0 8px;
+      }
+      #mtif_project_map {
+        height: 400px;
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid var(--metro-border);
+        box-shadow: 0 4px 12px rgba(2,6,23,0.08);
+        background: #f0f0f0;
+      }
+      #mtif_latlong_display {
+        font-size: 12px;
+        color: var(--metro-slate);
+        margin-top: 8px;
+      }
+
       .metro-status {
         font-size: 12px;
         color: var(--metro-slate);
@@ -326,7 +380,12 @@
     aesKey: AES_KEY,
     applicationTableKey: 'iw3twwkw2',
     applicationsReportId: 'tn3omkcq4',
-    applicationsIdFieldKey: 'dyd4osqa5'
+    applicationsIdFieldKey: 'dyd4osqa5',
+    granteesReportId: 'niazpvhq8',
+    projectHeaderReportId: 's3derd1q7',
+    locationTransitReportId: '6tvmwupw6',
+    vicinityMapFileFieldKey: 'v8yhpiia7',
+    gisShapefileFieldKey: '4wia8wlq4'
   };
 
   // ============================================================
@@ -430,9 +489,9 @@
     'field-location-transit-project-street-name-s': { name: 'project_street_names' },
     'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
     'field-location-transit-project-limits-description': { name: 'project_limits_description' },
-    'field-location-transit-project-vicinity-map-file': { name: 'vicinity_map_file' },
+    'field-location-transit-project-vicinity-map-file': { name: 'vicinity_map_file', fieldKey: 'v8yhpiia7' },
     'field-location-transit-project-latitude-longitude': { name: 'project_lat_long' },
-    'field-location-transit-gis-shapefile-upload': { name: 'gis_shapefile' },
+    'field-location-transit-gis-shapefile-upload': { name: 'gis_shapefile', fieldKey: '4wia8wlq4' },
     'field-location-transit-distance-to-nearest-fixed-route-transit-miles': { name: 'distance_to_transit_miles' },
     'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no': { name: 'within_three_quarter_mile_transit' },
     'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count': { name: 'weekday_transit_trip_count' },
@@ -1035,6 +1094,11 @@
       return { type: 'select', options: JURISDICTION_NAMES.slice().sort() };
     }
 
+    // Special case: Municipality/township/county is free-text (not a number)
+    if (lower.includes('municipality/township/county')) {
+      return { type: 'text' };
+    }
+
     const options = getSelectOptionsFromField(fieldName);
     if (options) return { type: 'select', options: options };
     if (lower.includes('yes/no') || lower.includes('flag') || lower.includes('indicator')) return { type: 'select', options: ['Yes', 'No'] };
@@ -1156,13 +1220,40 @@
         }
 
         if (config.type === 'file') {
-          var help = document.createElement('div');
-          help.className = 'metro-help';
-          help.textContent = 'Upload files when submitting in OpenGov.';
-          fieldWrap.appendChild(help);
+          var statusDiv = document.createElement('div');
+          statusDiv.id = fieldId + '_status';
+          statusDiv.className = 'metro-file-status';
+          fieldWrap.appendChild(statusDiv);
         }
         grid.appendChild(fieldWrap);
       });
+
+      // Inject interactive map and reorder fields in Location / Transit
+      if (category === 'Location / Transit') {
+        var mapWrap = document.createElement('div');
+        mapWrap.className = 'metro-map-container';
+        mapWrap.innerHTML =
+          '<p>Click on the map to drop a pin, or drag the pin to update. Latitude/Longitude will auto-fill.</p>' +
+          '<div id="mtif_project_map"></div>' +
+          '<p id="mtif_latlong_display"></p>';
+
+        var vicinityField = grid.querySelector('[data-field-label="Project vicinity map file"]');
+        var vicinityWrap = vicinityField ? vicinityField.closest('.metro-col-6, .metro-col-12') : null;
+        var latLngField = grid.querySelector('[data-field-label="Project latitude/longitude"]');
+        var latLngWrap = latLngField ? latLngField.closest('.metro-col-6, .metro-col-12') : null;
+
+        // Insert map before the lat/long field
+        if (latLngWrap) {
+          grid.insertBefore(mapWrap, latLngWrap);
+        } else {
+          grid.appendChild(mapWrap);
+        }
+
+        // Move vicinity map file to right after the lat/long field
+        if (vicinityWrap && latLngWrap) {
+          grid.insertBefore(vicinityWrap, latLngWrap.nextSibling);
+        }
+      }
 
       section.appendChild(grid);
       formEl.appendChild(section);
@@ -1320,6 +1411,20 @@
   };
 
   // ============================================================
+  // Show uploaded file name next to a file input
+  // ============================================================
+  function showFileName(field, fileName) {
+    var existing = field.parentNode.querySelector('.metro-file-name');
+    if (existing) existing.remove();
+    if (!fileName) return;
+    var cleanName = String(fileName).replace(/\+/g, ' ');
+    var el = document.createElement('div');
+    el.className = 'metro-file-name';
+    el.textContent = 'Uploaded: ' + cleanName;
+    field.parentNode.appendChild(el);
+  }
+
+  // ============================================================
   // API: Load application from API (queryreport)
   // ============================================================
   const loadFromAPI = async function() {
@@ -1448,6 +1553,221 @@
         console.log('[MTIF] Set field (FIELD_MAPPING):', formFieldId, '=', value);
       });
 
+      // ---- Load Applicant/Jurisdiction fields from report niazpvhq8 ----
+      try {
+        console.log('[MTIF] Loading applicant/jurisdiction data from report', API_CONFIG.granteesReportId);
+        var jResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.granteesReportId, Filters: [] })
+        });
+
+        if (jResponse.ok) {
+          var jResult = await jResponse.json();
+          var jRows = Array.isArray(jResult) ? jResult : (jResult.data || jResult.Data || []);
+
+          var jurData = null;
+          for (var ji = 0; ji < jRows.length; ji++) {
+            if (String(jRows[ji].id || jRows[ji].Rid || '') === String(recordId)) {
+              jurData = jRows[ji];
+              break;
+            }
+          }
+
+          if (jurData) {
+            console.log('[MTIF] Found applicant data. Keys:', Object.keys(jurData));
+
+            var JUR_COL_TO_FORM = {
+              'jurisdiction_name':            'field-applicant-jurisdiction-jurisdiction-name',
+              'jurisdiction_mailing_address':  'field-applicant-jurisdiction-jurisdiction-mailing-address',
+              'ceo_name':                     'field-applicant-jurisdiction-chief-executive-officer-name',
+              'ceo_title':                    'field-applicant-jurisdiction-chief-executive-officer-title',
+              'cfo_name':                     'field-applicant-jurisdiction-chief-fiscal-officer-name',
+              'cfo_title':                    'field-applicant-jurisdiction-chief-fiscal-officer-title',
+              'project_contact_name':         'field-applicant-jurisdiction-project-contact-person-name',
+              'project_contact_phone':        'field-applicant-jurisdiction-project-contact-phone',
+              'project_contact_email':        'field-applicant-jurisdiction-project-contact-email',
+              'primary_applicant_email':      'field-applicant-jurisdiction-primary-applicant-email-for-notices',
+              'applicant_role':               'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta'
+            };
+
+            Object.keys(jurData).forEach(function(jKey) {
+              var val = jurData[jKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(jKey);
+              var formId = JUR_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set applicant field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No applicant data found for record:', recordId);
+          }
+        }
+      } catch (jErr) {
+        console.warn('[MTIF] Error loading applicant data:', jErr);
+      }
+
+      // ---- Load Project Header fields from report s3derd1q7 ----
+      try {
+        console.log('[MTIF] Loading project header data from report', API_CONFIG.projectHeaderReportId);
+        var phResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.projectHeaderReportId, Filters: [] })
+        });
+
+        if (phResponse.ok) {
+          var phResult = await phResponse.json();
+          var phRows = Array.isArray(phResult) ? phResult : (phResult.data || phResult.Data || []);
+
+          var phData = null;
+          for (var phi = 0; phi < phRows.length; phi++) {
+            if (String(phRows[phi].id || phRows[phi].Rid || '') === String(recordId)) {
+              phData = phRows[phi];
+              break;
+            }
+          }
+
+          if (phData) {
+            console.log('[MTIF] Found project header data. Keys:', Object.keys(phData));
+
+            var PH_COL_TO_FORM = {
+              'project_name':           'field-project-header-project-name',
+              'project_description':    'field-project-header-project-description-short-narrative',
+              'project_id':             'field-project-header-project-id-sorta-mtif-project-id',
+              'year_project_funded':    'field-project-header-year-project-funded',
+              'date_of_project_award':  'field-project-header-date-of-project-award',
+              'program_year_round':     'field-project-header-program-year-round-e-g-round-5-2025',
+              'project_type_category':  'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
+              'project_size_category':  'field-project-header-large-vs-small-project-category-1m-vs-1m',
+              'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
+            };
+
+            Object.keys(phData).forEach(function(pKey) {
+              var val = phData[pKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(pKey);
+              var formId = PH_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field || field.value) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else if (field.tagName === 'TEXTAREA') {
+                field.value = val;
+                field.dispatchEvent(new Event('input'));
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set project header field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No project header data found for record:', recordId);
+          }
+        }
+      } catch (phErr) {
+        console.warn('[MTIF] Error loading project header data:', phErr);
+      }
+
+      // ---- Load Location/Transit fields from report 6tvmwupw6 ----
+      try {
+        console.log('[MTIF] Loading location/transit data from report', API_CONFIG.locationTransitReportId);
+        var ltResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.locationTransitReportId, Filters: [] })
+        });
+
+        if (ltResponse.ok) {
+          var ltResult = await ltResponse.json();
+          var ltRows = Array.isArray(ltResult) ? ltResult : (ltResult.data || ltResult.Data || []);
+
+          var ltData = null;
+          for (var lti = 0; lti < ltRows.length; lti++) {
+            if (String(ltRows[lti].id || ltRows[lti].Rid || '') === String(recordId)) {
+              ltData = ltRows[lti];
+              break;
+            }
+          }
+
+          if (ltData) {
+            console.log('[MTIF] Found location/transit data. Keys:', Object.keys(ltData));
+
+            var LT_COL_TO_FORM = {
+              'project_street_names':              'field-location-transit-project-street-name-s',
+              'municipality_township_county':      'field-location-transit-municipality-township-county',
+              'project_limits_description':        'field-location-transit-project-limits-description',
+              'vicinity_map_file':                 'field-location-transit-project-vicinity-map-file',
+              'project_lat_long':                  'field-location-transit-project-latitude-longitude',
+              'gis_shapefile':                     'field-location-transit-gis-shapefile-upload',
+              'distance_to_transit_miles':         'field-location-transit-distance-to-nearest-fixed-route-transit-miles',
+              'within_three_quarter_mile_transit':  'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no',
+              'weekday_transit_trip_count':         'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count',
+              'on_brt_corridor':                   'field-location-transit-on-brt-corridor-yes-no'
+            };
+
+            Object.keys(ltData).forEach(function(lKey) {
+              var val = ltData[lKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(lKey);
+              var formId = LT_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              if (field.type === 'file') {
+                showFileName(field, val);
+                console.log('[MTIF] Set location file:', formId, '(' + col + ') =', val);
+                return;
+              }
+
+              if (field.value) return;
+
+              if (field.tagName === 'SELECT') {
+                for (var si = 0; si < field.options.length; si++) {
+                  if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+                    field.value = field.options[si].value;
+                    break;
+                  }
+                }
+              } else if (field.tagName === 'TEXTAREA') {
+                field.value = val;
+                field.dispatchEvent(new Event('input'));
+              } else {
+                field.value = val;
+              }
+              console.log('[MTIF] Set location field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No location/transit data found for record:', recordId);
+          }
+        }
+      } catch (ltErr) {
+        console.warn('[MTIF] Error loading location/transit data:', ltErr);
+      }
+
       console.log('[MTIF] Successfully loaded application from API');
       return true;
 
@@ -1574,7 +1894,234 @@
 
     // Initialize Google Places Autocomplete on Jurisdiction mailing address
     initAddressAutocomplete();
+
+    // Initialize interactive map in Location / Transit section
+    initProjectMap();
+
+    // Initialize file upload handlers
+    initFileUploads();
   };
+
+  // ============================================================
+  // File upload to OpenGov API
+  // ============================================================
+
+  // Map form field IDs to their OpenGov field keys for file uploads
+  var FILE_FIELD_KEYS = {
+    'field-location-transit-project-vicinity-map-file': API_CONFIG.vicinityMapFileFieldKey,
+    'field-location-transit-gis-shapefile-upload': API_CONFIG.gisShapefileFieldKey
+  };
+
+  async function uploadFileToField(file, fieldId) {
+    var fieldKey = FILE_FIELD_KEYS[fieldId];
+    if (!fieldKey) {
+      console.warn('[MTIF] No field key configured for', fieldId);
+      return null;
+    }
+
+    var token = await getAuthToken();
+    if (!token) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+
+    var applicationRid = localStorage.getItem('mtif_current_application_id');
+    if (!applicationRid) {
+      throw new Error('Please save the application as a draft first before uploading files.');
+    }
+
+    console.log('[MTIF] Uploading file:', file.name, '(' + file.type + ',', file.size, 'bytes) to field:', fieldId, 'key:', fieldKey);
+
+    var base64File = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function() { resolve(reader.result.split(',')[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    var rid = parseInt(applicationRid, 10);
+    if (isNaN(rid)) {
+      throw new Error('Invalid application record ID: ' + applicationRid);
+    }
+
+    var payload = {
+      ApplicationTableKey: API_CONFIG.applicationTableKey,
+      Where: { Rid: rid },
+      FieldsList: [
+        {
+          Key: fieldKey,
+          Name: FIELD_MAPPING[fieldId] ? FIELD_MAPPING[fieldId].name : fieldId,
+          Value: file.name,
+          base64EncodedFile: base64File,
+          fileName: file.name
+        }
+      ]
+    };
+
+    var response = await fetch(API_CONFIG.baseURL + '/api/FormAction/putdata', {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      var errorText = await response.text();
+      throw new Error('File upload failed: ' + response.status + ' - ' + errorText);
+    }
+
+    var result = await response.json();
+    console.log('[MTIF] File uploaded successfully:', result);
+    return result;
+  }
+
+  function initFileUploads() {
+    var fileInputIds = Object.keys(FILE_FIELD_KEYS);
+    fileInputIds.forEach(function(fieldId) {
+      var input = document.getElementById(fieldId);
+      if (!input) return;
+
+      input.addEventListener('change', async function() {
+        var files = this.files;
+        if (!files || files.length === 0) return;
+
+        var applicationRid = localStorage.getItem('mtif_current_application_id');
+        if (!applicationRid) {
+          alert('Please save the application as a draft first before uploading files.');
+          this.value = '';
+          return;
+        }
+
+        var statusDiv = document.getElementById(fieldId + '_status');
+
+        if (statusDiv) {
+          statusDiv.className = 'metro-file-status uploading';
+          statusDiv.textContent = 'Uploading ' + files[0].name + '...';
+        }
+
+        try {
+          await uploadFileToField(files[0], fieldId);
+
+          if (statusDiv) {
+            statusDiv.className = 'metro-file-status success';
+            statusDiv.textContent = '\u2713 Uploaded: ' + files[0].name;
+          }
+
+          // Show file name below input
+          showFileName(input, files[0].name);
+
+        } catch (err) {
+          console.error('[MTIF] File upload error:', err);
+          if (statusDiv) {
+            statusDiv.className = 'metro-file-status error';
+            statusDiv.textContent = 'Upload failed: ' + err.message;
+          }
+        }
+      });
+    });
+    console.log('[MTIF] File upload handlers initialized for', fileInputIds.length, 'field(s).');
+  }
+
+  // ============================================================
+  // Interactive Google Map for Location / Transit section
+  // ============================================================
+  var projectMap, projectMarker;
+
+  const HAMILTON_COUNTY = { lat: 39.1956, lng: -84.5310 };
+  const HAMILTON_COUNTY_BOUNDS = {
+    north: 39.32, south: 39.07,
+    east: -84.26, west: -84.82
+  };
+
+  function setLatLngFromMap(lat, lng) {
+    var latLngField = document.getElementById('field-location-transit-project-latitude-longitude');
+    var display = document.getElementById('mtif_latlong_display');
+    var formatted = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    if (latLngField) latLngField.value = formatted;
+    if (display) display.textContent = 'Latitude: ' + lat.toFixed(6) + '  |  Longitude: ' + lng.toFixed(6);
+  }
+
+  function placeProjectMarker(location) {
+    var lat = typeof location.lat === 'function' ? location.lat() : location.lat;
+    var lng = typeof location.lng === 'function' ? location.lng() : location.lng;
+
+    if (projectMarker) {
+      projectMarker.setPosition(location);
+    } else {
+      projectMarker = new google.maps.Marker({
+        position: location,
+        map: projectMap,
+        draggable: true
+      });
+      projectMarker.addListener('dragend', function(e) {
+        setLatLngFromMap(e.latLng.lat(), e.latLng.lng());
+      });
+    }
+    setLatLngFromMap(lat, lng);
+  }
+
+  function initProjectMap() {
+    var mapEl = document.getElementById('mtif_project_map');
+    if (!mapEl) return;
+    if (typeof google === 'undefined' || !google.maps) {
+      setTimeout(initProjectMap, 200);
+      return;
+    }
+
+    var countyBounds = new google.maps.LatLngBounds(
+      new google.maps.LatLng(HAMILTON_COUNTY_BOUNDS.south, HAMILTON_COUNTY_BOUNDS.west),
+      new google.maps.LatLng(HAMILTON_COUNTY_BOUNDS.north, HAMILTON_COUNTY_BOUNDS.east)
+    );
+
+    projectMap = new google.maps.Map(mapEl, {
+      center: HAMILTON_COUNTY,
+      zoom: 11,
+      mapTypeControl: true,
+      streetViewControl: false,
+      restriction: { latLngBounds: countyBounds, strictBounds: false },
+      minZoom: 10,
+      maxZoom: 18
+    });
+
+    projectMap.fitBounds(countyBounds);
+
+    projectMap.addListener('click', function(event) {
+      placeProjectMarker(event.latLng);
+    });
+
+    // If the lat/long field already has a value, place marker there
+    var latLngField = document.getElementById('field-location-transit-project-latitude-longitude');
+    if (latLngField && latLngField.value && latLngField.value.indexOf(',') !== -1) {
+      var parts = latLngField.value.split(',');
+      var existLat = parseFloat(parts[0].trim());
+      var existLng = parseFloat(parts[1].trim());
+      if (!isNaN(existLat) && !isNaN(existLng)) {
+        var pos = new google.maps.LatLng(existLat, existLng);
+        placeProjectMarker(pos);
+        projectMap.setCenter(pos);
+        projectMap.setZoom(14);
+      }
+    }
+
+    // Sync when the user manually edits the lat/long field
+    if (latLngField) {
+      latLngField.addEventListener('change', function() {
+        var val = this.value;
+        if (val.indexOf(',') === -1) return;
+        var parts = val.split(',');
+        var lat = parseFloat(parts[0].trim());
+        var lng = parseFloat(parts[1].trim());
+        if (isNaN(lat) || isNaN(lng)) return;
+        var pos = new google.maps.LatLng(lat, lng);
+        placeProjectMarker(pos);
+        projectMap.setCenter(pos);
+        projectMap.setZoom(14);
+      });
+    }
+
+    console.log('[MTIF] Project map initialized for Hamilton County.');
+  }
 
   // ============================================================
   // Google Places Autocomplete for mailing address
