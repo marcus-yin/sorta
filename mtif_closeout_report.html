@@ -212,6 +212,36 @@
         font-size: 14px;
       }
 
+      .metro-toast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        min-width: 260px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateY(-12px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+      }
+
+      .metro-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .metro-toast.success {
+        background: #16a34a;
+      }
+
+      .metro-toast.error {
+        background: #dc2626;
+      }
+
       @media (max-width: 900px) {
         .metro-col-6,
         .metro-col-4,
@@ -226,6 +256,69 @@
 
         .metro-logo {
           width: 110px;
+        }
+      }
+      @media print {
+        .metro-actions,
+        .metro-status,
+        .metro-toast {
+          display: none !important;
+        }
+
+        body {
+          background: white;
+          font-size: 12px;
+        }
+
+        .metro-banner {
+          background: #003da5 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          padding: 16px;
+        }
+
+        .metro-container {
+          padding: 10px 0;
+        }
+
+        .metro-card,
+        .metro-section {
+          box-shadow: none;
+          border: 1px solid #ccc;
+          page-break-inside: avoid;
+          margin-bottom: 12px;
+          padding: 14px;
+        }
+
+        .metro-section h3 {
+          page-break-after: avoid;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="number"],
+        input[type="date"] {
+          border: 1px solid #ccc !important;
+          background: white !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          font-size: 12px;
+          padding: 6px 8px;
+        }
+
+        input[readonly] {
+          background: #f0f0f0 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .metro-grid {
+          gap: 8px;
+        }
+
+        label {
+          font-size: 10px;
         }
       }
     </style>
@@ -258,6 +351,9 @@
           </button>
           <button class="metro-button ghost" type="button" id="clearButton">
             Clear Draft
+          </button>
+          <button class="metro-button secondary" type="button" id="downloadPdfButton">
+            Print / Save as PDF
           </button>
         </div>
         <div class="metro-status" id="draftStatus">Draft not saved yet.</div>
@@ -301,7 +397,10 @@
             </div>
             <div class="metro-col-6">
               <label for="contactPhone">Phone</label>
-              <input type="tel" id="contactPhone" name="contactPhone" />
+              <input type="tel" id="contactPhone" name="contactPhone"
+                     pattern="\(\d{3}\)\s?\d{3}-\d{4}"
+                     placeholder="(513) 555-1234"
+                     title="Format: (XXX) XXX-XXXX" maxlength="14" />
             </div>
             <div class="metro-col-3">
               <label for="yearFunded">Year Project Funded</label>
@@ -655,7 +754,14 @@
               'jurisdiction':        'jurisdiction_name',
               'initialLocalAmount':  'local_funds_budgeted',
               'projectNumber':       'project_id',
-              'projectName':         'project_name'
+              'projectName':         'project_name',
+              'contactPerson':       'contact_person',
+              'contactPhone':        'contact_phone',
+              'initialSortaAmount':  'initial_sorta_amount',
+              'initialOtherAmount':  'initial_other_amount',
+              'actualLocalAmount':   'actual_local_amount',
+              'actualSortaAmount':   'actual_sorta_amount',
+              'actualOtherAmount':   'actual_other_amount'
             };
 
             var formFieldIds = Object.keys(FIELD_MAP);
@@ -684,6 +790,22 @@
         }).catch(function (err) {
           console.error('[CLOSEOUT] Load error:', err);
         });
+      }
+
+      function showToast(message, type) {
+        var existing = document.querySelector('.metro-toast');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.className = 'metro-toast ' + type;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(function () {
+          toast.classList.add('show');
+        });
+        setTimeout(function () {
+          toast.classList.remove('show');
+          setTimeout(function () { toast.remove(); }, 300);
+        }, 3000);
       }
 
       const storageKey = "sorta_mtif_closeout_report_draft_v1";
@@ -729,12 +851,18 @@
       };
 
       const saveDraft = () => {
-        const data = {};
-        document.querySelectorAll("input").forEach((input) => {
-          data[input.id] = input.value;
-        });
-        localStorage.setItem(storageKey, JSON.stringify(data));
-        draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+        try {
+          const data = {};
+          document.querySelectorAll("input").forEach((input) => {
+            data[input.id] = input.value;
+          });
+          localStorage.setItem(storageKey, JSON.stringify(data));
+          draftStatus.textContent = `Draft saved at ${new Date().toLocaleString()}.`;
+          showToast('Save Successful', 'success');
+        } catch (err) {
+          draftStatus.textContent = 'Save Error';
+          showToast('Save Error', 'error');
+        }
       };
 
       const loadDraft = () => {
@@ -768,9 +896,21 @@
         input.addEventListener("input", () => updateGroupTotals(group));
       });
 
+      document.getElementById('contactPhone').addEventListener('input', function () {
+        var digits = this.value.replace(/\D/g, '').substring(0, 10);
+        if (digits.length === 0) { this.value = ''; return; }
+        if (digits.length <= 3) { this.value = '(' + digits; }
+        else if (digits.length <= 6) { this.value = '(' + digits.substring(0, 3) + ') ' + digits.substring(3); }
+        else { this.value = '(' + digits.substring(0, 3) + ') ' + digits.substring(3, 6) + '-' + digits.substring(6); }
+      });
+
       document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
 
       document.getElementById("clearButton").addEventListener("click", clearDraft);
+
+      document.getElementById("downloadPdfButton").addEventListener("click", function () {
+        window.print();
+      });
 
       loadDraft();
       updateGroupTotals("initial");
