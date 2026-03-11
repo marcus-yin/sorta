@@ -822,5 +822,18 @@
   </div>
 
 </div>
+
+<script>
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('a[href^="#"]');
+    if (!link) return;
+    e.preventDefault();
+    var id = link.getAttribute('href').substring(1);
+    var target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+</script>
 </body>
 </html>
