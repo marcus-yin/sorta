@@ -265,6 +265,22 @@
 
       <form id="closeoutForm">
         <section class="metro-section">
+          <h3>Record Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="closeoutRecordId">Closeout Record ID</label>
+              <input type="text" id="closeoutRecordId" name="closeoutRecordId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+            <div class="metro-col-6">
+              <label for="relatedApplicationId">Related Application ID</label>
+              <input type="text" id="relatedApplicationId" name="relatedApplicationId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+          </div>
+        </section>
+
+        <section class="metro-section">
           <h3>Project Information</h3>
           <div class="metro-grid">
             <div class="metro-col-6">
@@ -509,7 +525,167 @@
       </form>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
+      // ============================================================
+      // API Configuration
+      // ============================================================
+      var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+      var API_CONFIG = {
+        baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+        closeoutTableKey: 'iyrj5cna7',
+        closeoutReportId: 'eexq4ceg5'
+      };
+
+      // ============================================================
+      // Token helpers
+      // ============================================================
+      function looksLikeSaltedCiphertext(s) {
+        return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+      }
+
+      function safeJsonParse(s) {
+        try { return JSON.parse(s); } catch (_) { return null; }
+      }
+
+      function extractAccessToken(decrypted) {
+        if (typeof decrypted !== 'string') return '';
+        var t = decrypted.trim();
+        if (!t) return '';
+        var j = safeJsonParse(t);
+        if (j && typeof j === 'object') {
+          if (j.access_token) return String(j.access_token);
+          if (j.token) return String(j.token);
+        }
+        return t;
+      }
+
+      function bootstrapToken() {
+        var enc = '';
+        try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+        if (!enc || typeof CryptoJS === 'undefined') return '';
+        try {
+          var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+          if (!dec) return '';
+          var tok = extractAccessToken(dec);
+          if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+          return tok;
+        } catch (_) {
+          return '';
+        }
+      }
+
+      function getAuthToken() {
+        return Promise.resolve(bootstrapToken() || null);
+      }
+
+      function apiHeaders(token) {
+        return {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        };
+      }
+
+      function extractFieldValue(row, fieldName) {
+        if (!row) return '';
+        var lower = fieldName.toLowerCase().replace(/[\s\/]+/g, '_');
+        var keys = Object.keys(row);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          var normalised = k.toLowerCase().replace(/^tbl[a-z0-9]+_/, '').replace(/[\s\/]+/g, '_');
+          if (normalised === lower) return row[k];
+          if (k.toLowerCase().replace(/[\s\/]+/g, '_') === lower) return row[k];
+        }
+        if (row[fieldName] !== undefined) return row[fieldName];
+        return '';
+      }
+
+      // ============================================================
+      // Load data from API
+      // ============================================================
+      function loadFromAPI(recordId) {
+        if (!recordId) return;
+
+        getAuthToken().then(function (token) {
+          if (!token) { console.warn('[CLOSEOUT] No auth token'); return; }
+
+          var payload = {
+            ApplicationTableKeyId: API_CONFIG.closeoutTableKey,
+            ReportId: API_CONFIG.closeoutReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = Array.isArray(data) ? data : (data && data.Records) || [];
+            console.log('[CLOSEOUT] Report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(recordId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[CLOSEOUT] No matching record for ID', recordId);
+              if (rows.length > 0) console.log('[CLOSEOUT] Sample row keys:', Object.keys(rows[0]));
+              return;
+            }
+
+            console.log('[CLOSEOUT] Matched record:', match);
+
+            document.getElementById('closeoutRecordId').value = recordId;
+
+            var relApp = extractFieldValue(match, 'Related Applications') ||
+                         extractFieldValue(match, 'related_applications') || '';
+            if (relApp) document.getElementById('relatedApplicationId').value = relApp;
+
+            var FIELD_MAP = {
+              'yearFunded':          'year_project_funded',
+              'awardDate':           'date_of_project_award',
+              'jurisdiction':        'jurisdiction_name',
+              'initialLocalAmount':  'local_funds_budgeted',
+              'projectNumber':       'project_id',
+              'projectName':         'project_name'
+            };
+
+            var formFieldIds = Object.keys(FIELD_MAP);
+            for (var f = 0; f < formFieldIds.length; f++) {
+              var formId = formFieldIds[f];
+              var dbName = FIELD_MAP[formId];
+              var val = extractFieldValue(match, dbName);
+              if (val) {
+                var el = document.getElementById(formId);
+                if (el) {
+                  if (el.type === 'date' && val) {
+                    try {
+                      var d = new Date(val);
+                      if (!isNaN(d.getTime())) val = d.toISOString().split('T')[0];
+                    } catch (_) {}
+                  }
+                  el.value = val;
+                }
+              }
+            }
+
+            // Recalculate percentages after populating amounts
+            updateGroupTotals('initial');
+            updateGroupTotals('actual');
+          });
+        }).catch(function (err) {
+          console.error('[CLOSEOUT] Load error:', err);
+        });
+      }
+
       const storageKey = "sorta_mtif_closeout_report_draft_v1";
       const draftStatus = document.getElementById("draftStatus");
 
@@ -599,6 +775,21 @@
       loadDraft();
       updateGroupTotals("initial");
       updateGroupTotals("actual");
+
+      // Populate record fields from localStorage or URL params, then load from API
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var recordId = localStorage.getItem('mtif_child_record_id') || params.get('recordId') || '';
+        var relatedAppId = localStorage.getItem('mtif_child_related_app_id') || params.get('relatedApplicationId') || '';
+
+        if (recordId) {
+          document.getElementById('closeoutRecordId').value = recordId;
+          loadFromAPI(recordId);
+        }
+        if (relatedAppId) {
+          document.getElementById('relatedApplicationId').value = relatedAppId;
+        }
+      })();
     </script>
   </body>
 </html>
