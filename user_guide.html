@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - MTIF User Guide</title>
+  <style>
+    :root {
+      --metro-blue: #003da5;
+      --metro-red: #e4002b;
+      --metro-navy: #0b1f3a;
+      --metro-ink: #111827;
+      --metro-slate: #475569;
+      --metro-border: #e2e8f0;
+      --metro-panel: #f8fafc;
+      --metro-white: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--metro-ink);
+      background: #f3f5f9;
+      line-height: 1.7;
+    }
+
+    .banner {
+      background: linear-gradient(135deg, var(--metro-blue) 0%, #1b4fbf 60%, var(--metro-navy) 100%);
+      padding: 32px 20px;
+      text-align: center;
+      border-bottom: 4px solid var(--metro-red);
+      position: relative;
+    }
+
+    .banner img {
+      height: 64px;
+      background: var(--metro-white);
+      padding: 8px 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .banner h1 {
+      color: var(--metro-white);
+      font-size: 26px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .banner p {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    /* Table of Contents */
+    .toc {
+      background: var(--metro-white);
+      border: 1px solid var(--metro-border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 28px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+    }
+
+    .toc h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      border-left: 4px solid var(--metro-red);
+      padding-left: 12px;
+      color: var(--metro-navy);
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 24px;
+    }
+
+    .toc a {
+      display: block;
+      color: var(--metro-blue);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--metro-border);
+      transition: color 0.15s;
+    }
+
+    .toc a:hover {
+      color: var(--metro-red);
+    }
+
+    .toc .toc-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--metro-navy);
+      margin-top: 12px;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--metro-blue);
+      grid-column: 1 / -1;
+    }
+
+    .toc .toc-section-title:first-child {
+      margin-top: 0;
+    }
+
+    /* Guide sections */
+    .guide-section {
+      background: var(--metro-white);
+      border: 1px solid var(--metro-border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+    }
+
+    .guide-section h2 {
+      font-size: 22px;
+      color: var(--metro-navy);
+      border-left: 4px solid var(--metro-red);
+      padding-left: 12px;
+      margin-bottom: 16px;
+    }
+
+    .guide-section h3 {
+      font-size: 17px;
+      color: var(--metro-blue);
+      margin: 20px 0 10px;
+      border-left: 3px solid var(--metro-blue);
+      padding-left: 10px;
+    }
+
+    .guide-section h4 {
+      font-size: 14px;
+      color: var(--metro-navy);
+      margin: 14px 0 6px;
+      font-weight: 700;
+    }
+
+    .guide-section p {
+      font-size: 14px;
+      color: var(--metro-slate);
+      margin-bottom: 10px;
+    }
+
+    .guide-section ul, .guide-section ol {
+      margin: 8px 0 14px 20px;
+      font-size: 14px;
+      color: var(--metro-slate);
+    }
+
+    .guide-section li {
+      margin-bottom: 4px;
+    }
+
+    .field-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 13px;
+    }
+
+    .field-table thead {
+      background: var(--metro-blue);
+      color: var(--metro-white);
+    }
+
+    .field-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .field-table td {
+      padding: 8px 12px;
+      border-top: 1px solid var(--metro-border);
+      color: var(--metro-ink);
+      vertical-align: top;
+    }
+
+    .field-table tbody tr:hover {
+      background: var(--metro-panel);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+
+    .badge-auto {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .badge-calc {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-required {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-file {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .tip {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #1e40af;
+    }
+
+    .tip strong {
+      color: var(--metro-blue);
+    }
+
+    .warning {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #92400e;
+    }
+
+    .back-to-top {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--metro-blue);
+      text-decoration: none;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    .back-to-top:hover {
+      color: var(--metro-red);
+    }
+
+    .divider {
+      border: none;
+      border-top: 2px solid var(--metro-border);
+      margin: 28px 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .footer a {
+      color: var(--metro-blue);
+      text-decoration: none;
+    }
+
+    @media print {
+      .banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .guide-section { box-shadow: none; page-break-inside: avoid; }
+      .toc { page-break-after: always; }
+    }
+
+    @media (max-width: 700px) {
+      .toc-grid { grid-template-columns: 1fr; }
+      .banner h1 { font-size: 20px; }
+      .guide-section { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="banner">
+  <img src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg" alt="Metro logo" /><br>
+  <h1>MTIF Portal User Guide</h1>
+  <p>Southwest Ohio Regional Transit Authority (SORTA) &mdash; Metro Transit Infrastructure Fund</p>
+</header>
+
+<div class="container" id="top">
+
+  <!-- ============================================================ -->
+  <!-- TABLE OF CONTENTS -->
+  <!-- ============================================================ -->
+  <nav class="toc">
+    <h2>Table of Contents</h2>
+    <div class="toc-grid">
+
+      <div class="toc-section-title">Getting Started</div>
+      <a href="#overview">Portal Overview</a>
+      <a href="#navigation">Navigating the Portal</a>
+      <a href="#saving">Saving &amp; Submitting</a>
+      <a href="#tips-general">General Tips</a>
+
+      <div class="toc-section-title">MTIF Application</div>
+      <a href="#app-overview">Application Overview</a>
+      <a href="#app-applicant">Applicant / Jurisdiction</a>
+      <a href="#app-project">Project Header</a>
+      <a href="#app-location">Location / Transit</a>
+      <a href="#app-budget">Budget / Funding</a>
+      <a href="#app-schedule">Schedule &amp; ROW</a>
+      <a href="#app-scoring">Scoring / Criteria</a>
+      <a href="#app-acknowledgment">Acknowledgment &amp; Attestation</a>
+
+      <div class="toc-section-title">Reimbursement Request</div>
+      <a href="#reimb-overview">Reimbursement Overview</a>
+      <a href="#reimb-applicant">Applicant Information</a>
+      <a href="#reimb-request">Type of Request</a>
+      <a href="#reimb-timeline">Project Timeline</a>
+      <a href="#reimb-cost">Project Cost</a>
+      <a href="#reimb-invoices">Invoice Detail</a>
+      <a href="#reimb-summary">Summary &amp; Certification</a>
+
+      <div class="toc-section-title">Quarterly Progress Report</div>
+      <a href="#qtr-overview">Quarterly Report Overview</a>
+      <a href="#qtr-basics">Report Basics</a>
+      <a href="#qtr-project">Project Information</a>
+      <a href="#qtr-risks">Risks, Issues &amp; Schedule</a>
+      <a href="#qtr-docs">Site Documentation</a>
+
+      <div class="toc-section-title">Closeout Report</div>
+      <a href="#close-overview">Closeout Overview</a>
+      <a href="#close-project">Project Information</a>
+      <a href="#close-budget">Initial Project Budget</a>
+      <a href="#close-actual">Actual Project Expenses</a>
+      <a href="#close-submit">Submitting the Report</a>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- GETTING STARTED -->
+  <!-- ============================================================ -->
+  <section class="guide-section" id="overview">
+    <h2>Portal Overview</h2>
+    <p>The MTIF Portal is a web-based system for managing Metro Transit Infrastructure Fund applications and related records. Through the portal you can:</p>
+    <ul>
+      <li><strong>Submit applications</strong> for MTIF funding</li>
+      <li><strong>Request reimbursements</strong> for approved project expenses</li>
+      <li><strong>File quarterly progress reports</strong> during construction</li>
+      <li><strong>Complete closeout reports</strong> when a project is finished</li>
+    </ul>
+    <p>Each reimbursement request, quarterly report, and closeout report is linked to a parent MTIF application. When you create one of these child records from the main landing page, the system automatically associates it with the correct application.</p>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="navigation">
+    <h2>Navigating the Portal</h2>
+    <h3>Main Landing Page</h3>
+    <p>After logging in, you'll see the <strong>My Applications</strong> landing page listing all your MTIF applications. From here you can:</p>
+    <ul>
+      <li><strong>Create New Application</strong> &mdash; Start a new MTIF funding application</li>
+      <li><strong>Edit</strong> &mdash; Return to an existing draft application (disabled once submitted)</li>
+      <li><strong>Reimbursement</strong> &mdash; Create a new reimbursement request linked to that application</li>
+      <li><strong>Quarterly Report</strong> &mdash; Create a new quarterly progress report</li>
+      <li><strong>Closeout Report</strong> &mdash; Create a new closeout report</li>
+    </ul>
+
+    <h3>List Pages</h3>
+    <p>Separate list pages are available for viewing all your reimbursement requests, quarterly reports, and closeout reports. Each list shows records you created, with an <strong>Edit</strong> button to return to the form.</p>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="saving">
+    <h2>Saving &amp; Submitting</h2>
+    <h3>Save Draft</h3>
+    <p>Every form includes a <strong>Save Draft</strong> button. Clicking it saves your current progress to your browser's local storage. A confirmation toast will appear to confirm the save was successful.</p>
+    <div class="warning"><strong>Important:</strong> Drafts are stored in your browser. If you clear your browser data or switch to a different computer, your draft will not be available. Save early and save often.</div>
+
+    <h3>Clear Draft</h3>
+    <p>The <strong>Clear Draft</strong> button removes the saved draft from your browser and resets the form to its default state.</p>
+
+    <h3>Submit (Application Only)</h3>
+    <p>The MTIF Application has a <strong>Submit Application</strong> button. Once submitted, the application status changes to "Submitted" and the Edit button on the landing page is disabled. You will be redirected back to the portal home page.</p>
+
+    <h3>Print / Save as PDF</h3>
+    <p>Some forms include a <strong>Print / Save as PDF</strong> button. This opens your browser's print dialog where you can choose "Save as PDF" as the destination to download a copy of the completed form.</p>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="tips-general">
+    <h2>General Tips</h2>
+    <ul>
+      <li>Fields with a gray background are <strong>read-only</strong> and populated automatically from the database.</li>
+      <li>Percentage fields are <strong>calculated automatically</strong> &mdash; you do not need to enter them.</li>
+      <li>File upload fields accept common formats (PDF, images, shapefiles). Each file is uploaded immediately upon selection.</li>
+      <li>Phone number fields auto-format to <strong>(XXX) XXX-XXXX</strong> as you type.</li>
+      <li>Currency fields should contain <strong>whole numbers only</strong> unless otherwise noted.</li>
+      <li>The <strong>Record ID</strong> and <strong>Related Application ID</strong> at the top of each child form are system-generated and cannot be edited.</li>
+    </ul>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- MTIF APPLICATION -->
+  <!-- ============================================================ -->
+  <section class="guide-section" id="app-overview">
+    <h2>MTIF Application</h2>
+    <p>The MTIF Application is the primary form for requesting Metro Transit Infrastructure Fund grant funding. It collects information about the applicant, project details, budget, schedule, and scoring criteria.</p>
+    <div class="tip"><strong>Tip:</strong> You can save your progress at any time using the <strong>Save Draft</strong> button. Return later to complete and submit.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-applicant">
+    <h3>Applicant / Jurisdiction</h3>
+    <p>Enter the jurisdiction and contact details for the applicant organization.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Jurisdiction Name</td><td>Name of the applying jurisdiction</td><td></td></tr>
+        <tr><td>Mailing Address</td><td>Official mailing address of the jurisdiction</td><td></td></tr>
+        <tr><td>Chief Executive Officer</td><td>Name and title of the CEO</td><td></td></tr>
+        <tr><td>Chief Fiscal Officer</td><td>Name and title of the CFO</td><td></td></tr>
+        <tr><td>Project Contact Person</td><td>Name, phone, and email for the primary contact</td><td></td></tr>
+        <tr><td>Primary Applicant Email</td><td>Email address for official notices</td><td></td></tr>
+        <tr><td>Applicant Role</td><td>Select applicable role (jurisdiction, county, township, etc.)</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-project">
+    <h3>Project Header</h3>
+    <p>Provide basic information about the proposed project.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Project Name</td><td>Descriptive name for the project</td><td></td></tr>
+        <tr><td>Project Description</td><td>Brief narrative describing the project scope</td><td></td></tr>
+        <tr><td>Project ID</td><td>SORTA MTIF project identifier</td><td></td></tr>
+        <tr><td>Year Project Funded</td><td>Year the project received funding</td><td></td></tr>
+        <tr><td>Date of Project Award</td><td>Official award date</td><td></td></tr>
+        <tr><td>Program Year / Round</td><td>e.g., "Round 5 - 2025"</td><td></td></tr>
+        <tr><td>Project Type</td><td>Category such as Road, Bridge, Sidewalk, Multimodal, ITS, or Transit Facility</td><td></td></tr>
+        <tr><td>Large vs Small Project</td><td>Large (&ge; $1M) or Small (&lt; $1M)</td><td></td></tr>
+        <tr><td>Emergency Project</td><td>Yes or No</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-location">
+    <h3>Location / Transit</h3>
+    <p>Describe where the project is located and its relationship to transit infrastructure.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Street Name(s)</td><td>Street(s) where the project is located</td><td></td></tr>
+        <tr><td>Municipality / Township / County</td><td>Governing jurisdiction for the project location</td><td></td></tr>
+        <tr><td>Project Limits</td><td>Description of project boundaries</td><td></td></tr>
+        <tr><td>Project Vicinity Map</td><td>Upload a map showing the project area</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>Latitude / Longitude</td><td>Auto-populated from the interactive Google Map</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>GIS Shapefile</td><td>Upload the project's GIS shapefile</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>Distance to Transit</td><td>Miles to nearest fixed-route transit</td><td></td></tr>
+        <tr><td>Within 3/4 Mile of Transit</td><td>Yes or No</td><td></td></tr>
+        <tr><td>Weekday Trips</td><td>Number of weekday fixed-route trips using the corridor</td><td></td></tr>
+        <tr><td>On BRT Corridor</td><td>Yes or No</td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="tip"><strong>Tip:</strong> Use the interactive Google Map to place a marker on your project location. The latitude and longitude fields will populate automatically.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-budget">
+    <h3>Budget / Funding</h3>
+    <p>Enter the financial details for the project. Percentage fields and totals are calculated automatically.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Local Funds Budgeted</td><td>Dollar amount of local funds committed</td><td></td></tr>
+        <tr><td>SORTA MTIF Funds Awarded</td><td>Dollar amount of MTIF grant funds</td><td></td></tr>
+        <tr><td>Other Funds Budgeted</td><td>Dollar amount from other funding sources</td><td></td></tr>
+        <tr><td>Total Project Budget</td><td>Sum of all funding sources</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Share Percentages</td><td>Local %, MTIF %, Other %</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Max Grant %</td><td>Must not exceed 90% of construction cost</td><td></td></tr>
+        <tr><td>Multi-Year Funding</td><td>Number of funding years (1&ndash;5)</td><td></td></tr>
+        <tr><td>Cost Estimate</td><td>Upload a detailed cost estimate</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>PE License</td><td>Upload engineer's stamp / PE license</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>Certification of Funds</td><td>Upload letter certifying availability of matching funds</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>Authorizing Legislation</td><td>Upload authorizing legislation document</td><td><span class="badge badge-file">File Upload</span></td></tr>
+      </tbody>
+    </table>
+    <div class="warning"><strong>Requirement:</strong> The local funding match must be at least 10% of the total project budget.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-schedule">
+    <h3>Schedule &amp; Right-of-Way</h3>
+    <p>Provide the project timeline and current status of right-of-way acquisition and design.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Construction Award Date</td><td>Date construction contract was/will be awarded</td><td></td></tr>
+        <tr><td>Anticipated Start Date</td><td>Expected construction start</td><td></td></tr>
+        <tr><td>Anticipated Completion Date</td><td>Expected construction completion</td><td></td></tr>
+        <tr><td>Start Within 1 Year</td><td>Will construction begin within 1 year of award?</td><td></td></tr>
+        <tr><td>Right-of-Way Status</td><td>All acquired / Partial / None</td><td></td></tr>
+        <tr><td>Design/Engineering Status</td><td>Complete / In Process / Not Started</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-scoring">
+    <h3>Scoring / Criteria</h3>
+    <p>This section collects narrative and quantitative information used in the scoring evaluation. Provide thorough, accurate responses to maximize your application score.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Physical Condition</td><td>Describe the current physical condition of the infrastructure</td></tr>
+        <tr><td>Safety Issues</td><td>Describe any safety concerns the project will address</td></tr>
+        <tr><td>Priority Ranking</td><td>Rank this project among your submitted projects (1st, 2nd, 3rd, etc.)</td></tr>
+        <tr><td>Economic Growth &amp; Connectivity</td><td>Describe how the project promotes economic growth</td></tr>
+        <tr><td>Regional Impact</td><td>Describe the regional significance of the project</td></tr>
+        <tr><td>Average Daily Traffic (ADT)</td><td>Current average daily traffic count</td></tr>
+        <tr><td>Relative Economic Strength</td><td>Economic strength score for the area</td></tr>
+        <tr><td>Transit Impact</td><td>Describe how the project impacts transit service</td></tr>
+        <tr><td>Multimodal Infrastructure</td><td>Details on multimodal (bike, pedestrian, transit) elements</td></tr>
+        <tr><td>Sustainability Measures</td><td>Checklist of sustainability features incorporated</td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-acknowledgment">
+    <h3>Acknowledgment &amp; Attestation</h3>
+    <p>The final section requires the authorized representative to certify the application.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Certification</td><td>Acknowledge that the information is accurate</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Signature</td><td>Type your full legal name</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Name &amp; Title</td><td>Your printed name and official title</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Date</td><td>Date of signature</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Acknowledgment Checkbox</td><td>Check to confirm you have read and agree to the terms</td><td><span class="badge badge-required">Required</span></td></tr>
+      </tbody>
+    </table>
+    <div class="warning"><strong>Important:</strong> All required fields must be completed before you can submit the application. Once submitted, the application cannot be edited.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- REIMBURSEMENT REQUEST -->
+  <!-- ============================================================ -->
+  <section class="guide-section" id="reimb-overview">
+    <h2>Reimbursement Request</h2>
+    <p>Use this form to request reimbursement for eligible project expenses. Each reimbursement request is linked to an approved MTIF application. You can create a new reimbursement request from the main landing page by clicking the <strong>Reimbursement</strong> button next to your application.</p>
+    <div class="tip"><strong>Tip:</strong> You may submit up to two reimbursement requests per month. Attach invoice detail lists and supporting documentation.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-applicant">
+    <h3>1. Applicant Information</h3>
+    <p>Basic contact information for the applicant. Some fields may be pre-populated from the parent application.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>Applicant's full name</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Street Address</td><td>Mailing address</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>City, State, Zip</td><td>City, state, and zip code</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Email</td><td>Contact email address</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Phone Number</td><td>Contact phone number</td><td><span class="badge badge-auto">Auto</span></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-request">
+    <h3>2. Type of Request</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Request Type</td><td>Select <strong>Final</strong> or <strong>Partial</strong></td><td></td></tr>
+        <tr><td>Project Name</td><td>Name of the funded project</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Contractor / Subcontractor(s)</td><td>Name(s) of contractors performing the work</td><td></td></tr>
+        <tr><td>Project ID #</td><td>SORTA MTIF project identifier</td><td><span class="badge badge-auto">Auto</span></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-timeline">
+    <h3>3. Project Timeline</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Start Date</td><td>Project construction start date</td><td></td></tr>
+        <tr><td>End / Completion Date</td><td>Anticipated or actual completion date</td><td></td></tr>
+        <tr><td>Total # Days</td><td>Total calendar days for the project</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-cost">
+    <h3>4. Project Cost</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Amount of Grant Awarded</td><td>Total MTIF grant amount</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Reimbursement Request Amount</td><td>Dollar amount you are requesting</td><td></td></tr>
+        <tr><td>Current Balance</td><td>Remaining grant balance</td><td></td></tr>
+        <tr><td>Date of Request</td><td>Date the request is being submitted</td><td></td></tr>
+        <tr><td>Work Completed (%)</td><td>Percentage of overall work completed</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-invoices">
+    <h3>5. Invoice Detail</h3>
+    <p>Enter each invoice as a separate row. The form starts with 3 rows; click <strong>Add Invoice Row</strong> to add more.</p>
+    <table class="field-table">
+      <thead><tr><th>Column</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Invoice Date</td><td>Date on the invoice</td></tr>
+        <tr><td>Invoice #</td><td>Invoice reference number</td></tr>
+        <tr><td>Description</td><td>Brief description of the work or materials invoiced</td></tr>
+        <tr><td>Amount</td><td>Dollar amount of the invoice</td></tr>
+      </tbody>
+    </table>
+    <p>The <strong>Total Invoice Amount</strong> field is automatically calculated as the sum of all invoice amounts.</p>
+    <div class="tip"><strong>Tip:</strong> Invoice records are saved to the database individually. Existing invoices will be updated when you save; new rows will create new records.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="reimb-summary">
+    <h3>6. Summary &amp; 7. Certification</h3>
+    <p>Review the summary of your request, add any notes, then complete the certification section.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Total Invoice Amount</td><td>Sum of all invoice amounts</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Amount Requested</td><td>Total reimbursement amount for this submission</td><td></td></tr>
+        <tr><td>Notes</td><td>Any additional information or clarifications</td><td></td></tr>
+        <tr><td>Applicant / Authorized Officer</td><td>Name of the authorized signer</td><td></td></tr>
+        <tr><td>Title</td><td>Official title</td><td></td></tr>
+        <tr><td>Signature</td><td>Type your full legal name as your signature</td><td></td></tr>
+        <tr><td>Date</td><td>Date of certification</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- QUARTERLY PROGRESS REPORT -->
+  <!-- ============================================================ -->
+  <section class="guide-section" id="qtr-overview">
+    <h2>Quarterly Progress Report</h2>
+    <p>Quarterly progress reports are required during the construction phase of your project. They provide SORTA with updates on project status, expenditures, and any issues or risks. Create a new report from the main landing page by clicking <strong>Quarterly Report</strong> next to your application.</p>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="qtr-basics">
+    <h3>Report Basics</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Report Date</td><td>Date the report is being prepared</td><td></td></tr>
+        <tr><td>Prepared By</td><td>Name of the person preparing the report</td><td></td></tr>
+        <tr><td>Jurisdiction</td><td>Name of the applicant jurisdiction</td><td></td></tr>
+        <tr><td>Address</td><td>Jurisdiction mailing address</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="qtr-project">
+    <h3>Project Information</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Project Description</td><td>Brief description of the project</td><td></td></tr>
+        <tr><td>Contractor</td><td>Name of the general contractor</td><td></td></tr>
+        <tr><td>Owner</td><td>Project owner (typically the jurisdiction)</td><td></td></tr>
+        <tr><td>Owner's Project Manager</td><td>Name of the project manager</td><td></td></tr>
+        <tr><td>Last Report % Completion</td><td>Percentage complete as of the previous report</td><td></td></tr>
+        <tr><td>Current Report % Completion</td><td>Percentage complete as of this report</td><td></td></tr>
+        <tr><td>Payment Status</td><td>Current payment status</td><td></td></tr>
+        <tr><td>Explain</td><td>Explanation of payment status if needed</td><td></td></tr>
+        <tr><td>Amount Expended</td><td>Total MTIF grant funds expended to date</td><td></td></tr>
+        <tr><td>Total Project Cost</td><td>Total project cost to date</td><td></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="qtr-risks">
+    <h3>Risks, Issues &amp; Schedule</h3>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Potential Risks</td><td>Describe any risks that could affect project completion</td></tr>
+        <tr><td>Issues / Concerns</td><td>Describe any current issues or concerns</td></tr>
+        <tr><td>Schedule Update</td><td>Provide an update on the project schedule</td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="qtr-docs">
+    <h3>Site Documentation</h3>
+    <p>Upload site photos and documents showing project progress. You can select multiple files at once.</p>
+    <div class="tip"><strong>Tip:</strong> Each file is uploaded as a separate record in the database. Previously uploaded documents are listed below the file input for reference. Upload photos that clearly show construction progress.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============================================================ -->
+  <!-- CLOSEOUT REPORT -->
+  <!-- ============================================================ -->
+  <section class="guide-section" id="close-overview">
+    <h2>Closeout Report</h2>
+    <p>The closeout report is required upon completion of construction for project accounting purposes. Create one from the main landing page by clicking <strong>Closeout Report</strong> next to your application.</p>
+    <div class="warning"><strong>Important:</strong> Failure to complete and file the closeout report could result in the loss of future TIF awards.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="close-project">
+    <h3>Project Information</h3>
+    <p>Most fields in this section are pre-populated from the parent application. You only need to fill in the contact person and phone number.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Jurisdiction</td><td>Applicant jurisdiction name</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Project Name</td><td>Name of the project</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Project Number</td><td>SORTA MTIF project ID</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Project Contact Person</td><td>Name of the contact for this closeout</td><td></td></tr>
+        <tr><td>Phone</td><td>Contact phone number</td><td>Format: (XXX) XXX-XXXX</td></tr>
+        <tr><td>Year Project Funded</td><td>Year the project received funding</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Date of Project Award</td><td>Official award date</td><td><span class="badge badge-auto">Auto</span></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="close-budget">
+    <h3>Initial Project Budget</h3>
+    <p>This section compares the original budgeted amounts. The local funds budgeted amount is pre-populated from the application. Enter the SORTA TIF and other funds amounts. All percentages and totals are calculated automatically.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Local funds budgeted ($)</td><td>Original local funding amount</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Local funds share (%)</td><td>Percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>SORTA's TIF funds awarded ($)</td><td>Original MTIF grant amount</td><td></td></tr>
+        <tr><td>SORTA's TIF share (%)</td><td>Percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Other funds budgeted ($)</td><td>Other funding sources</td><td></td></tr>
+        <tr><td>Other funds share (%)</td><td>Percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Total Project Budget ($)</td><td>Sum of all sources</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="close-actual">
+    <h3>Actual Project Expenses</h3>
+    <p>Enter the actual amounts expended for each funding source. Percentages and totals are calculated automatically.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Local funds expended ($)</td><td>Actual local funds spent</td><td></td></tr>
+        <tr><td>Local funds share (%)</td><td>Percentage of total expended</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>SORTA's TIF funds expended ($)</td><td>Actual MTIF grant funds spent</td><td></td></tr>
+        <tr><td>SORTA's TIF share (%)</td><td>Percentage of total expended</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Other funds expended ($)</td><td>Actual other funds spent</td><td></td></tr>
+        <tr><td>Other funds share (%)</td><td>Percentage of total expended</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+        <tr><td>Total funds expended ($)</td><td>Sum of all expenditures</td><td><span class="badge badge-calc">Calculated</span></td></tr>
+      </tbody>
+    </table>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="close-submit">
+    <h3>Submitting the Closeout Report</h3>
+    <p>After completing all sections:</p>
+    <ol>
+      <li>Review all entries for accuracy</li>
+      <li>Click <strong>Save Draft</strong> to save your progress</li>
+      <li>Use <strong>Print / Save as PDF</strong> to generate a PDF copy</li>
+      <li>Mail the completed report to:</li>
+    </ol>
+    <div style="background: var(--metro-panel); border-radius: 10px; padding: 12px 16px; border: 1px solid var(--metro-border); margin: 12px 0; font-size: 14px;">
+      <strong>SORTA (Attention &mdash; Jason Roe)</strong><br>
+      525 Vine St, Suite 500<br>
+      Cincinnati, Ohio 45202
+    </div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <div class="footer">
+    Southwest Ohio Regional Transit Authority &middot;
+    <a href="https://www.go-metro.com" target="_blank">go-metro.com</a>
+  </div>
+
+</div>
+</body>
+</html>
