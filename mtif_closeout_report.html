@@ -256,9 +256,6 @@
           <button class="metro-button primary" type="button" id="saveDraftButton">
             Save Draft
           </button>
-          <button class="metro-button secondary" type="button" id="exportButton">
-            Export JSON
-          </button>
           <button class="metro-button ghost" type="button" id="clearButton">
             Clear Draft
           </button>
@@ -590,29 +587,13 @@
         draftStatus.textContent = "Draft cleared.";
       };
 
-      const exportJson = () => {
-        const data = {};
-        document.querySelectorAll("input").forEach((input) => {
-          data[input.id] = input.value;
-        });
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "sorta_mtif_closeout_report.json";
-        link.click();
-        URL.revokeObjectURL(url);
-      };
-
       document.querySelectorAll("[data-group]").forEach((input) => {
         const group = input.dataset.group;
         input.addEventListener("input", () => updateGroupTotals(group));
       });
 
       document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
-      document.getElementById("exportButton").addEventListener("click", exportJson);
+
       document.getElementById("clearButton").addEventListener("click", clearDraft);
 
       loadDraft();

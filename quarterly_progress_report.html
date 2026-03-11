@@ -247,9 +247,6 @@
           <button class="metro-button primary" type="button" id="saveDraftButton">
             Save Draft
           </button>
-          <button class="metro-button secondary" type="button" id="exportButton">
-            Export JSON
-          </button>
           <button class="metro-button ghost" type="button" id="clearButton">
             Clear Draft
           </button>
@@ -258,6 +255,22 @@
       </section>
 
       <form id="quarterlyForm">
+        <section class="metro-section">
+          <h3>Record Information</h3>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="quarterlyRecordId">Quarterly Report Record ID</label>
+              <input type="text" id="quarterlyRecordId" name="quarterlyRecordId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+            <div class="metro-col-6">
+              <label for="relatedApplicationId">Related Application ID</label>
+              <input type="text" id="relatedApplicationId" name="relatedApplicationId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;" />
+            </div>
+          </div>
+        </section>
+
         <section class="metro-section">
           <h3>Report Basics</h3>
           <div class="metro-grid">
@@ -377,15 +390,210 @@
               <label for="siteDocumentation">Site Documentation (Include Pictures)</label>
               <input type="file" id="siteDocumentation" name="siteDocumentation" multiple />
               <div class="metro-help">
-                Upload site photos when submitting in OpenGov.
+                Upload site photos and documents. Each file is saved as a separate record.
               </div>
+              <div id="docUploadStatus" style="margin-top:8px; font-size:12px; color:#475569;"></div>
+              <div id="existingDocsList" style="margin-top:8px;"></div>
             </div>
           </div>
         </section>
       </form>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
+      // ============================================================
+      // API Configuration
+      // ============================================================
+      var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+      var API_CONFIG = {
+        baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+        quarterlyTableKey: 'q4zsuxna5',
+        documentsTableKey: 'eoeify9w2',
+        documentsReportId: 'dqe5kymw5',
+        documentFileFieldKey: '8x889kog8',
+        documentsRelFieldKey: 'aaxyzjig4'
+      };
+
+      // ============================================================
+      // Token helpers
+      // ============================================================
+      function looksLikeSaltedCiphertext(s) {
+        return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+      }
+
+      function safeJsonParse(s) {
+        try { return JSON.parse(s); } catch (_) { return null; }
+      }
+
+      function extractAccessToken(decrypted) {
+        if (typeof decrypted !== 'string') return '';
+        var t = decrypted.trim();
+        if (!t) return '';
+        var j = safeJsonParse(t);
+        if (j && typeof j === 'object') {
+          if (j.access_token) return String(j.access_token);
+          if (j.token) return String(j.token);
+        }
+        return t;
+      }
+
+      function bootstrapToken() {
+        var enc = '';
+        try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+        if (!enc || typeof CryptoJS === 'undefined') return '';
+        try {
+          var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+          if (!dec) return '';
+          var tok = extractAccessToken(dec);
+          if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+          return tok;
+        } catch (_) {
+          return '';
+        }
+      }
+
+      function getAuthToken() {
+        return Promise.resolve(bootstrapToken() || null);
+      }
+
+      function apiHeaders(token) {
+        return {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        };
+      }
+
+      function extractFieldValue(row, fieldName) {
+        if (!row) return '';
+        var lower = fieldName.toLowerCase().replace(/[\s\/]+/g, '_');
+        var keys = Object.keys(row);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          var normalised = k.toLowerCase().replace(/^tbl[a-z0-9]+_/, '').replace(/[\s\/]+/g, '_');
+          if (normalised === lower) return row[k];
+          if (k.toLowerCase() === lower) return row[k];
+        }
+        if (row[fieldName] !== undefined) return row[fieldName];
+        return '';
+      }
+
+      // ============================================================
+      // Upload documents to child table
+      // ============================================================
+      function uploadDocuments(quarterlyRecordId) {
+        var fileInput = document.getElementById('siteDocumentation');
+        var statusEl = document.getElementById('docUploadStatus');
+        if (!fileInput.files || fileInput.files.length === 0) return Promise.resolve();
+
+        return getAuthToken().then(function (token) {
+          if (!token) throw new Error('Not authenticated');
+
+          var files = Array.from(fileInput.files);
+          statusEl.textContent = 'Uploading ' + files.length + ' file(s)...';
+
+          var promises = files.map(function (file) {
+            return new Promise(function (resolve, reject) {
+              var reader = new FileReader();
+              reader.onload = function () {
+                var base64 = reader.result.split(',')[1];
+
+                var payload = {
+                  ApplicationTableKey: API_CONFIG.documentsTableKey,
+                  FieldsList: [
+                    { Name: 'related_quarterly_reports', Value: String(quarterlyRecordId), Key: API_CONFIG.documentsRelFieldKey },
+                    { Name: 'name', Value: file.name },
+                    { Name: 'file', Value: file.name, Key: API_CONFIG.documentFileFieldKey, base64EncodedFile: base64 }
+                  ]
+                };
+
+                fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+                  method: 'POST',
+                  headers: apiHeaders(token),
+                  body: JSON.stringify(payload)
+                }).then(function (r) {
+                  if (!r.ok) throw new Error('Upload ' + file.name + ': ' + r.status);
+                  return r.json();
+                }).then(function (result) {
+                  console.log('[QPR] Uploaded document:', file.name, 'record:', result.recordId || result.Rid);
+                  resolve(result);
+                }).catch(reject);
+              };
+              reader.onerror = function () { reject(new Error('Read failed: ' + file.name)); };
+              reader.readAsDataURL(file);
+            });
+          });
+
+          return Promise.all(promises).then(function (results) {
+            statusEl.textContent = results.length + ' file(s) uploaded successfully.';
+            statusEl.style.color = '#059669';
+            fileInput.value = '';
+            var qid = document.getElementById('quarterlyRecordId').value;
+            if (qid) loadDocuments(qid);
+          });
+        }).catch(function (err) {
+          console.error('[QPR] Upload error:', err);
+          statusEl.textContent = 'Upload failed: ' + err.message;
+          statusEl.style.color = '#991b1b';
+        });
+      }
+
+      // ============================================================
+      // Load existing documents from child table
+      // ============================================================
+      function loadDocuments(quarterlyRecordId) {
+        if (!quarterlyRecordId) return;
+
+        getAuthToken().then(function (token) {
+          if (!token) return;
+
+          var payload = {
+            ApplicationTableKeyId: API_CONFIG.documentsTableKey,
+            ReportId: API_CONFIG.documentsReportId,
+            PageNumber: 1,
+            PageSize: 500
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Documents report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && data.Records) || [];
+            console.log('[QPR] Documents report returned', rows.length, 'rows');
+
+            var docs = rows.filter(function (row) {
+              var rel = extractFieldValue(row, 'Related Quarterly Reports') ||
+                        extractFieldValue(row, 'related_quarterly_reports') || '';
+              return String(rel) === String(quarterlyRecordId);
+            });
+
+            console.log('[QPR] Found', docs.length, 'documents for quarterly report', quarterlyRecordId);
+
+            var listEl = document.getElementById('existingDocsList');
+            if (docs.length === 0) {
+              listEl.innerHTML = '<span style="font-size:12px; color:#94a3b8;">No documents uploaded yet.</span>';
+              return;
+            }
+
+            var html = '<div style="font-size:12px; font-weight:700; margin-bottom:4px;">Uploaded Documents:</div>';
+            docs.forEach(function (doc) {
+              var name = extractFieldValue(doc, 'name') || 'Unnamed file';
+              var rid = doc.id || doc.Rid || extractFieldValue(doc, 'Record Id');
+              html += '<div style="padding:4px 0; font-size:13px; color:#0f172a;">&#x1F4CE; ' + name + ' <span style="color:#94a3b8; font-size:11px;">(Record ' + rid + ')</span></div>';
+            });
+            listEl.innerHTML = html;
+          });
+        }).catch(function (err) {
+          console.error('[QPR] Load documents error:', err);
+        });
+      }
+
       const storageKey = "sorta_quarterly_progress_report_draft_v1";
       const draftStatus = document.getElementById("draftStatus");
 
@@ -422,33 +630,36 @@
         draftStatus.textContent = "Draft cleared.";
       };
 
-      const exportJson = () => {
-        const data = {};
-        document.querySelectorAll("input, textarea, select").forEach((field) => {
-          if (field.type === "file") {
-            data[field.id] = field.files.length
-              ? Array.from(field.files).map((file) => file.name)
-              : "";
-            return;
-          }
-          data[field.id] = field.value;
-        });
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "sorta_quarterly_progress_report.json";
-        link.click();
-        URL.revokeObjectURL(url);
-      };
-
       document.getElementById("saveDraftButton").addEventListener("click", saveDraft);
-      document.getElementById("exportButton").addEventListener("click", exportJson);
       document.getElementById("clearButton").addEventListener("click", clearDraft);
 
       loadDraft();
+
+      // Populate read-only record fields from localStorage or URL params
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var recordId = localStorage.getItem('mtif_child_record_id') || params.get('recordId') || '';
+        var relatedAppId = localStorage.getItem('mtif_child_related_app_id') || params.get('relatedApplicationId') || '';
+
+        if (recordId) {
+          document.getElementById('quarterlyRecordId').value = recordId;
+          loadDocuments(recordId);
+        }
+        if (relatedAppId) {
+          document.getElementById('relatedApplicationId').value = relatedAppId;
+        }
+      })();
+
+      // Upload documents when files are selected
+      document.getElementById('siteDocumentation').addEventListener('change', function () {
+        var qid = document.getElementById('quarterlyRecordId').value;
+        if (!qid) {
+          document.getElementById('docUploadStatus').textContent = 'Cannot upload: no quarterly report record ID.';
+          document.getElementById('docUploadStatus').style.color = '#991b1b';
+          return;
+        }
+        uploadDocuments(qid);
+      });
     </script>
   </body>
 </html>
