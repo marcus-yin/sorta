@@ -220,6 +220,35 @@
         margin-left: 8px;
       }
 
+      .eval-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: var(--metro-panel);
+        border: 1px solid var(--metro-border);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .eval-row .eval-info { flex: 1; }
+      .eval-row .eval-name { font-weight: 600; color: var(--metro-navy); }
+      .eval-row .eval-email { font-size: 12px; color: var(--metro-slate); }
+
+      .eval-remove {
+        background: none;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .eval-remove:hover { background: #fee2e2; }
+
       .metro-toast {
         position: fixed;
         top: 24px;
@@ -299,6 +328,26 @@
             </div>
           </section>
         </form>
+
+        <!-- Assigned Evaluators Section -->
+        <section class="metro-section scoring-section" id="evaluatorsSection">
+          <h3>Assigned Evaluators</h3>
+          <p style="font-size:13px; color:#475569; margin-bottom:12px;">Multiple evaluators can be assigned to review this application. Add or remove evaluators below.</p>
+          <div id="evaluatorsList" style="margin-bottom:12px;"></div>
+          <div class="metro-grid">
+            <div class="metro-col-6">
+              <label for="newEvaluatorEmail">Evaluator Email</label>
+              <input type="email" id="newEvaluatorEmail" placeholder="name@example.com" />
+            </div>
+            <div class="metro-col-6">
+              <label for="newEvaluatorName">Evaluator Name</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="newEvaluatorName" placeholder="Full name" style="flex:1;" />
+                <button class="metro-button secondary" type="button" id="addEvaluatorBtn" style="white-space:nowrap;">Add Evaluator</button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -320,7 +369,9 @@
     budgetFundingReportId: 'tvp6ny9w7',
     scheduleRowReportId: 'fz3k5d5q2',
     evaluatorTableKey: 'xrglb4cg4',
-    evaluatorReportId: 'aqjsnp6w4'
+    evaluatorReportId: 'aqjsnp6w4',
+    evalAssignmentTableKey: 'qynzr97g7',
+    evalAssignmentReportId: 'n7r13epq2'
   };
 
   var SCORING_CATEGORY = 'Scoring / Criteria';
@@ -402,7 +453,8 @@
     'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative' },
     'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details' },
     'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' },
-    'field-scoring-criteria-past-performance-score': { name: 'past_performance_score' }
+    'field-scoring-criteria-past-performance-score': { name: 'past_performance_score' },
+    'field-scoring-criteria-justification-summary': { name: 'justification_summary' }
   };
 
   // Full field mapping (same as applicant page)
@@ -519,7 +571,8 @@
     { "Category": "Scoring / Criteria", "FieldName": "Transit impact narrative" },
     { "Category": "Scoring / Criteria", "FieldName": "Multimodal infrastructure details" },
     { "Category": "Scoring / Criteria", "FieldName": "Sustainability measures checklist" },
-    { "Category": "Scoring / Criteria", "FieldName": "Past performance score" }
+    { "Category": "Scoring / Criteria", "FieldName": "Past performance score" },
+    { "Category": "Scoring / Criteria", "FieldName": "Justification summary", "Type": "textarea" }
   ];
 
   var JURISDICTION_NAMES = [
@@ -559,7 +612,7 @@
     if (lower.includes('dollars') || lower.includes('amount') || lower.includes('budget')) return { type: 'number', step: 0.01, min: 0 };
     if (lower.includes('%') || lower.includes('percent') || lower.includes('share')) return { type: 'number', step: 0.01, min: 0, max: 100 };
     if (lower.includes('count') || lower.includes('estimate') || lower.includes('miles')) return { type: 'number', step: 1, min: 0 };
-    if (lower.includes('narrative') || lower.includes('description') || lower.includes('details') || lower.includes('checklist') || lower.includes('note') || lower.includes('list')) return { type: 'textarea' };
+    if (lower.includes('narrative') || lower.includes('description') || lower.includes('details') || lower.includes('checklist') || lower.includes('note') || lower.includes('list') || lower.includes('summary')) return { type: 'textarea' };
     if (lower.includes('latitude/longitude')) return { type: 'text', placeholder: '39.1031, -84.5120' };
     return { type: 'text' };
   };
@@ -811,6 +864,148 @@
     });
   }
 
+  // ---- Assigned Evaluators management (child table backed) ----
+  var assignedEvaluators = []; // { rid, email, name, createdBy }
+  var _currentRecordId = '';
+  var _currentToken = '';
+
+  function escHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderEvaluators() {
+    var container = document.getElementById('evaluatorsList');
+    if (!container) return;
+    if (assignedEvaluators.length === 0) {
+      container.innerHTML = '<p style="font-size:13px; color:#94a3b8; font-style:italic;">No evaluators assigned yet.</p>';
+      return;
+    }
+    container.innerHTML = assignedEvaluators.map(function(ev) {
+      return '<div class="eval-row">'
+        + '<div class="eval-info"><span class="eval-name">' + escHtml(ev.name || ev.email.split('@')[0]) + '</span>'
+        + '<br><span class="eval-email">' + escHtml(ev.email) + '</span></div>'
+        + '<button class="eval-remove" data-rid="' + ev.rid + '">Remove</button>'
+        + '</div>';
+    }).join('');
+
+    container.querySelectorAll('.eval-remove').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var rid = this.getAttribute('data-rid');
+        removeEvaluator(rid);
+      });
+    });
+  }
+
+  function loadEvaluatorAssignments(token, applicationRecordId) {
+    return queryReport(token, API_CONFIG.evalAssignmentReportId).then(function(rows) {
+      assignedEvaluators = [];
+      var appIdStr = String(applicationRecordId);
+      rows.forEach(function(row) {
+        var rowAppId = '';
+        var rowEmail = '';
+        var rowName = '';
+        var rowRid = row.id || row.Rid || '';
+        var rowCreatedBy = '';
+
+        Object.keys(row).forEach(function(key) {
+          var col = stripPrefix(key);
+          if (col === 'application_record_id') rowAppId = String(row[key] || '');
+          if (col === 'evaluator_email') rowEmail = String(row[key] || '');
+          if (col === 'evaluator_name') rowName = String(row[key] || '');
+          if (col === 'Created By') rowCreatedBy = String(row[key] || '');
+        });
+
+        if (rowAppId === appIdStr && rowEmail) {
+          assignedEvaluators.push({
+            rid: rowRid,
+            email: rowEmail.toLowerCase(),
+            name: rowName || rowEmail.split('@')[0],
+            createdBy: rowCreatedBy
+          });
+        }
+      });
+      renderEvaluators();
+      console.log('[EVAL] Loaded', assignedEvaluators.length, 'evaluator assignments');
+    });
+  }
+
+  function addEvaluatorToTable(token, applicationRecordId, email, name) {
+    var payload = {
+      ApplicationTableKey: API_CONFIG.evalAssignmentTableKey,
+      FieldsList: [
+        { Name: 'application_record_id', Value: String(applicationRecordId) },
+        { Name: 'evaluator_email', Value: email },
+        { Name: 'evaluator_name', Value: name }
+      ]
+    };
+
+    return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Add evaluator: ' + r.status);
+      return r.json();
+    }).then(function(result) {
+      var newRid = result.recordId || result.Rid || '';
+      assignedEvaluators.push({ rid: newRid, email: email, name: name || email.split('@')[0] });
+      renderEvaluators();
+      showToast('Evaluator added', 'success');
+    }).catch(function(err) {
+      console.error('[EVAL] Add evaluator error:', err);
+      showToast('Error adding evaluator', 'error');
+    });
+  }
+
+  function removeEvaluator(rid) {
+    if (!rid) { showToast('Cannot remove: no record ID', 'error'); return; }
+
+    getAuthToken().then(function(token) {
+      return fetch(API_CONFIG.baseURL + '/api/FormAction/deletedata', {
+        method: 'DELETE',
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          TableKey: API_CONFIG.evalAssignmentTableKey,
+          RecordId: Number(rid)
+        })
+      });
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Delete evaluator: ' + r.status);
+      assignedEvaluators = assignedEvaluators.filter(function(e) { return String(e.rid) !== String(rid); });
+      renderEvaluators();
+      showToast('Evaluator removed', 'success');
+    }).catch(function(err) {
+      console.error('[EVAL] Remove evaluator error:', err);
+      showToast('Error removing evaluator', 'error');
+    });
+  }
+
+  function addEvaluator() {
+    var emailInput = document.getElementById('newEvaluatorEmail');
+    var nameInput = document.getElementById('newEvaluatorName');
+    var email = (emailInput.value || '').trim().toLowerCase();
+    var name = (nameInput.value || '').trim();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('Please enter a valid email address', 'error');
+      return;
+    }
+
+    if (assignedEvaluators.some(function(e) { return e.email === email; })) {
+      showToast('This evaluator is already assigned', 'error');
+      return;
+    }
+
+    emailInput.value = '';
+    nameInput.value = '';
+
+    getAuthToken().then(function(token) {
+      return addEvaluatorToTable(token, _currentRecordId, email, name || email.split('@')[0]);
+    });
+  }
+
   function saveScores(token, recordId) {
     var fieldsList = [];
     Object.keys(SCORING_FIELD_MAPPING).forEach(function(formId) {
@@ -913,8 +1108,20 @@
             })
           ];
 
+          // Load evaluator assignments from child table
+          _currentRecordId = recordId;
+          _currentToken = token;
+          reports.push(
+            loadEvaluatorAssignments(token, recordId).then(function() {
+              // Auto-add the current evaluator if not already assigned
+              if (email && !assignedEvaluators.some(function(e) { return e.email === email.toLowerCase(); })) {
+                return addEvaluatorToTable(token, recordId, email.toLowerCase(), email.split('@')[0]);
+              }
+            })
+          );
+
           Promise.all(reports).then(function() {
-            console.log('[EVAL] All reports loaded');
+            console.log('[EVAL] All reports and evaluator assignments loaded');
           }).catch(function(err) {
             console.warn('[EVAL] Some reports failed to load:', err);
           });
@@ -938,6 +1145,16 @@
           document.getElementById('printButton').addEventListener('click', function() {
             window.print();
           });
+
+          document.getElementById('addEvaluatorBtn').addEventListener('click', addEvaluator);
+          document.getElementById('newEvaluatorEmail').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); addEvaluator(); }
+          });
+          document.getElementById('newEvaluatorName').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); addEvaluator(); }
+          });
+
+          renderEvaluators();
         });
       });
     }).catch(function(err) {
