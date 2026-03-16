@@ -1,0 +1,118 @@
+Test ID,Category,Scenario,Steps,Expected Result,Priority,Status
+TC-E01,Access Control,Authorized evaluator accesses landing page,"1. Log in as a user whose email is listed in the evaluator table (xrglb4cg4)
+2. Navigate to sorta_evaluator_landing.html","Loading spinner appears briefly, then the evaluator dashboard is displayed with the user's email and EVALUATOR badge visible. Metrics and application table load successfully.",High,Not Started
+TC-E02,Access Control,Unauthorized user accesses landing page,"1. Log in as a user whose email is NOT in the evaluator table
+2. Navigate to sorta_evaluator_landing.html","Loading spinner appears, then 'Access Denied' message is displayed. No application data or dashboard elements are visible.",High,Not Started
+TC-E03,Access Control,Unauthenticated user accesses landing page,"1. Clear localStorage (no auth token)
+2. Navigate to sorta_evaluator_landing.html","Access Denied screen is displayed with a message about authentication required.",High,Not Started
+TC-E04,Access Control,Authorized evaluator accesses evaluator application page,"1. Log in as an authorized evaluator
+2. Navigate to mtif_application_evaluator.html with a valid recordId parameter","Loading spinner appears, access is verified, and the application data loads in read-only mode with the Scoring section editable.",High,Not Started
+TC-E05,Access Control,Unauthorized user accesses evaluator application page,"1. Log in as a non-evaluator user
+2. Navigate to mtif_application_evaluator.html with a valid recordId","Access Denied message is displayed. No application data is visible.",High,Not Started
+TC-E06,Access Control,Evaluator application page accessed without recordId,"1. Log in as an authorized evaluator
+2. Navigate to mtif_application_evaluator.html without a recordId parameter and without mtif_current_application_id in localStorage","Access Denied screen displays with message 'No application record ID provided.'",Medium,Not Started
+TC-E07,Landing Page - Dashboard,Metrics display correctly,"1. Log in as an authorized evaluator
+2. Observe the metrics dashboard at the top of the landing page","Total Applications count matches the number of rows in the table. Submitted and Draft counts correctly categorize applications by status.",Medium,Not Started
+TC-E08,Landing Page - Filters,Search filter by project name,"1. Enter a known project name (partial or full) in the Search field","Table filters to show only applications whose project name contains the search text. Metrics update to reflect filtered count.",Medium,Not Started
+TC-E09,Landing Page - Filters,Search filter by jurisdiction,"1. Enter a known jurisdiction name in the Search field","Table filters to show only applications whose jurisdiction contains the search text.",Medium,Not Started
+TC-E10,Landing Page - Filters,Search filter by creator email,"1. Enter a known creator email (partial or full) in the Search field","Table filters to show only applications whose Created By field contains the search text.",Medium,Not Started
+TC-E11,Landing Page - Filters,Status dropdown filter,"1. Select 'Submitted' from the Status dropdown
+2. Then select 'Draft'","Table shows only applications matching the selected status. Status badges reflect the correct state.",Medium,Not Started
+TC-E12,Landing Page - Filters,Jurisdiction dropdown filter,"1. Select a jurisdiction from the Jurisdiction dropdown","Table shows only applications from the selected jurisdiction. Dropdown options are dynamically populated from available data.",Medium,Not Started
+TC-E13,Landing Page - Filters,Combined filters,"1. Enter a search term
+2. Select a status from the dropdown
+3. Select a jurisdiction","Table shows only applications matching ALL active filter criteria simultaneously.",Medium,Not Started
+TC-E14,Landing Page - Filters,Clear Filters button,"1. Apply one or more filters
+2. Click the 'Clear Filters' button","All filter inputs are reset to empty/default. Table shows all applications again. Metrics update accordingly.",Low,Not Started
+TC-E15,Landing Page - Navigation,Evaluate button navigates to evaluator application page,"1. Click the 'Evaluate' button on any application row","Browser navigates to the evaluator application page URL with the correct recordId query parameter. The application's record ID is also stored in localStorage as mtif_current_application_id.",High,Not Started
+TC-E16,Landing Page - Table,Applications table displays all applications,"1. Log in as an evaluator
+2. View the applications table","Table displays ALL submitted and draft applications (not just the evaluator's own). Columns show Record ID, Jurisdiction, Project Name, Project ID, Status (with badge), Created By, and an Evaluate button.",High,Not Started
+TC-E17,Landing Page - Table,Applications sorted by Record ID descending,"1. View the applications table","Applications are listed with the highest Record ID first (most recent at the top).",Low,Not Started
+TC-E18,Landing Page - Table,Empty state when no applications match filters,"1. Enter a search term that matches no applications","Table is hidden and 'No Applications Found' empty state is displayed.",Low,Not Started
+TC-E19,Evaluator App - Read Only,Application fields are read-only,"1. Navigate to the evaluator application page for a specific application
+2. Attempt to edit fields in Applicant/Jurisdiction, Project Header, Location/Transit, Budget/Funding, and Schedule & ROW sections","All fields in non-scoring sections are read-only (input fields have readonly attribute, selects are disabled). Field values are populated from the database.",High,Not Started
+TC-E20,Evaluator App - Read Only,Application Record ID is displayed,"1. Navigate to the evaluator application page","The Application Record ID field at the top shows the correct record ID and is read-only.",Medium,Not Started
+TC-E21,Evaluator App - Scoring,Scoring / Criteria section is editable,"1. Navigate to the evaluator application page
+2. Locate the Scoring / Criteria section","The Scoring section has a distinct visual highlight (green border). All fields within this section are editable (not readonly/disabled).",High,Not Started
+TC-E22,Evaluator App - Scoring,Physical condition narrative field,"1. Enter text in the 'Physical condition narrative' textarea
+2. Save scores","Value is accepted and saved. Field renders as a full-width textarea.",Medium,Not Started
+TC-E23,Evaluator App - Scoring,Safety issues narrative field,"1. Enter text in the 'Safety issues narrative' textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E24,Evaluator App - Scoring,Project priority ranking field,"1. Enter a ranking value (e.g. 1st, 2nd, 3rd)
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E25,Evaluator App - Scoring,Economic growth & connectivity narrative,"1. Enter text in the narrative textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E26,Evaluator App - Scoring,Match % (calculated from budget) field,"1. Enter a percentage value
+2. Save scores","Value is accepted. Field has number type with min 0, max 100, step 0.01.",Medium,Not Started
+TC-E27,Evaluator App - Scoring,Regional impact narrative field,"1. Enter text in the narrative textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E28,Evaluator App - Scoring,Average Daily Traffic (ADT) field,"1. Enter a numeric value
+2. Save scores","Value is accepted. Field has number input type.",Medium,Not Started
+TC-E29,Evaluator App - Scoring,Relative Economic Strength score field,"1. Enter a numeric score value
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E30,Evaluator App - Scoring,Transit impact narrative field,"1. Enter text in the narrative textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E31,Evaluator App - Scoring,Multimodal infrastructure details field,"1. Enter details in the textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E32,Evaluator App - Scoring,Sustainability measures checklist field,"1. Enter checklist items in the textarea
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E33,Evaluator App - Scoring,Past performance score field,"1. Enter a numeric score
+2. Save scores","Value is accepted and saved.",Medium,Not Started
+TC-E34,Evaluator App - Scoring,Justification summary field,"1. Enter a multi-paragraph justification in the textarea
+2. Save scores","Value is accepted and saved. Field renders as a full-width textarea with adequate height for long text.",High,Not Started
+TC-E35,Evaluator App - Save,Save Scores - success,"1. Fill in one or more scoring fields
+2. Click 'Save Scores'","Button text changes to 'Saving...', then a green success toast appears: 'Scores saved successfully'. Button re-enables with original text. Data is persisted to the database.",High,Not Started
+TC-E36,Evaluator App - Save,Save Scores - no data entered,"1. Leave all scoring fields empty
+2. Click 'Save Scores'","A red error toast appears: 'No scoring data to save'. No API call is made.",Medium,Not Started
+TC-E37,Evaluator App - Save,Save Scores - API error,"1. Fill in scoring fields
+2. Simulate an API failure (e.g. invalid token or network issue)
+3. Click 'Save Scores'","A red error toast appears: 'Error saving scores'. Button re-enables. User can retry.",Medium,Not Started
+TC-E38,Evaluator App - Save,Save Scores - data persists on reload,"1. Enter scoring data and save
+2. Navigate away from the page
+3. Return to the same application","Previously saved scoring values are populated in the form fields.",High,Not Started
+TC-E39,Evaluator App - Print,Print / Save as PDF button,"1. Click the 'Print / Save as PDF' button","Browser print dialog opens. The printed/PDF output hides action buttons, status bar, toast notifications, and navigation. Form content is cleanly formatted.",Medium,Not Started
+TC-E40,Evaluator App - Navigation,Section navigation links,"1. Click on different section names in the navigation bar (e.g. Applicant/Jurisdiction, Budget/Funding, Scoring / Criteria)","Page scrolls smoothly to the corresponding section.",Low,Not Started
+TC-E41,Evaluators - Display,Evaluators section displays on page load,"1. Navigate to the evaluator application page for a specific application","The 'Assigned Evaluators' section is visible below the form. The current logged-in evaluator is automatically added to the list if not already present.",High,Not Started
+TC-E42,Evaluators - Add,Add evaluator with valid email and name,"1. Enter a valid email (e.g. reviewer@example.com) in the Evaluator Email field
+2. Enter a name in the Evaluator Name field
+3. Click 'Add Evaluator'","A new record is created in the evaluator assignment table (qynzr97g7). The evaluator appears in the list with their name and email. Green success toast: 'Evaluator added'. Input fields are cleared.",High,Not Started
+TC-E43,Evaluators - Add,Add evaluator with valid email and no name,"1. Enter a valid email address
+2. Leave the name field empty
+3. Click 'Add Evaluator'","Evaluator is added successfully. The display name defaults to the portion of the email before the @ symbol.",Medium,Not Started
+TC-E44,Evaluators - Add,Add evaluator with invalid email,"1. Enter an invalid email (e.g. 'notanemail')
+2. Click 'Add Evaluator'","Red error toast: 'Please enter a valid email address'. No record is created.",Medium,Not Started
+TC-E45,Evaluators - Add,Add evaluator with empty email,"1. Leave the email field empty
+2. Click 'Add Evaluator'","Red error toast: 'Please enter a valid email address'. No record is created.",Medium,Not Started
+TC-E46,Evaluators - Add,Add duplicate evaluator,"1. Add an evaluator with email reviewer@example.com
+2. Try to add the same email again","Red error toast: 'This evaluator is already assigned'. No duplicate record is created.",Medium,Not Started
+TC-E47,Evaluators - Add,Add evaluator via Enter key,"1. Enter a valid email and name
+2. Press Enter in either input field","Evaluator is added (same as clicking the button). Form submits via Enter key handler on both fields.",Low,Not Started
+TC-E48,Evaluators - Remove,Remove an evaluator,"1. Click the 'Remove' button next to an assigned evaluator","The evaluator record is deleted from the assignment table (qynzr97g7). The evaluator disappears from the list. Green success toast: 'Evaluator removed'.",High,Not Started
+TC-E49,Evaluators - Remove,Remove evaluator - API error,"1. Simulate a network/API failure
+2. Click 'Remove' on an evaluator","Red error toast: 'Error removing evaluator'. Evaluator remains in the list.",Medium,Not Started
+TC-E50,Evaluators - Auto-assign,Current evaluator auto-assigned on first visit,"1. Log in as evaluator1@example.com
+2. Navigate to an application that has no evaluator assignments yet","After reports load, evaluator1@example.com is automatically added to the assignment table and appears in the evaluator list.",High,Not Started
+TC-E51,Evaluators - Auto-assign,Current evaluator not duplicated on revisit,"1. Log in as evaluator1@example.com
+2. Navigate to an application where evaluator1@example.com is already assigned","Evaluator list loads from the database. The current evaluator is NOT added again (no duplicate).",Medium,Not Started
+TC-E52,Evaluators - Persistence,Evaluator assignments persist across sessions,"1. Add two evaluators to an application
+2. Close the browser and reopen the page
+3. Navigate to the same application","Both evaluators appear in the Assigned Evaluators list, loaded from the child table report (n7r13epq2).",High,Not Started
+TC-E53,Evaluators - Isolation,Evaluator assignments are per-application,"1. Add evaluators to Application A
+2. Navigate to Application B","Application B shows its own set of assigned evaluators (or none). Assignments from Application A do not bleed into Application B.",High,Not Started
+TC-E54,Evaluators - Empty State,No evaluators assigned state,"1. Navigate to an application with no evaluator records (before auto-assign runs)","The evaluator list area shows: 'No evaluators assigned yet.' in italic gray text.",Low,Not Started
+TC-E55,Evaluator App - Data Load,All application sections load data from reports,"1. Navigate to the evaluator application page for a record that has data in all sections","Fields in Applicant/Jurisdiction, Project Header, Location/Transit, Budget/Funding, and Schedule & ROW sections are populated with the correct values from their respective reports.",High,Not Started
+TC-E56,Evaluator App - Data Load,Scoring fields load previously saved data,"1. Save scores on an application
+2. Navigate away and return to the same application","All previously saved scoring field values (narratives, numbers, justification summary) are re-populated in the Scoring section.",High,Not Started
+TC-E57,Evaluator App - UI,Evaluator badge displays in header,"1. Navigate to the evaluator application page","The header shows 'MTIF Application' with an 'Evaluator View' badge styled distinctly.",Low,Not Started
+TC-E58,Evaluator App - UI,Evaluator email displays in status area,"1. Navigate to the evaluator application page","The status area shows 'Evaluator: user@example.com' with the logged-in user's email.",Low,Not Started
+TC-E59,Evaluator App - UI,Responsive layout on mobile,"1. Resize browser to mobile width (< 900px)","Grid columns collapse to full width. Banner adjusts to column layout. All content remains accessible and usable.",Low,Not Started
+TC-E60,End-to-End,Full evaluator workflow,"1. Log in as an authorized evaluator
+2. Land on the evaluator dashboard
+3. Use filters to find a specific application
+4. Click 'Evaluate' to open it
+5. Review read-only application data
+6. Fill in all scoring fields and justification summary
+7. Add two additional evaluators
+8. Save scores
+9. Print/save as PDF
+10. Return to the dashboard","Each step completes successfully. Scores are persisted. Evaluators are persisted in the child table. PDF output is clean. Dashboard reflects the correct data throughout.",High,Not Started

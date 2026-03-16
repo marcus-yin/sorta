@@ -309,6 +309,91 @@
 
     .sorta-footer a { color: #003da5; text-decoration: none; }
 
+    /* Evaluator Team Panel */
+    .eval-team-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .eval-team-section h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: #0f172a;
+      font-weight: 700;
+      padding-left: 12px;
+      border-left: 4px solid #003da5;
+    }
+
+    .eval-team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .eval-team-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      transition: box-shadow 0.15s;
+    }
+
+    .eval-team-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+    .eval-team-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #003da5;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .eval-team-info { overflow: hidden; }
+
+    .eval-team-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .eval-team-email {
+      font-size: 12px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .eval-team-you {
+      display: inline-block;
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
+    }
+
     @media (max-width: 860px) {
       .sorta-banner { padding: 20px 16px; }
       .sorta-logo { height: 52px; }
@@ -368,6 +453,11 @@
           <h3 id="metric_draft">0</h3>
           <p>Draft</p>
         </div>
+      </div>
+
+      <div class="eval-team-section" id="eval_team_section" style="display:none;">
+        <h2>Evaluation Team</h2>
+        <div class="eval-team-grid" id="eval_team_grid"></div>
       </div>
 
       <div class="sorta-filters">
@@ -547,17 +637,51 @@
       }).then(function(data) {
         var rows = Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
         var emailLower = email.toLowerCase();
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i];
-          var keys = Object.keys(row);
-          for (var k = 0; k < keys.length; k++) {
-            var key = keys[k];
-            if (stripPrefix(key).toLowerCase().replace(/[\s_]/g, '') === 'email') {
-              if (String(row[key]).toLowerCase() === emailLower) return true;
+        var isEvaluator = false;
+        var evaluatorList = [];
+
+        rows.forEach(function(row) {
+          var rowEmail = '';
+          var rowName = '';
+          Object.keys(row).forEach(function(key) {
+            var col = stripPrefix(key).toLowerCase().replace(/[\s_]/g, '');
+            if (col === 'email') rowEmail = String(row[key] || '');
+            if (col === 'name' || col === 'evaluatorname' || col === 'fullname' || col === 'firstname') {
+              rowName = String(row[key] || '');
             }
+          });
+          if (rowEmail) {
+            evaluatorList.push({ email: rowEmail, name: rowName });
+            if (rowEmail.toLowerCase() === emailLower) isEvaluator = true;
           }
-        }
-        return false;
+        });
+
+        return { isEvaluator: isEvaluator, evaluators: evaluatorList };
+      });
+    }
+
+    function renderEvaluatorTeam(evaluators, currentEmail) {
+      var section = $('eval_team_section');
+      var grid = $('eval_team_grid');
+      if (!evaluators || evaluators.length === 0) return;
+
+      section.style.display = 'block';
+      grid.innerHTML = '';
+
+      evaluators.forEach(function(ev) {
+        var name = ev.name || ev.email.split('@')[0];
+        var initials = name.split(/[\s._-]+/).map(function(w) { return w.charAt(0); }).join('').substring(0, 2);
+        var isYou = ev.email.toLowerCase() === (currentEmail || '').toLowerCase();
+
+        var card = document.createElement('div');
+        card.className = 'eval-team-card';
+        card.innerHTML =
+          '<div class="eval-team-avatar">' + initials.toUpperCase() + '</div>' +
+          '<div class="eval-team-info">' +
+            '<div class="eval-team-name">' + name + (isYou ? '<span class="eval-team-you">You</span>' : '') + '</div>' +
+            '<div class="eval-team-email">' + ev.email + '</div>' +
+          '</div>';
+        grid.appendChild(card);
       });
     }
 
@@ -712,16 +836,18 @@
         return getUserProfile(token).then(function(profile) {
           var email = (profile && profile.Email) || '';
 
-          return checkEvaluatorAccess(token, email).then(function(isEvaluator) {
+          return checkEvaluatorAccess(token, email).then(function(result) {
             $('eval_loading_screen').style.display = 'none';
 
-            if (!isEvaluator) {
+            if (!result.isEvaluator) {
               $('eval_access_denied').style.display = 'block';
               return;
             }
 
             $('eval_content').style.display = 'block';
             $('eval_user_email').textContent = email;
+
+            renderEvaluatorTeam(result.evaluators, email);
 
             return queryAllApplications(token).then(function(rows) {
               console.log('[EVAL-LANDING] Loaded', rows.length, 'applications');

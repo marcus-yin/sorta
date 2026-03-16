@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORTA MTIF - Evaluator Test Plan</title>
+  <style>
+    :root {
+      --navy: #003da5;
+      --navy-light: #1b4fbf;
+      --red: #e4002b;
+      --white: #ffffff;
+      --panel: #f8fafc;
+      --border: #e2e8f0;
+      --slate: #475569;
+      --dark: #0f172a;
+      --green: #16a34a;
+      --amber: #d97706;
+      --sky: #0284c7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #f1f5f9;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    .banner {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 60%, #0b1f3a 100%);
+      padding: 28px 20px 22px;
+      text-align: center;
+      border-bottom: 4px solid var(--red);
+    }
+
+    .banner-logo {
+      height: 56px;
+      background: var(--white);
+      padding: 6px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .banner h1 { color: var(--white); font-size: 22px; font-weight: 700; }
+    .banner p { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      background: var(--white);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .toolbar label { font-size: 12px; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .toolbar select,
+    .toolbar input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--white);
+      color: var(--dark);
+      min-width: 160px;
+    }
+
+    .toolbar select:focus,
+    .toolbar input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,61,165,0.12); }
+
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border-top: 3px solid var(--border);
+    }
+
+    .metric-card.total { border-top-color: var(--navy); }
+    .metric-card.high { border-top-color: var(--red); }
+    .metric-card.pass { border-top-color: var(--green); }
+    .metric-card.fail { border-top-color: #dc2626; }
+    .metric-card.skip { border-top-color: var(--amber); }
+    .metric-card.pending { border-top-color: var(--slate); }
+
+    .metric-value { font-size: 28px; font-weight: 700; color: var(--dark); }
+    .metric-label { font-size: 12px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    .progress-bar-wrap {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .progress-bar-wrap h3 { font-size: 14px; margin-bottom: 8px; color: var(--dark); }
+
+    .progress-track {
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 7px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .progress-fill-pass { background: var(--green); transition: width 0.3s; }
+    .progress-fill-fail { background: #dc2626; transition: width 0.3s; }
+    .progress-fill-skip { background: var(--amber); transition: width 0.3s; }
+
+    .progress-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--slate);
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .category-group { margin-bottom: 24px; }
+
+    .category-header {
+      background: var(--white);
+      padding: 14px 18px;
+      border-radius: 12px 12px 0 0;
+      border-bottom: 2px solid var(--navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .category-header:hover { background: #f8fafc; }
+    .category-header h2 { font-size: 16px; color: var(--navy); }
+
+    .category-count {
+      font-size: 12px;
+      background: var(--navy);
+      color: var(--white);
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .category-body {
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      overflow: hidden;
+    }
+
+    .category-body.collapsed { display: none; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead { background: var(--panel); }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: #f8fafc; }
+
+    .col-id { width: 80px; font-weight: 600; color: var(--navy); white-space: nowrap; }
+    .col-scenario { width: 22%; font-weight: 600; }
+    .col-steps { width: 28%; }
+    .col-expected { width: 28%; }
+    .col-priority { width: 70px; text-align: center; }
+    .col-status { width: 120px; text-align: center; }
+
+    .steps-list { padding-left: 18px; margin: 0; }
+    .steps-list li { margin-bottom: 2px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-high { background: #fee2e2; color: #dc2626; }
+    .badge-medium { background: #fef3c7; color: #92400e; }
+    .badge-low { background: #e0f2fe; color: #0369a1; }
+
+    .status-select {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--white);
+      min-width: 110px;
+    }
+
+    .status-select.not-started { border-color: #cbd5e1; color: var(--slate); }
+    .status-select.pass { border-color: var(--green); color: var(--green); background: #f0fdf4; }
+    .status-select.fail { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+    .status-select.blocked { border-color: var(--amber); color: var(--amber); background: #fffbeb; }
+    .status-select.in-progress { border-color: var(--sky); color: var(--sky); background: #f0f9ff; }
+
+    .actions-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+    }
+
+    .btn-primary { background: var(--navy); color: var(--white); }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-secondary { background: var(--white); color: var(--dark); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--panel); }
+    .btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fee2e2; }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--slate);
+    }
+
+    .footer a { color: var(--navy); }
+
+    @media print {
+      .toolbar, .actions-bar, .status-select, .footer { display: none !important; }
+      .banner { padding: 12px; }
+      .category-body.collapsed { display: block !important; }
+      body { background: white; font-size: 11px; }
+      .container { padding: 0 10px; }
+      .metric-card, .progress-bar-wrap, .category-group { box-shadow: none; page-break-inside: avoid; }
+      table { font-size: 11px; }
+      td, th { padding: 6px 8px; }
+    }
+
+    @media (max-width: 768px) {
+      .toolbar { flex-direction: column; }
+      .filter-group { width: 100%; }
+      .toolbar select, .toolbar input[type="text"] { width: 100%; }
+      .col-steps, .col-expected { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <img class="banner-logo" src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg" alt="Metro logo" />
+    <h1>MTIF Evaluator Role &mdash; Test Plan</h1>
+    <p>60 test scenarios across access control, dashboard, scoring, evaluator assignments, and end-to-end workflows</p>
+  </div>
+
+  <div class="container">
+
+    <div class="metrics" id="metricsRow">
+      <div class="metric-card total"><div class="metric-value" id="mTotal">60</div><div class="metric-label">Total</div></div>
+      <div class="metric-card pass"><div class="metric-value" id="mPass">0</div><div class="metric-label">Pass</div></div>
+      <div class="metric-card fail"><div class="metric-value" id="mFail">0</div><div class="metric-label">Fail</div></div>
+      <div class="metric-card skip"><div class="metric-value" id="mBlocked">0</div><div class="metric-label">Blocked</div></div>
+      <div class="metric-card high"><div class="metric-value" id="mInProgress">0</div><div class="metric-label">In Progress</div></div>
+      <div class="metric-card pending"><div class="metric-value" id="mNotStarted">60</div><div class="metric-label">Not Started</div></div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <h3>Overall Progress: <span id="progressPct">0</span>%</h3>
+      <div class="progress-track">
+        <div class="progress-fill-pass" id="barPass" style="width:0%"></div>
+        <div class="progress-fill-fail" id="barFail" style="width:0%"></div>
+        <div class="progress-fill-skip" id="barSkip" style="width:0%"></div>
+      </div>
+      <div class="progress-legend">
+        <span><span class="legend-dot" style="background:#16a34a;"></span> Pass</span>
+        <span><span class="legend-dot" style="background:#dc2626;"></span> Fail</span>
+        <span><span class="legend-dot" style="background:#d97706;"></span> Blocked</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="fSearch" placeholder="ID, scenario, steps..." />
+      </div>
+      <div class="filter-group">
+        <label>Category</label>
+        <select id="fCategory"><option value="">All Categories</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Priority</label>
+        <select id="fPriority">
+          <option value="">All Priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="">All Statuses</option>
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Pass">Pass</option>
+          <option value="Fail">Fail</option>
+          <option value="Blocked">Blocked</option>
+        </select>
+      </div>
+      <div class="actions-bar" style="margin-left:auto;">
+        <button class="btn btn-secondary" id="btnExpandAll">Expand All</button>
+        <button class="btn btn-secondary" id="btnCollapseAll">Collapse All</button>
+        <button class="btn btn-primary" id="btnExport">Export CSV</button>
+        <button class="btn btn-secondary" id="btnPrint">Print</button>
+        <button class="btn btn-danger" id="btnReset">Reset All</button>
+      </div>
+    </div>
+
+    <div id="testContent"></div>
+
+  </div>
+
+  <div class="footer">
+    Southwest Ohio Regional Transit Authority &middot; <a href="https://www.go-metro.com" target="_blank">go-metro.com</a>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var TESTS = [
+      { id:"TC-E01", cat:"Access Control", scenario:"Authorized evaluator accesses landing page", steps:["Log in as a user whose email is listed in the evaluator table (xrglb4cg4)","Navigate to sorta_evaluator_landing.html"], expected:"Loading spinner appears briefly, then the evaluator dashboard is displayed with the user\u2019s email and EVALUATOR badge visible. Metrics and application table load successfully.", priority:"High" },
+      { id:"TC-E02", cat:"Access Control", scenario:"Unauthorized user accesses landing page", steps:["Log in as a user whose email is NOT in the evaluator table","Navigate to sorta_evaluator_landing.html"], expected:"Loading spinner appears, then \u2018Access Denied\u2019 message is displayed. No application data or dashboard elements are visible.", priority:"High" },
+      { id:"TC-E03", cat:"Access Control", scenario:"Unauthenticated user accesses landing page", steps:["Clear localStorage (no auth token)","Navigate to sorta_evaluator_landing.html"], expected:"Access Denied screen is displayed with a message about authentication required.", priority:"High" },
+      { id:"TC-E04", cat:"Access Control", scenario:"Authorized evaluator accesses evaluator application page", steps:["Log in as an authorized evaluator","Navigate to mtif_application_evaluator.html with a valid recordId parameter"], expected:"Loading spinner appears, access is verified, and the application data loads in read-only mode with the Scoring section editable.", priority:"High" },
+      { id:"TC-E05", cat:"Access Control", scenario:"Unauthorized user accesses evaluator application page", steps:["Log in as a non-evaluator user","Navigate to mtif_application_evaluator.html with a valid recordId"], expected:"Access Denied message is displayed. No application data is visible.", priority:"High" },
+      { id:"TC-E06", cat:"Access Control", scenario:"Evaluator application page accessed without recordId", steps:["Log in as an authorized evaluator","Navigate to mtif_application_evaluator.html without a recordId parameter and without mtif_current_application_id in localStorage"], expected:"Access Denied screen displays with message \u2018No application record ID provided.\u2019", priority:"Medium" },
+      { id:"TC-E07", cat:"Landing Page - Dashboard", scenario:"Metrics display correctly", steps:["Log in as an authorized evaluator","Observe the metrics dashboard at the top of the landing page"], expected:"Total Applications count matches the number of rows in the table. Submitted and Draft counts correctly categorize applications by status.", priority:"Medium" },
+      { id:"TC-E08", cat:"Landing Page - Filters", scenario:"Search filter by project name", steps:["Enter a known project name (partial or full) in the Search field"], expected:"Table filters to show only applications whose project name contains the search text. Metrics update to reflect filtered count.", priority:"Medium" },
+      { id:"TC-E09", cat:"Landing Page - Filters", scenario:"Search filter by jurisdiction", steps:["Enter a known jurisdiction name in the Search field"], expected:"Table filters to show only applications whose jurisdiction contains the search text.", priority:"Medium" },
+      { id:"TC-E10", cat:"Landing Page - Filters", scenario:"Search filter by creator email", steps:["Enter a known creator email (partial or full) in the Search field"], expected:"Table filters to show only applications whose Created By field contains the search text.", priority:"Medium" },
+      { id:"TC-E11", cat:"Landing Page - Filters", scenario:"Status dropdown filter", steps:["Select \u2018Submitted\u2019 from the Status dropdown","Then select \u2018Draft\u2019"], expected:"Table shows only applications matching the selected status. Status badges reflect the correct state.", priority:"Medium" },
+      { id:"TC-E12", cat:"Landing Page - Filters", scenario:"Jurisdiction dropdown filter", steps:["Select a jurisdiction from the Jurisdiction dropdown"], expected:"Table shows only applications from the selected jurisdiction. Dropdown options are dynamically populated from available data.", priority:"Medium" },
+      { id:"TC-E13", cat:"Landing Page - Filters", scenario:"Combined filters", steps:["Enter a search term","Select a status from the dropdown","Select a jurisdiction"], expected:"Table shows only applications matching ALL active filter criteria simultaneously.", priority:"Medium" },
+      { id:"TC-E14", cat:"Landing Page - Filters", scenario:"Clear Filters button", steps:["Apply one or more filters","Click the \u2018Clear Filters\u2019 button"], expected:"All filter inputs are reset to empty/default. Table shows all applications again. Metrics update accordingly.", priority:"Low" },
+      { id:"TC-E15", cat:"Landing Page - Navigation", scenario:"Evaluate button navigates to evaluator application page", steps:["Click the \u2018Evaluate\u2019 button on any application row"], expected:"Browser navigates to the evaluator application page URL with the correct recordId query parameter. The application\u2019s record ID is also stored in localStorage as mtif_current_application_id.", priority:"High" },
+      { id:"TC-E16", cat:"Landing Page - Table", scenario:"Applications table displays all applications", steps:["Log in as an evaluator","View the applications table"], expected:"Table displays ALL submitted and draft applications (not just the evaluator\u2019s own). Columns show Record ID, Jurisdiction, Project Name, Project ID, Status (with badge), Created By, and an Evaluate button.", priority:"High" },
+      { id:"TC-E17", cat:"Landing Page - Table", scenario:"Applications sorted by Record ID descending", steps:["View the applications table"], expected:"Applications are listed with the highest Record ID first (most recent at the top).", priority:"Low" },
+      { id:"TC-E18", cat:"Landing Page - Table", scenario:"Empty state when no applications match filters", steps:["Enter a search term that matches no applications"], expected:"Table is hidden and \u2018No Applications Found\u2019 empty state is displayed.", priority:"Low" },
+      { id:"TC-E19", cat:"Evaluator App - Read Only", scenario:"Application fields are read-only", steps:["Navigate to the evaluator application page for a specific application","Attempt to edit fields in Applicant/Jurisdiction, Project Header, Location/Transit, Budget/Funding, and Schedule & ROW sections"], expected:"All fields in non-scoring sections are read-only (input fields have readonly attribute, selects are disabled). Field values are populated from the database.", priority:"High" },
+      { id:"TC-E20", cat:"Evaluator App - Read Only", scenario:"Application Record ID is displayed", steps:["Navigate to the evaluator application page"], expected:"The Application Record ID field at the top shows the correct record ID and is read-only.", priority:"Medium" },
+      { id:"TC-E21", cat:"Evaluator App - Scoring", scenario:"Scoring / Criteria section is editable", steps:["Navigate to the evaluator application page","Locate the Scoring / Criteria section"], expected:"The Scoring section has a distinct visual highlight (green border). All fields within this section are editable (not readonly/disabled).", priority:"High" },
+      { id:"TC-E22", cat:"Evaluator App - Scoring", scenario:"Physical condition narrative field", steps:["Enter text in the \u2018Physical condition narrative\u2019 textarea","Save scores"], expected:"Value is accepted and saved. Field renders as a full-width textarea.", priority:"Medium" },
+      { id:"TC-E23", cat:"Evaluator App - Scoring", scenario:"Safety issues narrative field", steps:["Enter text in the \u2018Safety issues narrative\u2019 textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E24", cat:"Evaluator App - Scoring", scenario:"Project priority ranking field", steps:["Enter a ranking value (e.g. 1st, 2nd, 3rd)","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E25", cat:"Evaluator App - Scoring", scenario:"Economic growth & connectivity narrative", steps:["Enter text in the narrative textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E26", cat:"Evaluator App - Scoring", scenario:"Match % (calculated from budget) field", steps:["Enter a percentage value","Save scores"], expected:"Value is accepted. Field has number type with min 0, max 100, step 0.01.", priority:"Medium" },
+      { id:"TC-E27", cat:"Evaluator App - Scoring", scenario:"Regional impact narrative field", steps:["Enter text in the narrative textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E28", cat:"Evaluator App - Scoring", scenario:"Average Daily Traffic (ADT) field", steps:["Enter a numeric value","Save scores"], expected:"Value is accepted. Field has number input type.", priority:"Medium" },
+      { id:"TC-E29", cat:"Evaluator App - Scoring", scenario:"Relative Economic Strength score field", steps:["Enter a numeric score value","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E30", cat:"Evaluator App - Scoring", scenario:"Transit impact narrative field", steps:["Enter text in the narrative textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E31", cat:"Evaluator App - Scoring", scenario:"Multimodal infrastructure details field", steps:["Enter details in the textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E32", cat:"Evaluator App - Scoring", scenario:"Sustainability measures checklist field", steps:["Enter checklist items in the textarea","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E33", cat:"Evaluator App - Scoring", scenario:"Past performance score field", steps:["Enter a numeric score","Save scores"], expected:"Value is accepted and saved.", priority:"Medium" },
+      { id:"TC-E34", cat:"Evaluator App - Scoring", scenario:"Justification summary field", steps:["Enter a multi-paragraph justification in the textarea","Save scores"], expected:"Value is accepted and saved. Field renders as a full-width textarea with adequate height for long text.", priority:"High" },
+      { id:"TC-E35", cat:"Evaluator App - Save", scenario:"Save Scores \u2013 success", steps:["Fill in one or more scoring fields","Click \u2018Save Scores\u2019"], expected:"Button text changes to \u2018Saving...\u2019, then a green success toast appears: \u2018Scores saved successfully\u2019. Button re-enables with original text. Data is persisted to the database.", priority:"High" },
+      { id:"TC-E36", cat:"Evaluator App - Save", scenario:"Save Scores \u2013 no data entered", steps:["Leave all scoring fields empty","Click \u2018Save Scores\u2019"], expected:"A red error toast appears: \u2018No scoring data to save\u2019. No API call is made.", priority:"Medium" },
+      { id:"TC-E37", cat:"Evaluator App - Save", scenario:"Save Scores \u2013 API error", steps:["Fill in scoring fields","Simulate an API failure (e.g. invalid token or network issue)","Click \u2018Save Scores\u2019"], expected:"A red error toast appears: \u2018Error saving scores\u2019. Button re-enables. User can retry.", priority:"Medium" },
+      { id:"TC-E38", cat:"Evaluator App - Save", scenario:"Save Scores \u2013 data persists on reload", steps:["Enter scoring data and save","Navigate away from the page","Return to the same application"], expected:"Previously saved scoring values are populated in the form fields.", priority:"High" },
+      { id:"TC-E39", cat:"Evaluator App - Print", scenario:"Print / Save as PDF button", steps:["Click the \u2018Print / Save as PDF\u2019 button"], expected:"Browser print dialog opens. The printed/PDF output hides action buttons, status bar, toast notifications, and navigation. Form content is cleanly formatted.", priority:"Medium" },
+      { id:"TC-E40", cat:"Evaluator App - Navigation", scenario:"Section navigation links", steps:["Click on different section names in the navigation bar (e.g. Applicant/Jurisdiction, Budget/Funding, Scoring / Criteria)"], expected:"Page scrolls smoothly to the corresponding section.", priority:"Low" },
+      { id:"TC-E41", cat:"Evaluators - Display", scenario:"Evaluators section displays on page load", steps:["Navigate to the evaluator application page for a specific application"], expected:"The \u2018Assigned Evaluators\u2019 section is visible below the form. The current logged-in evaluator is automatically added to the list if not already present.", priority:"High" },
+      { id:"TC-E42", cat:"Evaluators - Add", scenario:"Add evaluator with valid email and name", steps:["Enter a valid email (e.g. reviewer@example.com) in the Evaluator Email field","Enter a name in the Evaluator Name field","Click \u2018Add Evaluator\u2019"], expected:"A new record is created in the evaluator assignment table (qynzr97g7). The evaluator appears in the list with their name and email. Green success toast: \u2018Evaluator added\u2019. Input fields are cleared.", priority:"High" },
+      { id:"TC-E43", cat:"Evaluators - Add", scenario:"Add evaluator with valid email and no name", steps:["Enter a valid email address","Leave the name field empty","Click \u2018Add Evaluator\u2019"], expected:"Evaluator is added successfully. The display name defaults to the portion of the email before the @ symbol.", priority:"Medium" },
+      { id:"TC-E44", cat:"Evaluators - Add", scenario:"Add evaluator with invalid email", steps:["Enter an invalid email (e.g. \u2018notanemail\u2019)","Click \u2018Add Evaluator\u2019"], expected:"Red error toast: \u2018Please enter a valid email address\u2019. No record is created.", priority:"Medium" },
+      { id:"TC-E45", cat:"Evaluators - Add", scenario:"Add evaluator with empty email", steps:["Leave the email field empty","Click \u2018Add Evaluator\u2019"], expected:"Red error toast: \u2018Please enter a valid email address\u2019. No record is created.", priority:"Medium" },
+      { id:"TC-E46", cat:"Evaluators - Add", scenario:"Add duplicate evaluator", steps:["Add an evaluator with email reviewer@example.com","Try to add the same email again"], expected:"Red error toast: \u2018This evaluator is already assigned\u2019. No duplicate record is created.", priority:"Medium" },
+      { id:"TC-E47", cat:"Evaluators - Add", scenario:"Add evaluator via Enter key", steps:["Enter a valid email and name","Press Enter in either input field"], expected:"Evaluator is added (same as clicking the button). Form submits via Enter key handler on both fields.", priority:"Low" },
+      { id:"TC-E48", cat:"Evaluators - Remove", scenario:"Remove an evaluator", steps:["Click the \u2018Remove\u2019 button next to an assigned evaluator"], expected:"The evaluator record is deleted from the assignment table (qynzr97g7). The evaluator disappears from the list. Green success toast: \u2018Evaluator removed\u2019.", priority:"High" },
+      { id:"TC-E49", cat:"Evaluators - Remove", scenario:"Remove evaluator \u2013 API error", steps:["Simulate a network/API failure","Click \u2018Remove\u2019 on an evaluator"], expected:"Red error toast: \u2018Error removing evaluator\u2019. Evaluator remains in the list.", priority:"Medium" },
+      { id:"TC-E50", cat:"Evaluators - Auto-assign", scenario:"Current evaluator auto-assigned on first visit", steps:["Log in as evaluator1@example.com","Navigate to an application that has no evaluator assignments yet"], expected:"After reports load, evaluator1@example.com is automatically added to the assignment table and appears in the evaluator list.", priority:"High" },
+      { id:"TC-E51", cat:"Evaluators - Auto-assign", scenario:"Current evaluator not duplicated on revisit", steps:["Log in as evaluator1@example.com","Navigate to an application where evaluator1@example.com is already assigned"], expected:"Evaluator list loads from the database. The current evaluator is NOT added again (no duplicate).", priority:"Medium" },
+      { id:"TC-E52", cat:"Evaluators - Persistence", scenario:"Evaluator assignments persist across sessions", steps:["Add two evaluators to an application","Close the browser and reopen the page","Navigate to the same application"], expected:"Both evaluators appear in the Assigned Evaluators list, loaded from the child table report (n7r13epq2).", priority:"High" },
+      { id:"TC-E53", cat:"Evaluators - Isolation", scenario:"Evaluator assignments are per-application", steps:["Add evaluators to Application A","Navigate to Application B"], expected:"Application B shows its own set of assigned evaluators (or none). Assignments from Application A do not bleed into Application B.", priority:"High" },
+      { id:"TC-E54", cat:"Evaluators - Empty State", scenario:"No evaluators assigned state", steps:["Navigate to an application with no evaluator records (before auto-assign runs)"], expected:"The evaluator list area shows: \u2018No evaluators assigned yet.\u2019 in italic gray text.", priority:"Low" },
+      { id:"TC-E55", cat:"Evaluator App - Data Load", scenario:"All application sections load data from reports", steps:["Navigate to the evaluator application page for a record that has data in all sections"], expected:"Fields in Applicant/Jurisdiction, Project Header, Location/Transit, Budget/Funding, and Schedule & ROW sections are populated with the correct values from their respective reports.", priority:"High" },
+      { id:"TC-E56", cat:"Evaluator App - Data Load", scenario:"Scoring fields load previously saved data", steps:["Save scores on an application","Navigate away and return to the same application"], expected:"All previously saved scoring field values (narratives, numbers, justification summary) are re-populated in the Scoring section.", priority:"High" },
+      { id:"TC-E57", cat:"Evaluator App - UI", scenario:"Evaluator badge displays in header", steps:["Navigate to the evaluator application page"], expected:"The header shows \u2018MTIF Application\u2019 with an \u2018Evaluator View\u2019 badge styled distinctly.", priority:"Low" },
+      { id:"TC-E58", cat:"Evaluator App - UI", scenario:"Evaluator email displays in status area", steps:["Navigate to the evaluator application page"], expected:"The status area shows \u2018Evaluator: user@example.com\u2019 with the logged-in user\u2019s email.", priority:"Low" },
+      { id:"TC-E59", cat:"Evaluator App - UI", scenario:"Responsive layout on mobile", steps:["Resize browser to mobile width (< 900px)"], expected:"Grid columns collapse to full width. Banner adjusts to column layout. All content remains accessible and usable.", priority:"Low" },
+      { id:"TC-E60", cat:"End-to-End", scenario:"Full evaluator workflow", steps:["Log in as an authorized evaluator","Land on the evaluator dashboard","Use filters to find a specific application","Click \u2018Evaluate\u2019 to open it","Review read-only application data","Fill in all scoring fields and justification summary","Add two additional evaluators","Save scores","Print/save as PDF","Return to the dashboard"], expected:"Each step completes successfully. Scores are persisted. Evaluators are persisted in the child table. PDF output is clean. Dashboard reflects the correct data throughout.", priority:"High" }
+    ];
+
+    var STORAGE_KEY = 'sorta_eval_test_statuses';
+
+    function loadStatuses() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(_) { return {}; }
+    }
+
+    function saveStatuses(map) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    }
+
+    var statuses = loadStatuses();
+
+    function getStatus(id) { return statuses[id] || 'Not Started'; }
+    function setStatus(id, val) { statuses[id] = val; saveStatuses(statuses); }
+
+    function statusClass(s) {
+      if (s === 'Pass') return 'pass';
+      if (s === 'Fail') return 'fail';
+      if (s === 'Blocked') return 'blocked';
+      if (s === 'In Progress') return 'in-progress';
+      return 'not-started';
+    }
+
+    function priorityBadge(p) {
+      var cls = p === 'High' ? 'badge-high' : p === 'Medium' ? 'badge-medium' : 'badge-low';
+      return '<span class="badge ' + cls + '">' + p + '</span>';
+    }
+
+    function getCategories() {
+      var seen = {};
+      var cats = [];
+      TESTS.forEach(function(t) {
+        if (!seen[t.cat]) { seen[t.cat] = true; cats.push(t.cat); }
+      });
+      return cats;
+    }
+
+    function populateCategoryFilter() {
+      var sel = document.getElementById('fCategory');
+      getCategories().forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+    }
+
+    function getFilteredTests() {
+      var search = (document.getElementById('fSearch').value || '').toLowerCase();
+      var cat = document.getElementById('fCategory').value;
+      var pri = document.getElementById('fPriority').value;
+      var st = document.getElementById('fStatus').value;
+
+      return TESTS.filter(function(t) {
+        if (cat && t.cat !== cat) return false;
+        if (pri && t.priority !== pri) return false;
+        if (st && getStatus(t.id) !== st) return false;
+        if (search) {
+          var hay = (t.id + ' ' + t.scenario + ' ' + t.steps.join(' ') + ' ' + t.expected).toLowerCase();
+          if (!hay.includes(search)) return false;
+        }
+        return true;
+      });
+    }
+
+    function updateMetrics() {
+      var counts = { total: TESTS.length, Pass: 0, Fail: 0, Blocked: 0, 'In Progress': 0, 'Not Started': 0 };
+      TESTS.forEach(function(t) {
+        var s = getStatus(t.id);
+        counts[s] = (counts[s] || 0) + 1;
+      });
+      document.getElementById('mTotal').textContent = counts.total;
+      document.getElementById('mPass').textContent = counts.Pass;
+      document.getElementById('mFail').textContent = counts.Fail;
+      document.getElementById('mBlocked').textContent = counts.Blocked;
+      document.getElementById('mInProgress').textContent = counts['In Progress'];
+      document.getElementById('mNotStarted').textContent = counts['Not Started'];
+
+      var executed = counts.Pass + counts.Fail + counts.Blocked;
+      var pct = counts.total ? Math.round((executed / counts.total) * 100) : 0;
+      document.getElementById('progressPct').textContent = pct;
+      document.getElementById('barPass').style.width = (counts.total ? (counts.Pass / counts.total * 100) : 0) + '%';
+      document.getElementById('barFail').style.width = (counts.total ? (counts.Fail / counts.total * 100) : 0) + '%';
+      document.getElementById('barSkip').style.width = (counts.total ? (counts.Blocked / counts.total * 100) : 0) + '%';
+    }
+
+    function render() {
+      var filtered = getFilteredTests();
+      var grouped = {};
+      var catOrder = [];
+      filtered.forEach(function(t) {
+        if (!grouped[t.cat]) { grouped[t.cat] = []; catOrder.push(t.cat); }
+        grouped[t.cat].push(t);
+      });
+
+      var container = document.getElementById('testContent');
+      container.innerHTML = '';
+
+      catOrder.forEach(function(cat) {
+        var tests = grouped[cat];
+        var group = document.createElement('div');
+        group.className = 'category-group';
+
+        var header = document.createElement('div');
+        header.className = 'category-header';
+        header.innerHTML = '<h2>' + cat + '</h2><span class="category-count">' + tests.length + ' tests</span>';
+
+        var body = document.createElement('div');
+        body.className = 'category-body';
+
+        header.addEventListener('click', function() {
+          body.classList.toggle('collapsed');
+        });
+
+        var table = document.createElement('table');
+        table.innerHTML = '<thead><tr>' +
+          '<th class="col-id">ID</th>' +
+          '<th class="col-scenario">Scenario</th>' +
+          '<th class="col-steps">Steps</th>' +
+          '<th class="col-expected">Expected Result</th>' +
+          '<th class="col-priority">Priority</th>' +
+          '<th class="col-status">Status</th>' +
+          '</tr></thead>';
+
+        var tbody = document.createElement('tbody');
+        tests.forEach(function(t) {
+          var tr = document.createElement('tr');
+          var stepsHtml = '<ol class="steps-list">' + t.steps.map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ol>';
+          var currentStatus = getStatus(t.id);
+
+          tr.innerHTML =
+            '<td class="col-id">' + t.id + '</td>' +
+            '<td class="col-scenario">' + t.scenario + '</td>' +
+            '<td class="col-steps">' + stepsHtml + '</td>' +
+            '<td class="col-expected">' + t.expected + '</td>' +
+            '<td class="col-priority">' + priorityBadge(t.priority) + '</td>' +
+            '<td class="col-status">' +
+              '<select class="status-select ' + statusClass(currentStatus) + '" data-id="' + t.id + '">' +
+                '<option value="Not Started"' + (currentStatus === 'Not Started' ? ' selected' : '') + '>Not Started</option>' +
+                '<option value="In Progress"' + (currentStatus === 'In Progress' ? ' selected' : '') + '>In Progress</option>' +
+                '<option value="Pass"' + (currentStatus === 'Pass' ? ' selected' : '') + '>Pass</option>' +
+                '<option value="Fail"' + (currentStatus === 'Fail' ? ' selected' : '') + '>Fail</option>' +
+                '<option value="Blocked"' + (currentStatus === 'Blocked' ? ' selected' : '') + '>Blocked</option>' +
+              '</select>' +
+            '</td>';
+
+          var sel = tr.querySelector('select');
+          sel.addEventListener('change', function() {
+            setStatus(this.getAttribute('data-id'), this.value);
+            this.className = 'status-select ' + statusClass(this.value);
+            updateMetrics();
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        body.appendChild(table);
+        group.appendChild(header);
+        group.appendChild(body);
+        container.appendChild(group);
+      });
+
+      updateMetrics();
+    }
+
+    function exportCSV() {
+      var lines = ['Test ID,Category,Scenario,Steps,Expected Result,Priority,Status'];
+      TESTS.forEach(function(t) {
+        var steps = t.steps.join('; ');
+        lines.push([
+          t.id,
+          '"' + t.cat.replace(/"/g, '""') + '"',
+          '"' + t.scenario.replace(/"/g, '""') + '"',
+          '"' + steps.replace(/"/g, '""') + '"',
+          '"' + t.expected.replace(/"/g, '""') + '"',
+          t.priority,
+          getStatus(t.id)
+        ].join(','));
+      });
+
+      var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'evaluator_test_results_' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+    }
+
+    // Init
+    populateCategoryFilter();
+    render();
+
+    document.getElementById('fSearch').addEventListener('input', render);
+    document.getElementById('fCategory').addEventListener('change', render);
+    document.getElementById('fPriority').addEventListener('change', render);
+    document.getElementById('fStatus').addEventListener('change', render);
+
+    document.getElementById('btnExpandAll').addEventListener('click', function() {
+      document.querySelectorAll('.category-body').forEach(function(b) { b.classList.remove('collapsed'); });
+    });
+
+    document.getElementById('btnCollapseAll').addEventListener('click', function() {
+      document.querySelectorAll('.category-body').forEach(function(b) { b.classList.add('collapsed'); });
+    });
+
+    document.getElementById('btnExport').addEventListener('click', exportCSV);
+
+    document.getElementById('btnPrint').addEventListener('click', function() { window.print(); });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+      if (confirm('Reset all test statuses to "Not Started"?')) {
+        statuses = {};
+        saveStatuses(statuses);
+        render();
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
