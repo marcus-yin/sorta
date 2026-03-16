@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - MTIF Evaluator Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background-color: #f3f5f9;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    .sorta-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    .sorta-banner {
+      background: linear-gradient(135deg, #003da5 0%, #1b4fbf 60%, #0b1f3a 100%);
+      padding: 28px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.12);
+      border-bottom: 4px solid #e4002b;
+    }
+
+    .sorta-logo {
+      height: 64px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+
+    .sorta-banner-title {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .sorta-banner-sub {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .sorta-header {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sorta-header h1 { font-size: 24px; color: #0f172a; font-weight: 700; margin: 0; }
+
+    .sorta-user-info { font-size: 13px; color: #475569; text-align: right; }
+
+    .evaluator-label {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+
+    /* Metrics */
+    .sorta-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .sorta-metric-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(2,6,23,0.04);
+      text-align: center;
+    }
+
+    .sorta-metric-card h3 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #003da5;
+      margin: 0 0 6px;
+    }
+
+    .sorta-metric-card p {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+
+    /* Filters */
+    .sorta-filters {
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+
+    .sorta-filter-group { display: flex; flex-direction: column; }
+
+    .sorta-filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sorta-filter-group input,
+    .sorta-filter-group select {
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #ffffff;
+    }
+
+    .sorta-filter-group input:focus,
+    .sorta-filter-group select:focus {
+      outline: none;
+      border-color: #003da5;
+      box-shadow: 0 0 0 3px rgba(0,61,165,0.1);
+    }
+
+    /* Section */
+    .sorta-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #0f172a;
+      font-weight: 700;
+      padding-left: 12px;
+      border-left: 4px solid #e4002b;
+    }
+
+    /* Table */
+    .sorta-table-wrap {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      margin-top: 20px;
+    }
+
+    .sorta-table { width: 100%; border-collapse: collapse; }
+
+    .sorta-table thead { background: #003da5; color: #ffffff; }
+
+    .sorta-table thead th {
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+    }
+
+    .sorta-table tbody td {
+      padding: 14px 12px;
+      border-top: 1px solid #eef2f7;
+      font-size: 13px;
+      color: #0f172a;
+      vertical-align: middle;
+    }
+
+    .sorta-table tbody tr:hover { background-color: #f8fafc; }
+    .sorta-table tbody td:first-child { font-weight: 600; }
+
+    /* Buttons */
+    .sorta-button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,61,165,0.25);
+      background: rgba(0,61,165,0.08);
+      color: #003da5;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+
+    .sorta-button:hover { background: rgba(0,61,165,0.14); }
+    .sorta-button:active { transform: translateY(1px); }
+
+    .sorta-button-small { padding: 8px 14px; font-size: 13px; font-weight: 600; }
+
+    .sorta-button-evaluate {
+      background: #003da5;
+      border-color: #003da5;
+      color: #ffffff;
+    }
+
+    .sorta-button-evaluate:hover { background: #002d7a; border-color: #002d7a; }
+
+    /* Status badges */
+    .sorta-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .sorta-badge-draft { background: #fef3c7; color: #92400e; }
+    .sorta-badge-submitted { background: #d1fae5; color: #065f46; }
+    .sorta-badge-review { background: #dbeafe; color: #1e40af; }
+
+    /* Loading / Empty / Error */
+    .sorta-loading { text-align: center; padding: 60px 20px; color: #475569; }
+
+    .sorta-spinner {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #003da5;
+      border-radius: 50%;
+      animation: sorta-spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes sorta-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .sorta-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .sorta-empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94a3b8;
+    }
+
+    .sorta-empty-icon { font-size: 72px; margin-bottom: 20px; opacity: 0.5; }
+    .sorta-empty h3 { font-size: 20px; margin-bottom: 12px; color: #64748b; font-weight: 600; }
+    .sorta-empty p { color: #94a3b8; font-size: 14px; }
+
+    .sorta-access-denied {
+      text-align: center;
+      padding: 80px 20px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .sorta-access-denied h2 { color: #e4002b; font-size: 24px; margin-bottom: 12px; }
+    .sorta-access-denied p { font-size: 14px; color: #475569; }
+
+    .sorta-footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .sorta-footer a { color: #003da5; text-decoration: none; }
+
+    @media (max-width: 860px) {
+      .sorta-banner { padding: 20px 16px; }
+      .sorta-logo { height: 52px; }
+      .sorta-banner-title { font-size: 18px; }
+      .sorta-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .sorta-user-info { text-align: left; }
+      .sorta-table-wrap { overflow-x: auto; }
+      .sorta-table { min-width: 800px; }
+      .sorta-filters-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sorta-container">
+
+    <div class="sorta-banner">
+      <img class="sorta-logo"
+           src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+           alt="Metro logo" />
+      <h3 class="sorta-banner-title">Metro Transit Infrastructure Fund</h3>
+      <p class="sorta-banner-sub">Application Evaluator Dashboard</p>
+    </div>
+
+    <div id="eval_loading_screen" class="sorta-loading">
+      <div class="sorta-spinner"></div>
+      <p>Verifying evaluator access...</p>
+    </div>
+
+    <div id="eval_access_denied" class="sorta-access-denied" style="display:none;">
+      <h2>Access Denied</h2>
+      <p>Your account is not authorized to access the evaluator dashboard.</p>
+      <p>If you believe this is an error, please contact SORTA administration.</p>
+    </div>
+
+    <div id="eval_content" style="display:none;">
+
+      <div class="sorta-header">
+        <div>
+          <h1>Evaluation Dashboard</h1>
+        </div>
+        <div class="sorta-user-info">
+          <div id="eval_user_email">Loading...</div>
+          <div class="evaluator-label">EVALUATOR</div>
+        </div>
+      </div>
+
+      <div class="sorta-metrics" id="eval_metrics">
+        <div class="sorta-metric-card">
+          <h3 id="metric_total">0</h3>
+          <p>Total Applications</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_submitted">0</h3>
+          <p>Submitted</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_draft">0</h3>
+          <p>Draft</p>
+        </div>
+      </div>
+
+      <div class="sorta-filters">
+        <div class="sorta-filters-grid">
+          <div class="sorta-filter-group">
+            <label for="filter_search">Search</label>
+            <input type="text" id="filter_search" placeholder="Project name, jurisdiction..." />
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_status">Status</label>
+            <select id="filter_status">
+              <option value="">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Submitted">Submitted</option>
+            </select>
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_jurisdiction">Jurisdiction</label>
+            <select id="filter_jurisdiction">
+              <option value="">All Jurisdictions</option>
+            </select>
+          </div>
+          <div class="sorta-filter-group">
+            <label>&nbsp;</label>
+            <button id="clear_filters_btn" class="sorta-button" style="width:100%;">Clear Filters</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sorta-section">
+        <h2>Applications for Evaluation</h2>
+
+        <div id="eval_error" class="sorta-error" style="display:none;"></div>
+
+        <div id="eval_table_loading" class="sorta-loading">
+          <div class="sorta-spinner"></div>
+          <p>Loading applications...</p>
+        </div>
+
+        <div id="eval_table_wrap" style="display:none;">
+          <div class="sorta-table-wrap">
+            <table class="sorta-table">
+              <thead>
+                <tr>
+                  <th>Record ID</th>
+                  <th>Jurisdiction</th>
+                  <th>Project Name</th>
+                  <th>Project ID</th>
+                  <th>Status</th>
+                  <th>Created By</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="eval_tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="eval_empty" class="sorta-empty" style="display:none;">
+          <div class="sorta-empty-icon">&#x1F4CB;</div>
+          <h3>No Applications Found</h3>
+          <p>No applications match your current filters.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sorta-footer">
+      Southwest Ohio Regional Transit Authority &middot;
+      <a href="https://www.go-metro.com" target="_blank">go-metro.com</a>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+    var API_CONFIG = {
+      baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+      applicationTableKey: 'iw3twwkw2',
+      applicationsReportId: 'tn3omkcq4',
+      evaluatorTableKey: 'xrglb4cg4',
+      evaluatorReportId: 'aqjsnp6w4'
+    };
+
+    var EVALUATOR_PAGE = 'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/imahe5tq5';
+
+    function looksLikeSaltedCiphertext(s) {
+      return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+    }
+
+    function safeJsonParse(s) {
+      try { return JSON.parse(s); } catch (_) { return null; }
+    }
+
+    function extractAccessToken(decrypted) {
+      if (typeof decrypted !== 'string') return '';
+      var t = decrypted.trim();
+      if (!t) return '';
+      var j = safeJsonParse(t);
+      if (j && typeof j === 'object') {
+        if (j.access_token) return String(j.access_token);
+        if (j.token) return String(j.token);
+      }
+      return t;
+    }
+
+    function bootstrapToken() {
+      var enc = '';
+      try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+      if (!enc || typeof CryptoJS === 'undefined') return '';
+      try {
+        var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+        if (!dec) return '';
+        var tok = extractAccessToken(dec);
+        if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+        return tok;
+      } catch (_) { return ''; }
+    }
+
+    var userToken = bootstrapToken();
+
+    function getAuthToken() {
+      if (userToken) return Promise.resolve(userToken);
+      userToken = bootstrapToken();
+      return Promise.resolve(userToken || null);
+    }
+
+    function apiHeaders(token) {
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+    }
+
+    function stripPrefix(key) {
+      return key.replace(/^tbl\d+_/, '');
+    }
+
+    function extractFieldValue(record, fieldName) {
+      if (record[fieldName] !== undefined) return record[fieldName];
+      var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+      for (var key in record) {
+        var kn = key.toLowerCase().replace(/[\s_]/g, '');
+        if (kn === norm || kn.endsWith(norm)) return record[key];
+      }
+      return null;
+    }
+
+    function getRecordId(row) {
+      return row.id || extractFieldValue(row, 'id') || row.Rid || '';
+    }
+
+    function getUserProfile(token) {
+      return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
+        method: 'GET',
+        headers: apiHeaders(token)
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Profile ' + r.status);
+        return r.json();
+      });
+    }
+
+    function checkEvaluatorAccess(token, email) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          ApplicationTableKeyId: API_CONFIG.evaluatorTableKey,
+          ReportId: API_CONFIG.evaluatorReportId,
+          PageNumber: 1,
+          PageSize: 500
+        })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Evaluator check ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        var rows = Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+        var emailLower = email.toLowerCase();
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var keys = Object.keys(row);
+          for (var k = 0; k < keys.length; k++) {
+            var key = keys[k];
+            if (stripPrefix(key).toLowerCase().replace(/[\s_]/g, '') === 'email') {
+              if (String(row[key]).toLowerCase() === emailLower) return true;
+            }
+          }
+        }
+        return false;
+      });
+    }
+
+    function queryAllApplications(token) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          ReportId: API_CONFIG.applicationsReportId,
+          Filters: []
+        })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Query ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        return Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+      });
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function getStatusBadge(status) {
+      if (!status) return '<span class="sorta-badge sorta-badge-draft">Draft</span>';
+      var s = status.toLowerCase();
+      if (s.includes('submit')) return '<span class="sorta-badge sorta-badge-submitted">' + status + '</span>';
+      if (s.includes('review')) return '<span class="sorta-badge sorta-badge-review">' + status + '</span>';
+      return '<span class="sorta-badge sorta-badge-draft">' + status + '</span>';
+    }
+
+    function navigateTo(url) {
+      if (window.top !== window) { window.top.location.href = url; }
+      else { window.location.href = url; }
+    }
+
+    var allApplications = [];
+
+    function filterAndRender() {
+      var search = ($('filter_search').value || '').toLowerCase();
+      var statusFilter = $('filter_status').value;
+      var jurFilter = $('filter_jurisdiction').value;
+
+      var filtered = allApplications.filter(function(app) {
+        if (search) {
+          var projName = (extractFieldValue(app, 'project_name') || '').toLowerCase();
+          var jurisd = (extractFieldValue(app, 'jurisdiction_name') || '').toLowerCase();
+          var creator = (extractFieldValue(app, 'createdby') || extractFieldValue(app, 'Created By') || '').toLowerCase();
+          if (!projName.includes(search) && !jurisd.includes(search) && !creator.includes(search)) return false;
+        }
+        if (statusFilter) {
+          var st = extractFieldValue(app, 'status') || 'Draft';
+          if (st !== statusFilter) return false;
+        }
+        if (jurFilter) {
+          var jn = extractFieldValue(app, 'jurisdiction_name') || '';
+          if (jn !== jurFilter) return false;
+        }
+        return true;
+      });
+
+      renderTable(filtered);
+      updateMetrics(filtered);
+    }
+
+    function updateMetrics(rows) {
+      var total = rows.length;
+      var submitted = 0;
+      var draft = 0;
+      rows.forEach(function(app) {
+        var st = (extractFieldValue(app, 'status') || '').toLowerCase();
+        if (st.includes('submit')) submitted++;
+        else draft++;
+      });
+      $('metric_total').textContent = total;
+      $('metric_submitted').textContent = submitted;
+      $('metric_draft').textContent = draft;
+    }
+
+    function populateJurisdictionFilter(rows) {
+      var jurisdictions = {};
+      rows.forEach(function(app) {
+        var j = extractFieldValue(app, 'jurisdiction_name');
+        if (j) jurisdictions[j] = true;
+      });
+      var sel = $('filter_jurisdiction');
+      Object.keys(jurisdictions).sort().forEach(function(j) {
+        var opt = document.createElement('option');
+        opt.value = j;
+        opt.textContent = j;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderTable(rows) {
+      var tbody = $('eval_tbody');
+      var wrap = $('eval_table_wrap');
+      var empty = $('eval_empty');
+
+      if (!rows || rows.length === 0) {
+        wrap.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      var sorted = rows.slice().sort(function(a, b) {
+        return Number(getRecordId(b) || 0) - Number(getRecordId(a) || 0);
+      });
+
+      wrap.style.display = 'block';
+      empty.style.display = 'none';
+      tbody.innerHTML = '';
+
+      sorted.forEach(function(row) {
+        var rid = getRecordId(row);
+        var jurisd = extractFieldValue(row, 'jurisdiction_name') || '-';
+        var projName = extractFieldValue(row, 'project_name') || '-';
+        var projId = extractFieldValue(row, 'project_id') || '-';
+        var status = extractFieldValue(row, 'status') || 'Draft';
+        var creator = extractFieldValue(row, 'createdby') || extractFieldValue(row, 'Created By') || '-';
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + (rid || '-') + '</td>' +
+          '<td>' + jurisd + '</td>' +
+          '<td><strong>' + projName + '</strong></td>' +
+          '<td>' + projId + '</td>' +
+          '<td>' + getStatusBadge(status) + '</td>' +
+          '<td>' + creator + '</td>' +
+          '<td>' +
+            '<button class="sorta-button sorta-button-small sorta-button-evaluate" data-rid="' + rid + '">Evaluate</button>' +
+          '</td>';
+
+        var btn = tr.querySelector('[data-rid]');
+        btn.addEventListener('click', function() {
+          var recId = this.getAttribute('data-rid');
+          localStorage.setItem('mtif_current_application_id', recId);
+          var url = EVALUATOR_PAGE + '?recordId=' + encodeURIComponent(recId);
+          navigateTo(url);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function init() {
+      getAuthToken().then(function(token) {
+        if (!token) {
+          $('eval_loading_screen').style.display = 'none';
+          $('eval_access_denied').style.display = 'block';
+          return;
+        }
+
+        return getUserProfile(token).then(function(profile) {
+          var email = (profile && profile.Email) || '';
+
+          return checkEvaluatorAccess(token, email).then(function(isEvaluator) {
+            $('eval_loading_screen').style.display = 'none';
+
+            if (!isEvaluator) {
+              $('eval_access_denied').style.display = 'block';
+              return;
+            }
+
+            $('eval_content').style.display = 'block';
+            $('eval_user_email').textContent = email;
+
+            return queryAllApplications(token).then(function(rows) {
+              console.log('[EVAL-LANDING] Loaded', rows.length, 'applications');
+              allApplications = rows;
+              $('eval_table_loading').style.display = 'none';
+              populateJurisdictionFilter(rows);
+              filterAndRender();
+            });
+          });
+        });
+      }).catch(function(err) {
+        console.error('[EVAL-LANDING] Init error:', err);
+        $('eval_loading_screen').style.display = 'none';
+        $('eval_access_denied').style.display = 'block';
+      });
+    }
+
+    $('filter_search').addEventListener('input', filterAndRender);
+    $('filter_status').addEventListener('change', filterAndRender);
+    $('filter_jurisdiction').addEventListener('change', filterAndRender);
+    $('clear_filters_btn').addEventListener('click', function() {
+      $('filter_search').value = '';
+      $('filter_status').value = '';
+      $('filter_jurisdiction').value = '';
+      filterAndRender();
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>

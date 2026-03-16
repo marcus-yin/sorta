@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SORTA Metro - MTIF Application (Evaluator)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+      :root {
+        --metro-blue: #003da5;
+        --metro-red: #e4002b;
+        --metro-navy: #0b1f3a;
+        --metro-ink: #111827;
+        --metro-slate: #475569;
+        --metro-border: #e2e8f0;
+        --metro-panel: #f8fafc;
+        --metro-white: #ffffff;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--metro-ink);
+        background: #f3f5f9;
+      }
+
+      .metro-banner {
+        background: linear-gradient(120deg, var(--metro-blue), #1b4fbf);
+        padding: 24px 18px;
+        color: var(--metro-white);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 4px solid var(--metro-red);
+      }
+
+      .metro-logo {
+        width: 140px;
+        height: auto;
+        background: var(--metro-white);
+        padding: 8px 12px;
+        border-radius: 10px;
+      }
+
+      .metro-banner-text h1 { font-size: 22px; margin: 0 0 6px; font-weight: 700; }
+      .metro-banner-text p { margin: 0; font-size: 14px; color: rgba(255,255,255,0.85); }
+
+      .metro-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+      }
+
+      .metro-card {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+      }
+
+      .metro-card h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        border-left: 4px solid var(--metro-red);
+        padding-left: 10px;
+      }
+
+      .metro-card p { margin: 0 0 8px; color: var(--metro-slate); font-size: 14px; }
+
+      .metro-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+
+      .metro-button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .metro-button.primary { background: var(--metro-red); color: var(--metro-white); }
+      .metro-button.secondary { background: var(--metro-blue); color: var(--metro-white); }
+      .metro-button.ghost { background: transparent; border: 1px solid var(--metro-border); color: var(--metro-ink); }
+
+      .metro-button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15,23,42,0.12); }
+      .metro-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+      .metro-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+
+      .metro-nav a {
+        text-decoration: none;
+        background: var(--metro-panel);
+        color: var(--metro-navy);
+        border: 1px solid var(--metro-border);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .metro-section {
+        background: var(--metro-white);
+        border: 1px solid var(--metro-border);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      .metro-section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: var(--metro-navy);
+        border-left: 4px solid var(--metro-blue);
+        padding-left: 10px;
+      }
+
+      .metro-section.scoring-section h3 {
+        border-left-color: var(--metro-red);
+      }
+
+      .metro-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+      .metro-col-12 { grid-column: span 12; }
+      .metro-col-6 { grid-column: span 6; }
+      .metro-col-4 { grid-column: span 4; }
+      .metro-col-3 { grid-column: span 3; }
+
+      label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        outline: none;
+        background: var(--metro-white);
+      }
+
+      textarea { min-height: 120px; resize: vertical; }
+
+      input:focus, select:focus, textarea:focus {
+        border-color: rgba(0,61,165,0.6);
+        box-shadow: 0 0 0 3px rgba(0,61,165,0.15);
+      }
+
+      .metro-help { font-size: 11px; color: var(--metro-slate); margin-top: 6px; }
+
+      .metro-file-name {
+        font-size: 12px;
+        color: #003da5;
+        margin-top: 6px;
+        font-weight: 600;
+        word-break: break-all;
+      }
+
+      .metro-status { font-size: 12px; color: var(--metro-slate); margin-top: 8px; }
+
+      .metro-readonly-field {
+        background: var(--metro-panel) !important;
+        color: var(--metro-slate) !important;
+        cursor: default !important;
+        border-color: #e2e8f0 !important;
+      }
+
+      .metro-access-denied {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--metro-slate);
+      }
+
+      .metro-access-denied h2 {
+        color: var(--metro-red);
+        font-size: 24px;
+        margin-bottom: 12px;
+      }
+
+      .metro-access-denied p { font-size: 14px; }
+
+      .metro-loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--metro-slate);
+      }
+
+      .metro-spinner {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid var(--metro-blue);
+        border-radius: 50%;
+        animation: metro-spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes metro-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .evaluator-badge {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 8px;
+        margin-left: 8px;
+      }
+
+      .metro-toast {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        min-width: 260px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateY(-12px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      }
+
+      .metro-toast.show { opacity: 1; transform: translateY(0); }
+      .metro-toast.success { background: #16a34a; }
+      .metro-toast.error { background: #dc2626; }
+
+      @media print {
+        .metro-actions, .metro-status, .metro-toast, .metro-nav { display: none !important; }
+        body { background: white; font-size: 12px; }
+        .metro-card, .metro-section { box-shadow: none; page-break-inside: avoid; }
+      }
+
+      @media (max-width: 900px) {
+        .metro-col-6, .metro-col-4, .metro-col-3 { grid-column: span 12; }
+        .metro-banner { flex-direction: column; align-items: flex-start; }
+        .metro-logo { width: 110px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="metro-banner">
+      <img class="metro-logo" src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg" alt="Metro logo" />
+      <div class="metro-banner-text">
+        <h1>MTIF Application <span class="evaluator-badge">Evaluator View</span></h1>
+        <p>Southwest Ohio Regional Transportation Authority (SORTA)</p>
+      </div>
+    </header>
+
+    <main class="metro-container">
+      <div id="loadingScreen" class="metro-loading">
+        <div class="metro-spinner"></div>
+        <p>Verifying evaluator access...</p>
+      </div>
+
+      <div id="accessDenied" class="metro-access-denied" style="display:none;">
+        <h2>Access Denied</h2>
+        <p>Your account is not authorized to access the evaluator view.</p>
+        <p>If you believe this is an error, please contact SORTA administration.</p>
+      </div>
+
+      <div id="evaluatorContent" style="display:none;">
+        <section class="metro-card">
+          <h2>Evaluator Review</h2>
+          <p>You are viewing this application in <strong>evaluator mode</strong>. Application fields are read-only. The <strong>Scoring / Criteria</strong> section is editable.</p>
+          <div class="metro-actions">
+            <button class="metro-button primary" type="button" id="saveScoresButton">Save Scores</button>
+            <button class="metro-button secondary" type="button" id="printButton">Print / Save as PDF</button>
+          </div>
+          <div class="metro-status" id="evalStatus">
+            <span id="evalUserEmail"></span>
+          </div>
+          <nav class="metro-nav" id="sectionNav"></nav>
+        </section>
+
+        <form id="mtifForm">
+          <section class="metro-section" style="margin-bottom:20px;">
+            <div class="metro-grid">
+              <div class="metro-col-6">
+                <label for="mtif_record_id">Application Record ID</label>
+                <input type="text" id="mtif_record_id" name="mtif_record_id" readonly class="metro-readonly-field" />
+              </div>
+            </div>
+          </section>
+        </form>
+      </div>
+    </main>
+
+    <script>
+(function() {
+  'use strict';
+
+  var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+  var API_CONFIG = {
+    baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+    aesKey: AES_KEY,
+    applicationTableKey: 'iw3twwkw2',
+    applicationsReportId: 'tn3omkcq4',
+    granteesReportId: 'niazpvhq8',
+    projectHeaderReportId: 's3derd1q7',
+    locationTransitReportId: '6tvmwupw6',
+    budgetFundingReportId: 'tvp6ny9w7',
+    scheduleRowReportId: 'fz3k5d5q2',
+    evaluatorTableKey: 'xrglb4cg4',
+    evaluatorReportId: 'aqjsnp6w4'
+  };
+
+  var SCORING_CATEGORY = 'Scoring / Criteria';
+
+  // Token helpers
+  function looksLikeSaltedCiphertext(s) {
+    return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+  }
+
+  function safeJsonParse(s) {
+    try { return JSON.parse(s); } catch (_) { return null; }
+  }
+
+  function extractAccessToken(decrypted) {
+    if (typeof decrypted !== 'string') return '';
+    var t = decrypted.trim();
+    if (!t) return '';
+    var j = safeJsonParse(t);
+    if (j && typeof j === 'object') {
+      if (j.access_token) return String(j.access_token);
+      if (j.token) return String(j.token);
+    }
+    return t;
+  }
+
+  function bootstrapToken() {
+    var enc = '';
+    try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+    if (!enc || typeof CryptoJS === 'undefined') return '';
+    try {
+      var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+      if (!dec) return '';
+      var tok = extractAccessToken(dec);
+      if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+      return tok;
+    } catch (_) { return ''; }
+  }
+
+  var userToken = bootstrapToken();
+
+  function getAuthToken() {
+    if (userToken) return Promise.resolve(userToken);
+    userToken = bootstrapToken();
+    return Promise.resolve(userToken || null);
+  }
+
+  function apiHeaders(token) {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  }
+
+  function stripPrefix(key) {
+    return key.replace(/^tbl\d+_/, '');
+  }
+
+  function showToast(message, type) {
+    var existing = document.querySelector('.metro-toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'metro-toast ' + type;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () { toast.classList.add('show'); });
+    setTimeout(function () {
+      toast.classList.remove('show');
+      setTimeout(function () { toast.remove(); }, 300);
+    }, 3000);
+  }
+
+  // Field mapping for scoring fields
+  var SCORING_FIELD_MAPPING = {
+    'field-scoring-criteria-physical-condition-narrative': { name: 'physical_condition_narrative' },
+    'field-scoring-criteria-safety-issues-narrative': { name: 'safety_issues_narrative' },
+    'field-scoring-criteria-project-priority-ranking-1st-2nd-3rd-etc': { name: 'project_priority_ranking' },
+    'field-scoring-criteria-economic-growth-connectivity-narrative': { name: 'economic_growth_narrative' },
+    'field-scoring-criteria-match-calculated-from-budget': { name: 'match_pct' },
+    'field-scoring-criteria-regional-impact-narrative': { name: 'regional_impact_narrative' },
+    'field-scoring-criteria-average-daily-traffic-adt': { name: 'average_daily_traffic' },
+    'field-scoring-criteria-relative-economic-strength-score': { name: 'relative_economic_strength' },
+    'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative' },
+    'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details' },
+    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' },
+    'field-scoring-criteria-past-performance-score': { name: 'past_performance_score' }
+  };
+
+  // Full field mapping (same as applicant page)
+  var FIELD_MAPPING = {
+    'field-applicant-jurisdiction-jurisdiction-name': { name: 'jurisdiction_name' },
+    'field-applicant-jurisdiction-jurisdiction-mailing-address': { name: 'jurisdiction_mailing_address' },
+    'field-applicant-jurisdiction-chief-executive-officer-name': { name: 'ceo_name' },
+    'field-applicant-jurisdiction-chief-executive-officer-title': { name: 'ceo_title' },
+    'field-applicant-jurisdiction-chief-fiscal-officer-name': { name: 'cfo_name' },
+    'field-applicant-jurisdiction-chief-fiscal-officer-title': { name: 'cfo_title' },
+    'field-applicant-jurisdiction-project-contact-person-name': { name: 'project_contact_name' },
+    'field-applicant-jurisdiction-project-contact-phone': { name: 'project_contact_phone' },
+    'field-applicant-jurisdiction-project-contact-email': { name: 'project_contact_email' },
+    'field-applicant-jurisdiction-primary-applicant-email-for-notices': { name: 'primary_applicant_email' },
+    'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta': { name: 'applicant_role' },
+    'field-project-header-project-name': { name: 'project_name' },
+    'field-project-header-project-description-short-narrative': { name: 'project_description' },
+    'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
+    'field-project-header-year-project-funded': { name: 'year_project_funded' },
+    'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
+    'field-project-header-program-year-round-e-g-round-5-2025': { name: 'program_year_round' },
+    'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
+    'field-project-header-large-vs-small-project-category-1m-vs-1m': { name: 'project_size_category' },
+    'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
+    'field-location-transit-project-street-name-s': { name: 'project_street_names' },
+    'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
+    'field-location-transit-project-limits-description': { name: 'project_limits_description' },
+    'field-location-transit-project-latitude-longitude': { name: 'project_lat_long' },
+    'field-location-transit-distance-to-nearest-fixed-route-transit-miles': { name: 'distance_to_transit_miles' },
+    'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no': { name: 'within_three_quarter_mile_transit' },
+    'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count': { name: 'weekday_transit_trip_count' },
+    'field-location-transit-on-brt-corridor-yes-no': { name: 'on_brt_corridor' },
+    'field-budget-funding-local-funds-budgeted-dollars': { name: 'local_funds_budgeted' },
+    'field-budget-funding-sorta-mtif-funds-awarded-dollars': { name: 'mtif_funds_awarded' },
+    'field-budget-funding-other-funds-budgeted-dollars': { name: 'other_funds_budgeted' },
+    'field-budget-funding-total-project-budget-dollars': { name: 'total_project_budget' },
+    'field-budget-funding-local-funds-share': { name: 'local_funds_share_pct' },
+    'field-budget-funding-mtif-funds-share': { name: 'mtif_funds_share_pct' },
+    'field-budget-funding-other-funds-share': { name: 'other_funds_share_pct' },
+    'field-budget-funding-max-grant-90-of-construction-cost': { name: 'max_grant_pct' },
+    'field-budget-funding-local-minimum-10-match-flag': { name: 'local_min_match_flag' },
+    'field-budget-funding-multi-year-project-funding-years-1-5': { name: 'multi_year_funding_years' },
+    'field-budget-funding-construction-contingency': { name: 'construction_contingency_pct' },
+    'field-budget-funding-useful-life-estimate-years': { name: 'useful_life_years' },
+    'field-schedule-row-construction-award-date': { name: 'construction_award_date' },
+    'field-schedule-row-anticipated-construction-start-date': { name: 'anticipated_start_date' },
+    'field-schedule-row-anticipated-construction-completion-date': { name: 'anticipated_completion_date' },
+    'field-schedule-row-construction-start-within-1-year-flag': { name: 'start_within_one_year_flag' },
+    'field-schedule-row-right-of-way-status-all-partial-none': { name: 'row_status' },
+    'field-schedule-row-design-engineering-status-complete-in-process-not-started': { name: 'design_engineering_status' }
+  };
+
+  // Merge scoring into full mapping
+  Object.keys(SCORING_FIELD_MAPPING).forEach(function(k) {
+    FIELD_MAPPING[k] = SCORING_FIELD_MAPPING[k];
+  });
+
+  // Field data (same categories as applicant page, but we include Scoring / Criteria)
+  var fieldData = [
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Jurisdiction name" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Jurisdiction mailing address" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Chief Executive Officer name" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Chief Executive Officer title" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Chief Fiscal Officer name" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Chief Fiscal Officer title" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Project contact person name" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Project contact phone" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Project contact email" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Primary applicant email for notices" },
+    { "Category": "Applicant / Jurisdiction", "FieldName": "Applicant role (jurisdiction/county/township/HCTID/CRC/SORTA)" },
+    { "Category": "Project Header", "FieldName": "Project name" },
+    { "Category": "Project Header", "FieldName": "Project description (short narrative)" },
+    { "Category": "Project Header", "FieldName": "Project ID (SORTA MTIF project ID)" },
+    { "Category": "Project Header", "FieldName": "Year project funded" },
+    { "Category": "Project Header", "FieldName": "Date of project award" },
+    { "Category": "Project Header", "FieldName": "Program year / round (e.g. Round 5 - 2025)" },
+    { "Category": "Project Header", "FieldName": "Project type/category (Road/Bridge/Sidewalk/Multimodal/ITS/Transit facility)" },
+    { "Category": "Project Header", "FieldName": "Large vs small project category (>= $1M vs < $1M)" },
+    { "Category": "Project Header", "FieldName": "Emergency project indicator (Yes/No)" },
+    { "Category": "Location / Transit", "FieldName": "Project street name(s)" },
+    { "Category": "Location / Transit", "FieldName": "Municipality/township/county" },
+    { "Category": "Location / Transit", "FieldName": "Project limits description" },
+    { "Category": "Location / Transit", "FieldName": "Project latitude/longitude" },
+    { "Category": "Location / Transit", "FieldName": "Distance to nearest fixed-route transit (miles)" },
+    { "Category": "Location / Transit", "FieldName": "Within 3/4 mile of fixed-route transit (Yes/No)" },
+    { "Category": "Location / Transit", "FieldName": "Weekday fixed-route trips using project corridor (count)" },
+    { "Category": "Location / Transit", "FieldName": "On BRT corridor (Yes/No)" },
+    { "Category": "Budget / Funding", "FieldName": "Local funds budgeted (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "SORTA MTIF funds awarded (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "Other funds budgeted (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "Total project budget (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "Local funds share (%)" },
+    { "Category": "Budget / Funding", "FieldName": "MTIF funds share (%)" },
+    { "Category": "Budget / Funding", "FieldName": "Other funds share (%)" },
+    { "Category": "Budget / Funding", "FieldName": "Max grant % (<= 90% of construction cost)" },
+    { "Category": "Budget / Funding", "FieldName": "Local minimum 10% match flag" },
+    { "Category": "Budget / Funding", "FieldName": "Multi-year project funding years (1-5)" },
+    { "Category": "Budget / Funding", "FieldName": "Construction contingency %" },
+    { "Category": "Budget / Funding", "FieldName": "Useful life estimate (years)" },
+    { "Category": "Schedule & ROW", "FieldName": "Construction award date" },
+    { "Category": "Schedule & ROW", "FieldName": "Anticipated construction start date" },
+    { "Category": "Schedule & ROW", "FieldName": "Anticipated construction completion date" },
+    { "Category": "Schedule & ROW", "FieldName": "Construction start within 1 year flag" },
+    { "Category": "Schedule & ROW", "FieldName": "Right-of-way status (all/partial/none)" },
+    { "Category": "Schedule & ROW", "FieldName": "Design/engineering status (complete/in process/not started)" },
+    { "Category": "Scoring / Criteria", "FieldName": "Physical condition narrative" },
+    { "Category": "Scoring / Criteria", "FieldName": "Safety issues narrative" },
+    { "Category": "Scoring / Criteria", "FieldName": "Project priority ranking (1st/2nd/3rd/etc.)" },
+    { "Category": "Scoring / Criteria", "FieldName": "Economic growth & connectivity narrative" },
+    { "Category": "Scoring / Criteria", "FieldName": "Match % (calculated from budget)" },
+    { "Category": "Scoring / Criteria", "FieldName": "Regional impact narrative" },
+    { "Category": "Scoring / Criteria", "FieldName": "Average Daily Traffic (ADT)" },
+    { "Category": "Scoring / Criteria", "FieldName": "Relative Economic Strength score" },
+    { "Category": "Scoring / Criteria", "FieldName": "Transit impact narrative" },
+    { "Category": "Scoring / Criteria", "FieldName": "Multimodal infrastructure details" },
+    { "Category": "Scoring / Criteria", "FieldName": "Sustainability measures checklist" },
+    { "Category": "Scoring / Criteria", "FieldName": "Past performance score" }
+  ];
+
+  var JURISDICTION_NAMES = [
+    'Addyston','Anderson Township','Cincinnati','Colerain Township','Columbia Township',
+    'Deer Park','Delhi Township','Forest Park','Glendale','Golf Manor','Greenhills',
+    'Hamilton County','Harrison','Lincoln Heights','Madeira','Mt. Healthy',
+    'North College Hill','Norwood','Sharonville','Silverton','Springdale',
+    'Sycamore Township','Wyoming','Blue Ash','Cheviot','Elmwood','Green Township',
+    'Lockland','Montgomery','Reading','Springfield Township','Symmes Township',
+    'Woodlawn','Mariemont'
+  ];
+
+  var slugify = function(value) {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  };
+
+  var getFieldConfig = function(fieldName) {
+    var lower = fieldName.toLowerCase();
+    if (fieldName === 'Jurisdiction name') return { type: 'select', options: JURISDICTION_NAMES.slice().sort() };
+    if (lower.includes('municipality/township/county')) return { type: 'text' };
+    var match = fieldName.match(/\(([^)]+)\)/);
+    if (match) {
+      var content = match[1];
+      if (content.includes('/')) return { type: 'select', options: content.split('/').map(function(i) { return i.trim(); }) };
+      if (content.includes(' vs ')) return { type: 'select', options: content.split(' vs ').map(function(i) { return i.trim(); }) };
+    }
+    if (lower.includes('yes/no') || lower.includes('flag') || lower.includes('indicator')) return { type: 'select', options: ['Yes', 'No'] };
+    if (lower.includes('status') && lower.includes('all/partial/none')) return { type: 'select', options: ['All', 'Partial', 'None'] };
+    if (lower.includes('status') && lower.includes('complete/in process/not started')) return { type: 'select', options: ['Complete', 'In process', 'Not started'] };
+    if (lower.includes('priority ranking')) return { type: 'select', options: ['1st', '2nd', '3rd', '4th', '5th', 'Other'] };
+    if (lower.includes('email')) return { type: 'email' };
+    if (lower.includes('phone')) return { type: 'tel' };
+    if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
+    if (lower.includes('useful life estimate')) return { type: 'number', min: 1, max: 100, step: 1 };
+    if (lower.includes('date')) return { type: 'date' };
+    if (lower.includes('year')) return { type: 'number', min: 2000, max: 2100, step: 1 };
+    if (lower.includes('dollars') || lower.includes('amount') || lower.includes('budget')) return { type: 'number', step: 0.01, min: 0 };
+    if (lower.includes('%') || lower.includes('percent') || lower.includes('share')) return { type: 'number', step: 0.01, min: 0, max: 100 };
+    if (lower.includes('count') || lower.includes('estimate') || lower.includes('miles')) return { type: 'number', step: 1, min: 0 };
+    if (lower.includes('narrative') || lower.includes('description') || lower.includes('details') || lower.includes('checklist') || lower.includes('note') || lower.includes('list')) return { type: 'textarea' };
+    if (lower.includes('latitude/longitude')) return { type: 'text', placeholder: '39.1031, -84.5120' };
+    return { type: 'text' };
+  };
+
+  var formEl = document.getElementById('mtifForm');
+  var sectionNav = document.getElementById('sectionNav');
+
+  function buildSections() {
+    var grouped = fieldData.reduce(function(acc, item) {
+      if (!acc[item.Category]) acc[item.Category] = [];
+      acc[item.Category].push(item.FieldName);
+      return acc;
+    }, {});
+
+    Object.keys(grouped).forEach(function(category, index) {
+      var isScoring = (category === SCORING_CATEGORY);
+      var sectionId = 'section-' + index + '-' + slugify(category);
+
+      var navLink = document.createElement('a');
+      navLink.href = 'javascript:void(0)';
+      navLink.textContent = category;
+      navLink.setAttribute('data-target', sectionId);
+      navLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        var target = document.getElementById(this.getAttribute('data-target'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      sectionNav.appendChild(navLink);
+
+      var section = document.createElement('section');
+      section.className = isScoring ? 'metro-section scoring-section' : 'metro-section';
+      section.id = sectionId;
+
+      var title = document.createElement('h3');
+      title.textContent = category;
+      if (isScoring) {
+        title.innerHTML = category + ' <span style="font-size:12px; color:#e4002b; font-weight:700;">(Editable)</span>';
+      }
+      section.appendChild(title);
+
+      var grid = document.createElement('div');
+      grid.className = 'metro-grid';
+
+      grouped[category].forEach(function(fieldName) {
+        var config = getFieldConfig(fieldName);
+        var fieldId = 'field-' + slugify(category) + '-' + slugify(fieldName);
+        var fieldWrap = document.createElement('div');
+        fieldWrap.className = config.type === 'textarea' ? 'metro-col-12' : 'metro-col-6';
+
+        var label = document.createElement('label');
+        label.setAttribute('for', fieldId);
+        label.textContent = fieldName;
+
+        var input;
+        if (config.type === 'textarea') {
+          input = document.createElement('textarea');
+        } else if (config.type === 'select') {
+          input = document.createElement('select');
+          var ph = document.createElement('option');
+          ph.value = '';
+          ph.textContent = 'Select an option';
+          input.appendChild(ph);
+          config.options.forEach(function(opt) {
+            var o = document.createElement('option');
+            o.value = opt;
+            o.textContent = opt;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = config.type;
+        }
+
+        input.id = fieldId;
+        input.name = fieldId;
+        input.dataset.fieldId = fieldId;
+        input.dataset.fieldLabel = fieldName;
+        input.dataset.category = category;
+        if (config.placeholder) input.placeholder = config.placeholder;
+        if (config.min !== undefined) input.min = config.min;
+        if (config.max !== undefined) input.max = config.max;
+        if (config.step !== undefined) input.step = config.step;
+
+        if (!isScoring) {
+          if (input.tagName === 'SELECT') {
+            input.disabled = true;
+          } else {
+            input.readOnly = true;
+          }
+          input.classList.add('metro-readonly-field');
+        }
+
+        fieldWrap.appendChild(label);
+        fieldWrap.appendChild(input);
+        grid.appendChild(fieldWrap);
+      });
+
+      section.appendChild(grid);
+      formEl.appendChild(section);
+    });
+  }
+
+  // Report column-to-form mappings (same as applicant page)
+  var JUR_COL_TO_FORM = {
+    'jurisdiction_name': 'field-applicant-jurisdiction-jurisdiction-name',
+    'jurisdiction_mailing_address': 'field-applicant-jurisdiction-jurisdiction-mailing-address',
+    'ceo_name': 'field-applicant-jurisdiction-chief-executive-officer-name',
+    'ceo_title': 'field-applicant-jurisdiction-chief-executive-officer-title',
+    'cfo_name': 'field-applicant-jurisdiction-chief-fiscal-officer-name',
+    'cfo_title': 'field-applicant-jurisdiction-chief-fiscal-officer-title',
+    'project_contact_name': 'field-applicant-jurisdiction-project-contact-person-name',
+    'project_contact_phone': 'field-applicant-jurisdiction-project-contact-phone',
+    'project_contact_email': 'field-applicant-jurisdiction-project-contact-email',
+    'primary_applicant_email': 'field-applicant-jurisdiction-primary-applicant-email-for-notices',
+    'applicant_role': 'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta'
+  };
+
+  var PH_COL_TO_FORM = {
+    'project_name': 'field-project-header-project-name',
+    'project_description': 'field-project-header-project-description-short-narrative',
+    'project_id': 'field-project-header-project-id-sorta-mtif-project-id',
+    'year_project_funded': 'field-project-header-year-project-funded',
+    'date_of_project_award': 'field-project-header-date-of-project-award',
+    'program_year_round': 'field-project-header-program-year-round-e-g-round-5-2025',
+    'project_type_category': 'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
+    'project_size_category': 'field-project-header-large-vs-small-project-category-1m-vs-1m',
+    'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
+  };
+
+  var LT_COL_TO_FORM = {
+    'project_street_names': 'field-location-transit-project-street-name-s',
+    'municipality_township_county': 'field-location-transit-municipality-township-county',
+    'project_limits_description': 'field-location-transit-project-limits-description',
+    'project_lat_long': 'field-location-transit-project-latitude-longitude',
+    'distance_to_transit_miles': 'field-location-transit-distance-to-nearest-fixed-route-transit-miles',
+    'within_three_quarter_mile_transit': 'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no',
+    'weekday_transit_trip_count': 'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count',
+    'on_brt_corridor': 'field-location-transit-on-brt-corridor-yes-no'
+  };
+
+  var BF_COL_TO_FORM = {
+    'local_funds_budgeted': 'field-budget-funding-local-funds-budgeted-dollars',
+    'mtif_funds_awarded': 'field-budget-funding-sorta-mtif-funds-awarded-dollars',
+    'other_funds_budgeted': 'field-budget-funding-other-funds-budgeted-dollars',
+    'total_project_budget': 'field-budget-funding-total-project-budget-dollars',
+    'local_funds_share_pct': 'field-budget-funding-local-funds-share',
+    'mtif_funds_share_pct': 'field-budget-funding-mtif-funds-share',
+    'other_funds_share_pct': 'field-budget-funding-other-funds-share',
+    'max_grant_pct': 'field-budget-funding-max-grant-90-of-construction-cost',
+    'local_min_match_flag': 'field-budget-funding-local-minimum-10-match-flag',
+    'multi_year_funding_years': 'field-budget-funding-multi-year-project-funding-years-1-5',
+    'construction_contingency_pct': 'field-budget-funding-construction-contingency',
+    'useful_life_years': 'field-budget-funding-useful-life-estimate-years'
+  };
+
+  var SR_COL_TO_FORM = {
+    'construction_award_date': 'field-schedule-row-construction-award-date',
+    'anticipated_start_date': 'field-schedule-row-anticipated-construction-start-date',
+    'anticipated_completion_date': 'field-schedule-row-anticipated-construction-completion-date',
+    'start_within_one_year_flag': 'field-schedule-row-construction-start-within-1-year-flag',
+    'row_status': 'field-schedule-row-right-of-way-status-all-partial-none',
+    'design_engineering_status': 'field-schedule-row-design-engineering-status-complete-in-process-not-started'
+  };
+
+  function populateFromReport(rows, recordId, colMap) {
+    var match = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].id || rows[i].Rid || '') === String(recordId)) { match = rows[i]; break; }
+    }
+    if (!match) return;
+
+    Object.keys(match).forEach(function(apiKey) {
+      var val = match[apiKey];
+      if (val === null || val === undefined || val === '') return;
+      var col = stripPrefix(apiKey);
+      var formId = colMap[col];
+      if (!formId) return;
+
+      var field = document.getElementById(formId);
+      if (!field) return;
+
+      if (field.tagName === 'SELECT') {
+        for (var si = 0; si < field.options.length; si++) {
+          if (field.options[si].value === String(val) || field.options[si].textContent === String(val)) {
+            field.value = field.options[si].value;
+            break;
+          }
+        }
+      } else if (field.tagName === 'TEXTAREA') {
+        field.value = val;
+      } else {
+        field.value = val;
+      }
+    });
+  }
+
+  function queryReport(token, reportId) {
+    return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify({ ReportId: reportId, Filters: [] })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Report ' + r.status);
+      return r.json();
+    }).then(function(data) {
+      return Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+    });
+  }
+
+  function checkEvaluatorAccess(token, email) {
+    return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify({
+        ApplicationTableKeyId: API_CONFIG.evaluatorTableKey,
+        ReportId: API_CONFIG.evaluatorReportId,
+        PageNumber: 1,
+        PageSize: 500
+      })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Evaluator check ' + r.status);
+      return r.json();
+    }).then(function(data) {
+      var rows = Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+      console.log('[EVAL] Evaluator table returned', rows.length, 'rows');
+
+      var emailLower = email.toLowerCase();
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var keys = Object.keys(row);
+        for (var k = 0; k < keys.length; k++) {
+          var key = keys[k];
+          if (key.toLowerCase().replace(/^tbl[a-z0-9]+_/, '').replace(/[\s_]/g, '') === 'email') {
+            if (String(row[key]).toLowerCase() === emailLower) return true;
+          }
+        }
+      }
+      return false;
+    });
+  }
+
+  function getUserProfile(token) {
+    return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
+      method: 'GET',
+      headers: apiHeaders(token)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Profile ' + r.status);
+      return r.json();
+    });
+  }
+
+  function saveScores(token, recordId) {
+    var fieldsList = [];
+    Object.keys(SCORING_FIELD_MAPPING).forEach(function(formId) {
+      var field = document.getElementById(formId);
+      if (!field) return;
+      var val = field.value;
+      if (val !== undefined && val !== null && val !== '') {
+        fieldsList.push({ Name: SCORING_FIELD_MAPPING[formId].name, Value: val });
+      }
+    });
+
+    if (fieldsList.length === 0) {
+      showToast('No scoring data to save', 'error');
+      return Promise.resolve();
+    }
+
+    var rid = Number(recordId);
+    if (isNaN(rid)) {
+      showToast('Invalid record ID', 'error');
+      return Promise.resolve();
+    }
+
+    var payload = {
+      ApplicationTableKey: API_CONFIG.applicationTableKey,
+      Where: { Rid: rid },
+      FieldsList: fieldsList
+    };
+
+    return fetch(API_CONFIG.baseURL + '/api/FormAction/putdata', {
+      method: 'PUT',
+      headers: apiHeaders(token),
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Save scores ' + r.status);
+      return r.json();
+    }).then(function() {
+      showToast('Scores saved successfully', 'success');
+    }).catch(function(err) {
+      console.error('[EVAL] Save error:', err);
+      showToast('Error saving scores', 'error');
+    });
+  }
+
+  // Initialization
+  function init() {
+    var params = new URLSearchParams(window.location.search);
+    var recordId = params.get('recordId') || localStorage.getItem('mtif_current_application_id') || '';
+
+    if (!recordId) {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('accessDenied').style.display = 'block';
+      document.querySelector('.metro-access-denied p').textContent = 'No application record ID provided.';
+      return;
+    }
+
+    getAuthToken().then(function(token) {
+      if (!token) {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('accessDenied').style.display = 'block';
+        document.querySelector('.metro-access-denied p').textContent = 'Authentication required. Please log in.';
+        return;
+      }
+
+      return getUserProfile(token).then(function(profile) {
+        var email = (profile && profile.Email) || '';
+        console.log('[EVAL] Logged in as:', email);
+
+        return checkEvaluatorAccess(token, email).then(function(isEvaluator) {
+          document.getElementById('loadingScreen').style.display = 'none';
+
+          if (!isEvaluator) {
+            document.getElementById('accessDenied').style.display = 'block';
+            console.warn('[EVAL] User not in evaluator table:', email);
+            return;
+          }
+
+          console.log('[EVAL] Evaluator access granted for:', email);
+          document.getElementById('evaluatorContent').style.display = 'block';
+          document.getElementById('evalUserEmail').textContent = 'Evaluator: ' + email;
+          document.getElementById('mtif_record_id').value = recordId;
+
+          buildSections();
+
+          // Load all reports
+          var reports = [
+            queryReport(token, API_CONFIG.granteesReportId).then(function(rows) {
+              populateFromReport(rows, recordId, JUR_COL_TO_FORM);
+            }),
+            queryReport(token, API_CONFIG.projectHeaderReportId).then(function(rows) {
+              populateFromReport(rows, recordId, PH_COL_TO_FORM);
+            }),
+            queryReport(token, API_CONFIG.locationTransitReportId).then(function(rows) {
+              populateFromReport(rows, recordId, LT_COL_TO_FORM);
+            }),
+            queryReport(token, API_CONFIG.budgetFundingReportId).then(function(rows) {
+              populateFromReport(rows, recordId, BF_COL_TO_FORM);
+            }),
+            queryReport(token, API_CONFIG.scheduleRowReportId).then(function(rows) {
+              populateFromReport(rows, recordId, SR_COL_TO_FORM);
+            })
+          ];
+
+          Promise.all(reports).then(function() {
+            console.log('[EVAL] All reports loaded');
+          }).catch(function(err) {
+            console.warn('[EVAL] Some reports failed to load:', err);
+          });
+
+          // Attach button handlers
+          document.getElementById('saveScoresButton').addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            getAuthToken().then(function(t) {
+              return saveScores(t, recordId);
+            }).then(function() {
+              btn.disabled = false;
+              btn.textContent = 'Save Scores';
+            }).catch(function() {
+              btn.disabled = false;
+              btn.textContent = 'Save Scores';
+            });
+          });
+
+          document.getElementById('printButton').addEventListener('click', function() {
+            window.print();
+          });
+        });
+      });
+    }).catch(function(err) {
+      console.error('[EVAL] Init error:', err);
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('accessDenied').style.display = 'block';
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+    </script>
+  </body>
+</html>
