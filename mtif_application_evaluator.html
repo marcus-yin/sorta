@@ -311,6 +311,7 @@
           <div class="metro-actions">
             <button class="metro-button primary" type="button" id="saveScoresButton">Save Scores</button>
             <button class="metro-button secondary" type="button" id="printButton">Print / Save as PDF</button>
+            <button class="metro-button ghost" type="button" id="sendMessageBtn">Send message</button>
           </div>
           <div class="metro-status" id="evalStatus">
             <span id="evalUserEmail"></span>
@@ -351,6 +352,38 @@
       </div>
     </main>
 
+    <!-- Send Message Modal -->
+    <div id="sendMessageModal" class="metro-modal" style="display:none;">
+      <div class="metro-modal-overlay"></div>
+      <div class="metro-modal-content">
+        <h3 style="margin:0 0 20px; font-size:18px; font-weight:700; color:var(--metro-ink);">Send message</h3>
+        <div style="margin-bottom:15px;">
+          <label for="sendMessageSubject" style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Subject</label>
+          <input type="text" id="sendMessageSubject" placeholder="Enter subject" />
+        </div>
+        <div style="margin-bottom:15px;">
+          <label for="sendMessageBody" style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Message</label>
+          <textarea id="sendMessageBody" placeholder="Enter your message" rows="4" style="resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Attachments (optional)</label>
+          <input type="file" id="sendMessageFiles" multiple style="width:100%; padding:8px; border:1px solid var(--metro-border); border-radius:10px;" />
+          <p class="metro-help" style="margin:6px 0 0;">You can select multiple files.</p>
+        </div>
+        <div id="sendMessageStatus" style="font-size:12px; margin-bottom:10px; min-height:18px;"></div>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+          <button type="button" class="metro-button ghost" id="sendMessageCancelBtn">Cancel</button>
+          <button type="button" class="metro-button primary" id="sendMessageSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .metro-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+      .metro-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1; }
+      .metro-modal-content { position: relative; z-index: 2; background: var(--metro-white); border-radius: 16px; padding: 30px; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    </style>
+
     <script>
 (function() {
   'use strict';
@@ -371,7 +404,19 @@
     evaluatorTableKey: 'xrglb4cg4',
     evaluatorReportId: 'aqjsnp6w4',
     evalAssignmentTableKey: 'qynzr97g7',
-    evalAssignmentReportId: 'n7r13epq2'
+    evalAssignmentReportId: 'n7r13epq2',
+    notificationsTableKey: 'YOUR_NOTIFICATIONS_TABLE_KEY_HERE',
+    notificationsReportId: 'YOUR_NOTIFICATIONS_REPORT_ID_HERE',
+    notificationsSubjectFieldKey: 'YOUR_NOTIFICATIONS_SUBJECT_FIELD_KEY_HERE',
+    notificationsMessageFieldKey: 'YOUR_NOTIFICATIONS_MESSAGE_FIELD_KEY_HERE',
+    notificationsRelatedApplicationFieldKey: 'YOUR_NOTIFICATIONS_RELATED_APP_FIELD_KEY_HERE',
+    notificationsSenderFieldKey: 'YOUR_NOTIFICATIONS_SENDER_FIELD_KEY_HERE',
+    notificationsDirectionFieldKey: 'YOUR_NOTIFICATIONS_DIRECTION_FIELD_KEY_HERE',
+    documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
+    documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
+    documentsFileFieldKey: 'YOUR_DOCUMENTS_FILE_FIELD_KEY_HERE',
+    documentsNameFieldKey: 'YOUR_DOCUMENTS_NAME_FIELD_KEY_HERE',
+    documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
   };
 
   var SCORING_CATEGORY = 'Scoring / Criteria';
@@ -1049,6 +1094,138 @@
     });
   }
 
+  // ---- Send Message modal (notifications + attachments) ----
+  function openSendMessageModal() {
+    var modal = document.getElementById('sendMessageModal');
+    if (!modal) return;
+    document.getElementById('sendMessageSubject').value = '';
+    document.getElementById('sendMessageBody').value = '';
+    var fileInput = document.getElementById('sendMessageFiles');
+    if (fileInput) fileInput.value = '';
+    var statusEl = document.getElementById('sendMessageStatus');
+    if (statusEl) statusEl.textContent = '';
+    modal.style.display = 'flex';
+  }
+
+  function closeSendMessageModal() {
+    var modal = document.getElementById('sendMessageModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function uploadNotificationAttachment(file, notificationRid, token) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        var base64 = reader.result.split(',')[1];
+        var payload = {
+          ApplicationTableKey: API_CONFIG.documentsTableKey,
+          FieldsList: [
+            { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
+            { Key: API_CONFIG.documentsRelatedNotificationFieldKey, Name: 'related_notification', Value: String(notificationRid) },
+            { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
+            { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: 'Notification Attachment' }
+          ]
+        };
+        fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+          method: 'POST',
+          headers: apiHeaders(token),
+          body: JSON.stringify(payload)
+        }).then(function(r) {
+          if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+          return r.json();
+        }).then(resolve).catch(reject);
+      };
+      reader.onerror = function() { reject(new Error('Read failed: ' + file.name)); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function sendMessageFromModal() {
+    var subjectEl = document.getElementById('sendMessageSubject');
+    var bodyEl = document.getElementById('sendMessageBody');
+    var fileInput = document.getElementById('sendMessageFiles');
+    var statusEl = document.getElementById('sendMessageStatus');
+    var sendBtn = document.getElementById('sendMessageSendBtn');
+    var subject = (subjectEl && subjectEl.value) ? subjectEl.value.trim() : '';
+    var message = (bodyEl && bodyEl.value) ? bodyEl.value.trim() : '';
+    if (!subject || !message) {
+      if (statusEl) { statusEl.textContent = 'Please enter a subject and message.'; statusEl.style.color = '#dc2626'; }
+      return;
+    }
+    var recordId = document.getElementById('mtif_record_id') ? document.getElementById('mtif_record_id').value : _currentRecordId;
+    if (!recordId) {
+      if (statusEl) { statusEl.textContent = 'No application selected.'; statusEl.style.color = '#dc2626'; }
+      return;
+    }
+    var tableKey = API_CONFIG.notificationsTableKey;
+    if (!tableKey || tableKey === 'YOUR_NOTIFICATIONS_TABLE_KEY_HERE') {
+      if (statusEl) { statusEl.textContent = 'Notifications are not configured. Add notifications table key to API_CONFIG.'; statusEl.style.color = '#dc2626'; }
+      return;
+    }
+    if (sendBtn) sendBtn.disabled = true;
+    if (statusEl) { statusEl.textContent = 'Sending...'; statusEl.style.color = 'var(--metro-ink)'; }
+    getAuthToken().then(function(token) {
+      if (!token) throw new Error('Not signed in.');
+      return getUserProfile(token).then(function(profile) {
+        var senderVal = (profile && (profile.Rid || profile.Email)) ? String(profile.Rid || profile.Email) : '';
+        var direction = 'to_applicant';
+        var notifPayload = {
+          ApplicationTableKey: tableKey,
+          FieldsList: [
+            { Key: API_CONFIG.notificationsSubjectFieldKey, Name: 'subject', Value: subject },
+            { Key: API_CONFIG.notificationsMessageFieldKey, Name: 'message', Value: message },
+            { Key: API_CONFIG.notificationsRelatedApplicationFieldKey, Name: 'related_application', Value: String(recordId) },
+            { Key: API_CONFIG.notificationsSenderFieldKey, Name: 'sender', Value: senderVal },
+            { Key: API_CONFIG.notificationsDirectionFieldKey, Name: 'direction', Value: direction }
+          ]
+        };
+        return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+          method: 'POST',
+          headers: apiHeaders(token),
+          body: JSON.stringify(notifPayload)
+        });
+      }).then(function(r) {
+        if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+        return r.json();
+      }).then(function(notifResult) {
+        var notificationRid = notifResult.recordId || notifResult.Rid;
+        var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+        var docNotifKey = API_CONFIG.documentsRelatedNotificationFieldKey;
+        var docTable = API_CONFIG.documentsTableKey;
+        if (files.length && notificationRid && docNotifKey && docNotifKey !== 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE' && docTable && docTable !== 'YOUR_DOCUMENTS_TABLE_KEY_HERE') {
+          return Promise.all(files.map(function(file) {
+            return uploadNotificationAttachment(file, notificationRid, token);
+          })).then(function() { return notificationRid; });
+        }
+        return notificationRid;
+      });
+    }).then(function() {
+      if (statusEl) { statusEl.textContent = 'Message sent.'; statusEl.style.color = '#059669'; }
+      showToast('Message sent.', 'success');
+      setTimeout(closeSendMessageModal, 1200);
+    }).catch(function(err) {
+      console.error('[EVAL] Send message error:', err);
+      if (statusEl) { statusEl.textContent = err.message || 'Failed to send message.'; statusEl.style.color = '#dc2626'; }
+      showToast(err.message || 'Failed to send message.', 'error');
+    }).finally(function() {
+      if (sendBtn) sendBtn.disabled = false;
+    });
+  }
+
+  function attachSendMessageModalListeners() {
+    var openBtn = document.getElementById('sendMessageBtn');
+    var cancelBtn = document.getElementById('sendMessageCancelBtn');
+    var sendBtn = document.getElementById('sendMessageSendBtn');
+    var modal = document.getElementById('sendMessageModal');
+    if (openBtn) openBtn.addEventListener('click', openSendMessageModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSendMessageModal);
+    if (sendBtn) sendBtn.addEventListener('click', sendMessageFromModal);
+    if (modal) {
+      var overlay = modal.querySelector('.metro-modal-overlay');
+      if (overlay) overlay.addEventListener('click', closeSendMessageModal);
+    }
+  }
+
   // Initialization
   function init() {
     var params = new URLSearchParams(window.location.search);
@@ -1153,6 +1330,8 @@
           document.getElementById('newEvaluatorName').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') { e.preventDefault(); addEvaluator(); }
           });
+
+          attachSendMessageModalListeners();
 
           renderEvaluators();
         });
