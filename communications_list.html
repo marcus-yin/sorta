@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - Communications</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background-color: #f3f5f9;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    .sorta-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .sorta-banner {
+      background: linear-gradient(135deg, #003da5 0%, #1b4fbf 60%, #0b1f3a 100%);
+      padding: 28px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+      border-bottom: 4px solid #e4002b;
+    }
+
+    .sorta-logo {
+      height: 64px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+
+    .sorta-banner-title {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .sorta-banner-sub {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .sorta-header {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sorta-header h1 {
+      font-size: 24px;
+      color: #0f172a;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .sorta-user-info {
+      font-size: 13px;
+      color: #475569;
+      text-align: right;
+    }
+
+    .sorta-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #0f172a;
+      font-weight: 700;
+      padding-left: 12px;
+      border-left: 4px solid #e4002b;
+    }
+
+    .sorta-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #475569;
+    }
+
+    .sorta-spinner {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #003da5;
+      border-radius: 50%;
+      animation: sorta-spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes sorta-spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .sorta-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .sorta-info {
+      background: #dbeafe;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .sorta-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .sorta-filter-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sorta-filter-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sorta-filter-btn:hover {
+      background: #eef2f7;
+    }
+
+    .sorta-filter-btn.active {
+      background: #003da5;
+      color: #ffffff;
+      border-color: #003da5;
+    }
+
+    .sorta-table-wrap {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    .sorta-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sorta-table thead {
+      background: #003da5;
+      color: #ffffff;
+    }
+
+    .sorta-table thead th {
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+    }
+
+    .sorta-table tbody td {
+      padding: 14px 12px;
+      border-top: 1px solid #eef2f7;
+      font-size: 13px;
+      color: #0f172a;
+      vertical-align: middle;
+    }
+
+    .sorta-table tbody tr {
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .sorta-table tbody tr:hover {
+      background-color: #f0f5ff;
+    }
+
+    .sorta-table tbody td:first-child {
+      font-weight: 600;
+    }
+
+    .sorta-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .sorta-badge-sent {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .sorta-badge-received {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .sorta-button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 61, 165, 0.25);
+      background: rgba(0, 61, 165, 0.08);
+      color: #003da5;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+
+    .sorta-button:hover {
+      background: rgba(0, 61, 165, 0.14);
+    }
+
+    .sorta-button:active {
+      transform: translateY(1px);
+    }
+
+    .sorta-button-primary {
+      background: #e4002b;
+      color: #ffffff;
+      border: none;
+    }
+
+    .sorta-button-primary:hover {
+      background: #c70025;
+    }
+
+    .sorta-button-small {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .sorta-empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94a3b8;
+    }
+
+    .sorta-empty-icon {
+      font-size: 72px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .sorta-empty h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .sorta-empty p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .sorta-footer {
+      text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .sorta-footer a {
+      color: #003da5;
+      text-decoration: none;
+    }
+
+    /* Modal */
+    .sorta-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .sorta-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+
+    .sorta-modal-content {
+      position: relative;
+      z-index: 2;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .sorta-modal-content h3 {
+      margin: 0 0 20px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .sorta-modal-content label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .sorta-modal-content input[type="text"],
+    .sorta-modal-content textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cfd8e3;
+      border-radius: 12px;
+      font-size: 14px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      font-family: inherit;
+    }
+
+    .sorta-modal-content input:focus,
+    .sorta-modal-content textarea:focus {
+      border-color: rgba(0, 61, 165, 0.6);
+      box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15);
+    }
+
+    .sorta-modal-content textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Detail view (in-page panel) */
+    .sorta-detail {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .sorta-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .sorta-detail-subject {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .sorta-detail-meta {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 16px;
+    }
+
+    .sorta-detail-meta span {
+      margin-right: 16px;
+    }
+
+    .sorta-detail-body {
+      font-size: 14px;
+      color: #1e293b;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .sorta-detail-attachments {
+      margin-bottom: 16px;
+    }
+
+    .sorta-detail-attachments h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #475569;
+    }
+
+    .sorta-attachment-link {
+      display: inline-block;
+      background: #eef2f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #003da5;
+      text-decoration: none;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 6px;
+      transition: background 0.15s ease;
+    }
+
+    .sorta-attachment-link:hover {
+      background: #dbeafe;
+    }
+
+    .sorta-detail-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .sorta-toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      min-width: 260px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    }
+
+    .sorta-toast.show { opacity: 1; transform: translateY(0); }
+    .sorta-toast.success { background: #16a34a; }
+    .sorta-toast.error { background: #dc2626; }
+
+    @media (max-width: 860px) {
+      .sorta-banner { padding: 20px 16px; }
+      .sorta-logo { height: 52px; }
+      .sorta-banner-title { font-size: 18px; }
+
+      .sorta-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .sorta-user-info { text-align: left; }
+      .sorta-table-wrap { overflow-x: auto; }
+      .sorta-table { min-width: 600px; }
+      .sorta-modal-content { padding: 20px; max-width: 100%; }
+    }
+
+    @media print {
+      .sorta-banner, .sorta-toolbar, .sorta-footer, .sorta-detail-actions { display: none !important; }
+      body { background: white; }
+      .sorta-section, .sorta-detail { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sorta-container">
+
+    <div class="sorta-banner">
+      <img class="sorta-logo"
+           src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+           alt="Metro logo" />
+      <h3 class="sorta-banner-title">Metro Transit Infrastructure Fund</h3>
+      <p class="sorta-banner-sub">Communications</p>
+    </div>
+
+    <div class="sorta-header">
+      <div>
+        <h1>Communications</h1>
+      </div>
+      <div class="sorta-user-info">
+        <div id="comm_user_email">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Detail Panel (shown when viewing a single message) -->
+    <div id="comm_detail" class="sorta-section" style="display:none;">
+      <div class="sorta-detail">
+        <div class="sorta-detail-header">
+          <div class="sorta-detail-subject" id="comm_detail_subject"></div>
+          <button class="sorta-button sorta-button-small" id="comm_detail_close_btn">Back to list</button>
+        </div>
+        <div class="sorta-detail-meta" id="comm_detail_meta"></div>
+        <div class="sorta-detail-body" id="comm_detail_body"></div>
+        <div class="sorta-detail-attachments" id="comm_detail_attachments" style="display:none;">
+          <h4>Attachments</h4>
+          <div id="comm_detail_attachment_list"></div>
+        </div>
+        <div class="sorta-detail-actions">
+          <button class="sorta-button sorta-button-primary sorta-button-small" id="comm_detail_reply_btn">Reply</button>
+          <button class="sorta-button sorta-button-small" id="comm_detail_back_btn">Back to list</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages list -->
+    <div id="comm_list_section" class="sorta-section">
+      <h2>Messages</h2>
+
+      <div id="comm_error" class="sorta-error" style="display:none;"></div>
+      <div id="comm_info" class="sorta-info" style="display:none;"></div>
+
+      <div class="sorta-toolbar">
+        <div class="sorta-filter-group">
+          <button class="sorta-filter-btn active" data-filter="all">All</button>
+          <button class="sorta-filter-btn" data-filter="received">Received</button>
+          <button class="sorta-filter-btn" data-filter="sent">Sent</button>
+        </div>
+        <button class="sorta-button sorta-button-primary" id="comm_new_message_btn">New message</button>
+      </div>
+
+      <div id="comm_loading" class="sorta-loading">
+        <div class="sorta-spinner"></div>
+        <p>Loading communications...</p>
+      </div>
+
+      <div id="comm_table_wrap" style="display:none;">
+        <div class="sorta-table-wrap">
+          <table class="sorta-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Direction</th>
+                <th>Application</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="comm_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="comm_empty" class="sorta-empty" style="display:none;">
+        <div class="sorta-empty-icon">&#x2709;</div>
+        <h3>No Messages Yet</h3>
+        <p>Communications between you and SORTA / evaluators will appear here.</p>
+      </div>
+    </div>
+
+    <div class="sorta-footer">
+      Southwest Ohio Regional Transit Authority &middot;
+      <a href="https://www.go-metro.com" target="_blank">go-metro.com</a>
+    </div>
+  </div>
+
+  <!-- Send / Reply Message Modal -->
+  <div id="comm_modal" class="sorta-modal" style="display:none;">
+    <div class="sorta-modal-overlay"></div>
+    <div class="sorta-modal-content">
+      <h3 id="comm_modal_title">New message</h3>
+      <div style="display:flex; gap:12px; margin-bottom:15px;">
+        <div style="flex:1;">
+          <label for="comm_modal_to">To</label>
+          <input type="text" id="comm_modal_to" placeholder="Recipient name or email" />
+        </div>
+        <div style="flex:1;">
+          <label for="comm_modal_from">From</label>
+          <input type="text" id="comm_modal_from" placeholder="Your name or email" readonly style="background:#f8fafc; color:#475569; cursor:default;" />
+        </div>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="comm_modal_subject">Subject</label>
+        <input type="text" id="comm_modal_subject" placeholder="Enter subject" />
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label for="comm_modal_body">Message</label>
+        <textarea id="comm_modal_body" placeholder="Enter your message" rows="5"></textarea>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label>Attachments (optional)</label>
+        <input type="file" id="comm_modal_files" multiple style="width:100%; padding:8px; border:1px solid #cfd8e3; border-radius:12px; font-size:14px;" />
+        <p style="margin: 6px 0 0; font-size:11px; color:#475569;">You can select multiple files.</p>
+      </div>
+      <div id="comm_modal_status" style="font-size:12px; margin-bottom:10px; min-height:18px;"></div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="sorta-button sorta-button-small" id="comm_modal_cancel_btn">Cancel</button>
+        <button class="sorta-button sorta-button-primary sorta-button-small" id="comm_modal_send_btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+    var API_CONFIG = {
+      baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+      communicationsTableKey: 'ia2vnshw7',
+      communicationsReportId: '48keiqwa8',
+      subjectFieldKey: 'YOUR_COMMUNICATIONS_SUBJECT_FIELD_KEY_HERE',
+      messageFieldKey: 'YOUR_COMMUNICATIONS_MESSAGE_FIELD_KEY_HERE',
+      relatedApplicationFieldKey: 'YOUR_COMMUNICATIONS_RELATED_APP_FIELD_KEY_HERE',
+      senderFieldKey: 'YOUR_COMMUNICATIONS_SENDER_FIELD_KEY_HERE',
+      toFieldKey: 'YOUR_COMMUNICATIONS_TO_FIELD_KEY_HERE',
+      fromFieldKey: 'YOUR_COMMUNICATIONS_FROM_FIELD_KEY_HERE',
+      directionFieldKey: 'YOUR_COMMUNICATIONS_DIRECTION_FIELD_KEY_HERE',
+      documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
+      documentsReportId: 'YOUR_DOCUMENTS_REPORT_ID_HERE',
+      documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
+      documentsFileFieldKey: 'YOUR_DOCUMENTS_FILE_FIELD_KEY_HERE',
+      documentsNameFieldKey: 'YOUR_DOCUMENTS_NAME_FIELD_KEY_HERE',
+      documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
+    };
+
+    // ============================================================
+    // Token helpers
+    // ============================================================
+    function looksLikeSaltedCiphertext(s) {
+      return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+    }
+
+    function safeJsonParse(s) {
+      try { return JSON.parse(s); } catch (_) { return null; }
+    }
+
+    function extractAccessToken(decrypted) {
+      if (typeof decrypted !== 'string') return '';
+      var t = decrypted.trim();
+      if (!t) return '';
+      var j = safeJsonParse(t);
+      if (j && typeof j === 'object') {
+        if (j.access_token) return String(j.access_token);
+        if (j.token) return String(j.token);
+      }
+      return t;
+    }
+
+    function bootstrapToken() {
+      var enc = '';
+      try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+      if (!enc || typeof CryptoJS === 'undefined') return '';
+      try {
+        var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+        if (!dec) return '';
+        var tok = extractAccessToken(dec);
+        if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+        return tok;
+      } catch (_) {
+        return '';
+      }
+    }
+
+    var userToken = bootstrapToken();
+
+    function getAuthToken() {
+      if (userToken) return Promise.resolve(userToken);
+      userToken = bootstrapToken();
+      return Promise.resolve(userToken || null);
+    }
+
+    function apiHeaders(token) {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      };
+    }
+
+    // ============================================================
+    // Field extraction
+    // ============================================================
+    function extractFieldValue(record, fieldName) {
+      if (record[fieldName] !== undefined) return record[fieldName];
+      var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+      for (var key in record) {
+        var kn = key.toLowerCase().replace(/[\s_]/g, '');
+        if (kn === norm || kn.endsWith(norm)) return record[key];
+      }
+      return null;
+    }
+
+    function getRecordId(row) {
+      return row.id || extractFieldValue(row, 'id') || row.Rid || '';
+    }
+
+    function escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      try {
+        return new Date(d).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      } catch (_) { return d; }
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function showToast(message, type) {
+      var existing = document.querySelector('.sorta-toast');
+      if (existing) existing.remove();
+      var toast = document.createElement('div');
+      toast.className = 'sorta-toast ' + type;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      requestAnimationFrame(function () { toast.classList.add('show'); });
+      setTimeout(function () {
+        toast.classList.remove('show');
+        setTimeout(function () { toast.remove(); }, 300);
+      }, 3000);
+    }
+
+    // ============================================================
+    // API: User profile
+    // ============================================================
+    function getUserProfile(token) {
+      return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
+        method: 'GET',
+        headers: apiHeaders(token)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Profile ' + r.status);
+        return r.json();
+      });
+    }
+
+    // ============================================================
+    // API: Query communications
+    // ============================================================
+    function queryCommunications(token) {
+      var payload = {
+        ApplicationTableKeyId: API_CONFIG.communicationsTableKey,
+        ReportId: API_CONFIG.communicationsReportId,
+        PageNumber: 1,
+        PageSize: 500
+      };
+
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Query ' + r.status);
+        return r.json();
+      }).then(function (result) {
+        var rows = (result && result.Records) || (Array.isArray(result) ? result : (result.data || result.Data || []));
+        console.log('[COMM] API returned', rows.length, 'total rows');
+        if (rows.length > 0) {
+          console.log('[COMM] Sample row keys:', Object.keys(rows[0]));
+        }
+        return rows;
+      });
+    }
+
+    // ============================================================
+    // API: Query documents linked to a communication record
+    // ============================================================
+    function queryDocumentsForCommunication(token, commRid) {
+      var docReport = API_CONFIG.documentsReportId;
+      if (!docReport || docReport.indexOf('YOUR_') === 0) return Promise.resolve([]);
+
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          ApplicationTableKeyId: API_CONFIG.documentsTableKey,
+          ReportId: docReport,
+          PageNumber: 1,
+          PageSize: 100
+        })
+      }).then(function (r) {
+        if (!r.ok) return [];
+        return r.json();
+      }).then(function (result) {
+        var rows = (result && result.Records) || (Array.isArray(result) ? result : (result.data || result.Data || []));
+        return rows.filter(function (row) {
+          var rel = extractFieldValue(row, 'related_notification') || extractFieldValue(row, 'related_communication') || '';
+          return String(rel) === String(commRid);
+        });
+      }).catch(function () { return []; });
+    }
+
+    // ============================================================
+    // API: Send a communication (new or reply)
+    // ============================================================
+    function sendCommunication(token, subject, message, applicationRid, senderVal, direction, toVal, fromVal) {
+      var tableKey = API_CONFIG.communicationsTableKey;
+      if (!tableKey || tableKey.indexOf('YOUR_') === 0) {
+        return Promise.reject(new Error('Communications table not configured.'));
+      }
+
+      var payload = {
+        ApplicationTableKey: tableKey,
+        FieldsList: [
+          { Key: API_CONFIG.subjectFieldKey, Name: 'subject', Value: subject },
+          { Key: API_CONFIG.messageFieldKey, Name: 'message', Value: message },
+          { Key: API_CONFIG.relatedApplicationFieldKey, Name: 'related_application', Value: String(applicationRid || '') },
+          { Key: API_CONFIG.senderFieldKey, Name: 'sender', Value: senderVal },
+          { Key: API_CONFIG.toFieldKey, Name: 'to', Value: toVal || '' },
+          { Key: API_CONFIG.fromFieldKey, Name: 'from', Value: fromVal || '' },
+          { Key: API_CONFIG.directionFieldKey, Name: 'direction', Value: direction }
+        ]
+      };
+
+      return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
+        return r.json();
+      });
+    }
+
+    function uploadAttachment(token, file, commRid) {
+      var docTable = API_CONFIG.documentsTableKey;
+      var docNotifKey = API_CONFIG.documentsRelatedNotificationFieldKey;
+      if (!docTable || docTable.indexOf('YOUR_') === 0 || !docNotifKey || docNotifKey.indexOf('YOUR_') === 0) {
+        return Promise.resolve(null);
+      }
+
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var base64 = reader.result.split(',')[1];
+          var payload = {
+            ApplicationTableKey: docTable,
+            FieldsList: [
+              { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
+              { Key: docNotifKey, Name: 'related_notification', Value: String(commRid) },
+              { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
+              { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: 'Communication Attachment' }
+            ]
+          };
+          fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
+            return r.json();
+          }).then(resolve).catch(reject);
+        };
+        reader.onerror = function () { reject(new Error('Read failed: ' + file.name)); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ============================================================
+    // State
+    // ============================================================
+    var allMessages = [];
+    var currentFilter = 'all';
+    var currentUserEmail = '';
+    var currentUserRid = '';
+    var currentReplyContext = null; // { applicationRid, direction }
+
+    // ============================================================
+    // Rendering: message list
+    // ============================================================
+    function determineDirection(row) {
+      var dir = extractFieldValue(row, 'direction') || '';
+      return String(dir).toLowerCase();
+    }
+
+    function determineSender(row) {
+      return extractFieldValue(row, 'sender') || extractFieldValue(row, 'Created By') || extractFieldValue(row, 'createdby') || '-';
+    }
+
+    function isMessageFromMe(row) {
+      var sender = String(determineSender(row)).toLowerCase();
+      return sender === currentUserEmail.toLowerCase() || sender === String(currentUserRid);
+    }
+
+    function filterMessages(rows) {
+      if (currentFilter === 'all') return rows;
+      return rows.filter(function (row) {
+        var fromMe = isMessageFromMe(row);
+        if (currentFilter === 'sent') return fromMe;
+        if (currentFilter === 'received') return !fromMe;
+        return true;
+      });
+    }
+
+    function renderTable(rows) {
+      var tbody = $('comm_tbody');
+      var wrap = $('comm_table_wrap');
+      var empty = $('comm_empty');
+      var filtered = filterMessages(rows);
+
+      if (!filtered || filtered.length === 0) {
+        wrap.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      var sorted = filtered.slice().sort(function (a, b) {
+        var dateA = extractFieldValue(a, 'Created Date') || extractFieldValue(a, 'createddate') || extractFieldValue(a, 'created_date') || '';
+        var dateB = extractFieldValue(b, 'Created Date') || extractFieldValue(b, 'createddate') || extractFieldValue(b, 'created_date') || '';
+        if (dateA && dateB) return new Date(dateB) - new Date(dateA);
+        return Number(getRecordId(b) || 0) - Number(getRecordId(a) || 0);
+      });
+
+      wrap.style.display = 'block';
+      empty.style.display = 'none';
+      tbody.innerHTML = '';
+
+      sorted.forEach(function (row) {
+        var rid = getRecordId(row);
+        var subject = extractFieldValue(row, 'subject') || '(no subject)';
+        var fromVal = extractFieldValue(row, 'from') || determineSender(row);
+        var toVal = extractFieldValue(row, 'to') || '-';
+        var direction = determineDirection(row);
+        var appRef = extractFieldValue(row, 'related_application') || extractFieldValue(row, 'related application') || '-';
+        var createdDate = extractFieldValue(row, 'Created Date') || extractFieldValue(row, 'createddate') || extractFieldValue(row, 'created_date') || '';
+
+        var dirLabel = direction === 'to_applicant' ? 'To Applicant' : direction === 'to_evaluator' ? 'To Evaluator' : direction || '-';
+        var badgeClass = isMessageFromMe(row) ? 'sorta-badge-sent' : 'sorta-badge-received';
+        var badgeText = isMessageFromMe(row) ? 'Sent' : 'Received';
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + escHtml(subject) + '</td>' +
+          '<td>' + escHtml(fromVal) + '</td>' +
+          '<td>' + escHtml(toVal) + '</td>' +
+          '<td><span class="sorta-badge ' + badgeClass + '">' + badgeText + '</span> ' + escHtml(dirLabel) + '</td>' +
+          '<td>' + escHtml(appRef) + '</td>' +
+          '<td>' + formatDate(createdDate) + '</td>';
+
+        tr.setAttribute('data-rid', rid);
+        tr.addEventListener('click', function () {
+          openDetail(row);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ============================================================
+    // Detail view
+    // ============================================================
+    function openDetail(row) {
+      var rid = getRecordId(row);
+      var subject = extractFieldValue(row, 'subject') || '(no subject)';
+      var fromVal = extractFieldValue(row, 'from') || determineSender(row);
+      var toVal = extractFieldValue(row, 'to') || '-';
+      var direction = determineDirection(row);
+      var body = extractFieldValue(row, 'message') || '';
+      var appRef = extractFieldValue(row, 'related_application') || extractFieldValue(row, 'related application') || '';
+      var createdDate = extractFieldValue(row, 'Created Date') || extractFieldValue(row, 'createddate') || extractFieldValue(row, 'created_date') || '';
+
+      var dirLabel = direction === 'to_applicant' ? 'To Applicant' : direction === 'to_evaluator' ? 'To Evaluator' : direction || '';
+
+      $('comm_detail_subject').textContent = subject;
+      $('comm_detail_meta').innerHTML =
+        '<span><strong>From:</strong> ' + escHtml(fromVal) + '</span>' +
+        '<span><strong>To:</strong> ' + escHtml(toVal) + '</span>' +
+        '<span><strong>Direction:</strong> ' + escHtml(dirLabel) + '</span>' +
+        (appRef ? '<span><strong>Application:</strong> ' + escHtml(appRef) + '</span>' : '') +
+        '<span><strong>Date:</strong> ' + formatDate(createdDate) + '</span>';
+      $('comm_detail_body').textContent = body;
+
+      // Reply context: flip the direction
+      currentReplyContext = {
+        applicationRid: appRef,
+        direction: direction === 'to_applicant' ? 'to_evaluator' : 'to_applicant',
+        originalSubject: subject,
+        replyTo: fromVal,
+        replyFrom: toVal
+      };
+
+      // Load attachments
+      var attachSection = $('comm_detail_attachments');
+      var attachList = $('comm_detail_attachment_list');
+      attachSection.style.display = 'none';
+      attachList.innerHTML = '';
+
+      getAuthToken().then(function (token) {
+        if (!token || !rid) return;
+        return queryDocumentsForCommunication(token, rid);
+      }).then(function (docs) {
+        if (!docs || docs.length === 0) return;
+        attachSection.style.display = 'block';
+        docs.forEach(function (doc) {
+          var name = extractFieldValue(doc, 'document_name') || extractFieldValue(doc, 'name') || 'Attachment';
+          var fileRid = doc.Rid || getRecordId(doc);
+          var a = document.createElement('a');
+          a.className = 'sorta-attachment-link';
+          a.href = API_CONFIG.baseURL + '/api/File/download/' + fileRid;
+          a.target = '_blank';
+          a.textContent = name;
+          attachList.appendChild(a);
+        });
+      });
+
+      $('comm_list_section').style.display = 'none';
+      $('comm_detail').style.display = 'block';
+    }
+
+    function closeDetail() {
+      $('comm_detail').style.display = 'none';
+      $('comm_list_section').style.display = 'block';
+      currentReplyContext = null;
+    }
+
+    // ============================================================
+    // Modal: new message / reply
+    // ============================================================
+    function openModal(isReply) {
+      var modal = $('comm_modal');
+      var toField = $('comm_modal_to');
+      var fromField = $('comm_modal_from');
+      var subjectField = $('comm_modal_subject');
+      var bodyField = $('comm_modal_body');
+      var fileInput = $('comm_modal_files');
+      var statusEl = $('comm_modal_status');
+
+      toField.value = '';
+      fromField.value = currentUserEmail || '';
+      subjectField.value = '';
+      bodyField.value = '';
+      if (fileInput) fileInput.value = '';
+      if (statusEl) statusEl.textContent = '';
+
+      if (isReply && currentReplyContext) {
+        $('comm_modal_title').textContent = 'Reply';
+        var origSubject = currentReplyContext.originalSubject || '';
+        subjectField.value = origSubject.indexOf('Re: ') === 0 ? origSubject : 'Re: ' + origSubject;
+        toField.value = currentReplyContext.replyTo || '';
+        fromField.value = currentReplyContext.replyFrom || currentUserEmail || '';
+      } else {
+        $('comm_modal_title').textContent = 'New message';
+        currentReplyContext = null;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      $('comm_modal').style.display = 'none';
+    }
+
+    function handleSend() {
+      var toEl = $('comm_modal_to');
+      var fromEl = $('comm_modal_from');
+      var subjectEl = $('comm_modal_subject');
+      var bodyEl = $('comm_modal_body');
+      var fileInput = $('comm_modal_files');
+      var statusEl = $('comm_modal_status');
+      var sendBtn = $('comm_modal_send_btn');
+
+      var toVal = (toEl.value || '').trim();
+      var fromVal = (fromEl.value || '').trim();
+      var subject = (subjectEl.value || '').trim();
+      var message = (bodyEl.value || '').trim();
+
+      if (!toVal) {
+        statusEl.textContent = 'Please enter a recipient in the To field.';
+        statusEl.style.color = '#dc2626';
+        return;
+      }
+
+      if (!subject || !message) {
+        statusEl.textContent = 'Please enter a subject and message.';
+        statusEl.style.color = '#dc2626';
+        return;
+      }
+
+      var applicationRid = (currentReplyContext && currentReplyContext.applicationRid) ? currentReplyContext.applicationRid : '';
+      var direction = (currentReplyContext && currentReplyContext.direction) ? currentReplyContext.direction : 'to_evaluator';
+      var senderVal = currentUserRid || currentUserEmail || '';
+
+      sendBtn.disabled = true;
+      statusEl.textContent = 'Sending...';
+      statusEl.style.color = '#0f172a';
+
+      getAuthToken().then(function (token) {
+        if (!token) throw new Error('Not signed in.');
+        return sendCommunication(token, subject, message, applicationRid, senderVal, direction, toVal, fromVal).then(function (result) {
+          var commRid = result.recordId || result.Rid;
+          var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+          if (files.length && commRid) {
+            return Promise.all(files.map(function (f) {
+              return uploadAttachment(token, f, commRid);
+            })).then(function () { return token; });
+          }
+          return token;
+        }).then(function (token) {
+          statusEl.textContent = 'Message sent.';
+          statusEl.style.color = '#059669';
+          showToast('Message sent.', 'success');
+          setTimeout(function () {
+            closeModal();
+            closeDetail();
+            reload(token);
+          }, 800);
+        });
+      }).catch(function (err) {
+        console.error('[COMM] Send error:', err);
+        statusEl.textContent = (err && err.message) ? err.message : 'Failed to send message.';
+        statusEl.style.color = '#dc2626';
+        showToast('Failed to send message.', 'error');
+      }).finally(function () {
+        sendBtn.disabled = false;
+      });
+    }
+
+    // ============================================================
+    // Filter buttons
+    // ============================================================
+    function attachFilterListeners() {
+      var buttons = document.querySelectorAll('.sorta-filter-btn');
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          buttons.forEach(function (b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          currentFilter = this.getAttribute('data-filter');
+          renderTable(allMessages);
+        });
+      });
+    }
+
+    // ============================================================
+    // Reload data
+    // ============================================================
+    function reload(token) {
+      $('comm_loading').style.display = 'block';
+      $('comm_table_wrap').style.display = 'none';
+      $('comm_empty').style.display = 'none';
+
+      queryCommunications(token).then(function (rows) {
+        allMessages = rows;
+        $('comm_loading').style.display = 'none';
+        renderTable(rows);
+      }).catch(function (err) {
+        console.error('[COMM] Reload error:', err);
+        $('comm_loading').style.display = 'none';
+        renderTable([]);
+      });
+    }
+
+    // ============================================================
+    // Initialise
+    // ============================================================
+    function init() {
+      attachFilterListeners();
+
+      $('comm_new_message_btn').addEventListener('click', function () {
+        currentReplyContext = null;
+        openModal(false);
+      });
+      $('comm_modal_cancel_btn').addEventListener('click', closeModal);
+      $('comm_modal_send_btn').addEventListener('click', handleSend);
+      $('comm_detail_close_btn').addEventListener('click', closeDetail);
+      $('comm_detail_back_btn').addEventListener('click', closeDetail);
+      $('comm_detail_reply_btn').addEventListener('click', function () {
+        openModal(true);
+      });
+
+      var modalEl = $('comm_modal');
+      if (modalEl) {
+        modalEl.querySelector('.sorta-modal-overlay').addEventListener('click', closeModal);
+      }
+
+      getAuthToken().then(function (token) {
+        if (!token) {
+          $('comm_loading').style.display = 'none';
+          $('comm_user_email').textContent = 'Not signed in';
+          renderTable([]);
+          return;
+        }
+
+        return getUserProfile(token).then(function (profile) {
+          currentUserEmail = (profile && profile.Email) || '';
+          currentUserRid = (profile && profile.Rid) ? String(profile.Rid) : '';
+          $('comm_user_email').textContent = currentUserEmail || 'Unknown user';
+          return queryCommunications(token);
+        }).then(function (rows) {
+          allMessages = rows;
+          $('comm_loading').style.display = 'none';
+          renderTable(rows);
+        });
+      }).catch(function (err) {
+        console.error('[COMM] Init error:', err);
+        $('comm_loading').style.display = 'none';
+        renderTable([]);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,12 +1,17 @@
-# Notifications Table Setup (Send Message)
+# Communications Table Setup (Send Message)
 
-The **Send message** feature stores in-app messages in a **notifications** table and optional file attachments in the **documents** table, linked to each notification. After creating the table(s) in OpenGov, add the table and field keys to `API_CONFIG` in the relevant HTML files.
+The **Send message** feature stores in-app messages in your **Communications** table and optional file attachments in the **documents** table, linked to each communication row. After creating the table(s) in OpenGov, add the table and field keys to `API_CONFIG` in the relevant HTML files.
+
+**Configured in this repo:**
+
+- **Communications table key:** `ia2vnshw7` (`notificationsTableKey` in code)
+- **Communications report ID:** `48keiqwa8` (`notificationsReportId` in code)
 
 ---
 
-## 1. Notifications table
+## 1. Communications table
 
-Create a table in OpenGov (e.g. named **Notifications** or **Messages**) with at least these fields:
+Create a table in OpenGov (named **Communications** in your environment) with at least these fields:
 
 | Field name (logical) | Purpose |
 |----------------------|--------|
@@ -21,10 +26,10 @@ Optional but useful:
 - `created_at` / timestamp (if your API auto-fills it)
 - `read_at` or `status` if you add an in-app inbox later
 
-After creation, set in `API_CONFIG`:
+After creation, set in `API_CONFIG` (table/report keys are already set; **field keys** still need your OpenGov field keys):
 
-- `notificationsTableKey` – table key
-- `notificationsReportId` – report ID used to query notifications
+- `notificationsTableKey` – `ia2vnshw7` ✓
+- `notificationsReportId` – `48keiqwa8` ✓
 - `notificationsSubjectFieldKey`
 - `notificationsMessageFieldKey`
 - `notificationsRelatedApplicationFieldKey`

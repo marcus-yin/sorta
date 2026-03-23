@@ -1495,6 +1495,16 @@
   <div class="mq-modal-overlay"></div>
   <div class="mq-modal-content" style="max-width: 520px;">
     <h3 style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #0f172a;">Send message</h3>
+    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
+      <div style="flex: 1;">
+        <label for="mq_send_message_to" style="display: block; font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">To</label>
+        <input type="text" id="mq_send_message_to" placeholder="Recipient name or email" style="width: 100%; padding: 11px 12px; border: 1px solid #cfd8e3; border-radius: 12px; font-size: 14px; box-sizing: border-box;" />
+      </div>
+      <div style="flex: 1;">
+        <label for="mq_send_message_from" style="display: block; font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">From</label>
+        <input type="text" id="mq_send_message_from" placeholder="Your name or email" readonly style="width: 100%; padding: 11px 12px; border: 1px solid #cfd8e3; border-radius: 12px; font-size: 14px; box-sizing: border-box; background: #f8fafc; color: #475569; cursor: default;" />
+      </div>
+    </div>
     <div style="margin-bottom: 15px;">
       <label for="mq_send_message_subject" style="display: block; font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">Subject</label>
       <input type="text" id="mq_send_message_subject" placeholder="Enter subject" style="width: 100%; padding: 11px 12px; border: 1px solid #cfd8e3; border-radius: 12px; font-size: 14px; box-sizing: border-box;" />
@@ -1680,12 +1690,17 @@
   function openSendMessageModal() {
     const modal = document.getElementById('mq_send_message_modal');
     if (!modal) return;
+    document.getElementById('mq_send_message_to').value = '';
+    document.getElementById('mq_send_message_from').value = '';
     document.getElementById('mq_send_message_subject').value = '';
     document.getElementById('mq_send_message_body').value = '';
     const fileInput = document.getElementById('mq_send_message_files');
     if (fileInput) fileInput.value = '';
     const statusEl = document.getElementById('mq_send_message_status');
     if (statusEl) statusEl.textContent = '';
+    getUserProfile().then(function(p) {
+      if (p && p.Email) document.getElementById('mq_send_message_from').value = p.Email;
+    }).catch(function() {});
     modal.style.display = 'flex';
   }
 
@@ -1727,13 +1742,22 @@
   }
 
   async function sendMessageFromModal() {
+    const toEl = document.getElementById('mq_send_message_to');
+    const fromEl = document.getElementById('mq_send_message_from');
     const subjectEl = document.getElementById('mq_send_message_subject');
     const bodyEl = document.getElementById('mq_send_message_body');
     const fileInput = document.getElementById('mq_send_message_files');
     const statusEl = document.getElementById('mq_send_message_status');
     const sendBtn = document.getElementById('mq_send_message_modal_send_btn');
+    const toVal = toEl && toEl.value ? toEl.value.trim() : '';
+    const fromVal = fromEl && fromEl.value ? fromEl.value.trim() : '';
     const subject = subjectEl && subjectEl.value ? subjectEl.value.trim() : '';
     const message = bodyEl && bodyEl.value ? bodyEl.value.trim() : '';
+    if (!toVal) {
+      if (statusEl) statusEl.textContent = 'Please enter a recipient in the To field.';
+      if (statusEl) statusEl.style.color = '#dc2626';
+      return;
+    }
     if (!subject || !message) {
       if (statusEl) statusEl.textContent = 'Please enter a subject and message.';
       if (statusEl) statusEl.style.color = '#dc2626';
@@ -1766,6 +1790,8 @@
           { Key: API_CONFIG.notificationsMessageFieldKey, Name: 'message', Value: message },
           { Key: API_CONFIG.notificationsRelatedApplicationFieldKey, Name: 'related_application', Value: String(recordId) },
           { Key: API_CONFIG.notificationsSenderFieldKey, Name: 'sender', Value: senderVal },
+          { Key: API_CONFIG.notificationsToFieldKey, Name: 'to', Value: toVal },
+          { Key: API_CONFIG.notificationsFromFieldKey, Name: 'from', Value: fromVal },
           { Key: API_CONFIG.notificationsDirectionFieldKey, Name: 'direction', Value: direction }
         ]
       };
@@ -2166,14 +2192,16 @@
     timelineTableKey: 'e9mdin2w1', // Project Timeline table
     budgetTableKey: 'yu933jka3', // Budget Items table
     documentsTableKey: '3hzlmokw5', // Documents/Attachments table
-    notificationsTableKey: 'YOUR_NOTIFICATIONS_TABLE_KEY_HERE', // Notifications/messages table
-    notificationsReportId: 'YOUR_NOTIFICATIONS_REPORT_ID_HERE', // Report for querying notifications
+    notificationsTableKey: 'ia2vnshw7', // Communications table
+    notificationsReportId: '48keiqwa8', // Communications report
     
     // Notifications table field keys (set after creating the table in OpenGov)
     notificationsSubjectFieldKey: 'YOUR_NOTIFICATIONS_SUBJECT_FIELD_KEY_HERE',
     notificationsMessageFieldKey: 'YOUR_NOTIFICATIONS_MESSAGE_FIELD_KEY_HERE',
     notificationsRelatedApplicationFieldKey: 'YOUR_NOTIFICATIONS_RELATED_APP_FIELD_KEY_HERE',
     notificationsSenderFieldKey: 'YOUR_NOTIFICATIONS_SENDER_FIELD_KEY_HERE',
+    notificationsToFieldKey: 'YOUR_NOTIFICATIONS_TO_FIELD_KEY_HERE',
+    notificationsFromFieldKey: 'YOUR_NOTIFICATIONS_FROM_FIELD_KEY_HERE',
     notificationsDirectionFieldKey: 'YOUR_NOTIFICATIONS_DIRECTION_FIELD_KEY_HERE', // e.g. to_applicant | to_evaluator
     documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE', // Documents table: link to notification record
     

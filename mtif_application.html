@@ -463,6 +463,16 @@
       <div class="metro-modal-overlay"></div>
       <div class="metro-modal-content">
         <h3 style="margin:0 0 20px; font-size:18px; font-weight:700; color:var(--metro-ink);">Send message</h3>
+        <div style="display:flex; gap:12px; margin-bottom:15px;">
+          <div style="flex:1;">
+            <label for="sendMessageTo" style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">To</label>
+            <input type="text" id="sendMessageTo" placeholder="Recipient name or email" />
+          </div>
+          <div style="flex:1;">
+            <label for="sendMessageFrom" style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">From</label>
+            <input type="text" id="sendMessageFrom" readonly style="background:var(--metro-panel); color:var(--metro-slate); cursor:default;" />
+          </div>
+        </div>
         <div style="margin-bottom:15px;">
           <label for="sendMessageSubject" style="display:block; font-size:12px; font-weight:700; margin-bottom:6px;">Subject</label>
           <input type="text" id="sendMessageSubject" placeholder="Enter subject" />
@@ -519,12 +529,14 @@
     scheduleRowReportId: 'fz3k5d5q2',
     attestationReportId: 'xqovqejg3',
     statusFieldKey: 'caxzgb2w5',
-    notificationsTableKey: 'YOUR_NOTIFICATIONS_TABLE_KEY_HERE',
-    notificationsReportId: 'YOUR_NOTIFICATIONS_REPORT_ID_HERE',
+    notificationsTableKey: 'ia2vnshw7',
+    notificationsReportId: '48keiqwa8',
     notificationsSubjectFieldKey: 'YOUR_NOTIFICATIONS_SUBJECT_FIELD_KEY_HERE',
     notificationsMessageFieldKey: 'YOUR_NOTIFICATIONS_MESSAGE_FIELD_KEY_HERE',
     notificationsRelatedApplicationFieldKey: 'YOUR_NOTIFICATIONS_RELATED_APP_FIELD_KEY_HERE',
     notificationsSenderFieldKey: 'YOUR_NOTIFICATIONS_SENDER_FIELD_KEY_HERE',
+    notificationsToFieldKey: 'YOUR_NOTIFICATIONS_TO_FIELD_KEY_HERE',
+    notificationsFromFieldKey: 'YOUR_NOTIFICATIONS_FROM_FIELD_KEY_HERE',
     notificationsDirectionFieldKey: 'YOUR_NOTIFICATIONS_DIRECTION_FIELD_KEY_HERE',
     documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
     documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
@@ -624,12 +636,17 @@
   function openSendMessageModal() {
     var modal = document.getElementById('sendMessageModal');
     if (!modal) return;
+    document.getElementById('sendMessageTo').value = '';
+    document.getElementById('sendMessageFrom').value = '';
     document.getElementById('sendMessageSubject').value = '';
     document.getElementById('sendMessageBody').value = '';
     var fileInput = document.getElementById('sendMessageFiles');
     if (fileInput) fileInput.value = '';
     var statusEl = document.getElementById('sendMessageStatus');
     if (statusEl) statusEl.textContent = '';
+    getUserProfile().then(function(p) {
+      if (p && p.Email) document.getElementById('sendMessageFrom').value = p.Email;
+    }).catch(function() {});
     modal.style.display = 'flex';
   }
 
@@ -664,13 +681,21 @@
   }
 
   async function sendMessageFromModal() {
+    var toEl = document.getElementById('sendMessageTo');
+    var fromEl = document.getElementById('sendMessageFrom');
     var subjectEl = document.getElementById('sendMessageSubject');
     var bodyEl = document.getElementById('sendMessageBody');
     var fileInput = document.getElementById('sendMessageFiles');
     var statusEl = document.getElementById('sendMessageStatus');
     var sendBtn = document.getElementById('sendMessageSendBtn');
+    var toVal = (toEl && toEl.value) ? toEl.value.trim() : '';
+    var fromVal = (fromEl && fromEl.value) ? fromEl.value.trim() : '';
     var subject = (subjectEl && subjectEl.value) ? subjectEl.value.trim() : '';
     var message = (bodyEl && bodyEl.value) ? bodyEl.value.trim() : '';
+    if (!toVal) {
+      if (statusEl) { statusEl.textContent = 'Please enter a recipient in the To field.'; statusEl.style.color = '#dc2626'; }
+      return;
+    }
     if (!subject || !message) {
       if (statusEl) { statusEl.textContent = 'Please enter a subject and message.'; statusEl.style.color = '#dc2626'; }
       return;
@@ -700,6 +725,8 @@
           { Key: API_CONFIG.notificationsMessageFieldKey, Name: 'message', Value: message },
           { Key: API_CONFIG.notificationsRelatedApplicationFieldKey, Name: 'related_application', Value: String(recordId) },
           { Key: API_CONFIG.notificationsSenderFieldKey, Name: 'sender', Value: senderVal },
+          { Key: API_CONFIG.notificationsToFieldKey, Name: 'to', Value: toVal },
+          { Key: API_CONFIG.notificationsFromFieldKey, Name: 'from', Value: fromVal },
           { Key: API_CONFIG.notificationsDirectionFieldKey, Name: 'direction', Value: direction }
         ]
       };
