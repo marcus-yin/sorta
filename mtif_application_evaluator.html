@@ -123,6 +123,64 @@
         border-left-color: var(--metro-red);
       }
 
+      .metro-scoring-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--metro-border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .metro-scoring-table thead {
+        background: var(--metro-navy);
+        color: #ffffff;
+      }
+
+      .metro-scoring-table thead th {
+        padding: 12px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+      }
+
+      .metro-scoring-table tbody td {
+        padding: 10px;
+        border-top: 1px solid #eef2f7;
+        font-size: 13px;
+        vertical-align: middle;
+      }
+
+      .metro-scoring-table tbody tr:hover {
+        background: #f8fafc;
+      }
+
+      .metro-scoring-table tbody td:first-child {
+        font-weight: 600;
+        color: var(--metro-navy);
+      }
+
+      .metro-scoring-table input[type="number"] {
+        width: 80px;
+        padding: 8px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        outline: none;
+      }
+
+      .metro-scoring-table input[type="number"]:focus {
+        border-color: rgba(0,61,165,0.6);
+        box-shadow: 0 0 0 3px rgba(0,61,165,0.15);
+      }
+
+      .metro-scoring-table .weighted-score-cell {
+        text-align: center;
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--metro-blue);
+      }
+
       .metro-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
       .metro-col-12 { grid-column: span 12; }
       .metro-col-6 { grid-column: span 6; }
@@ -330,6 +388,33 @@
           </section>
         </form>
 
+        <!-- Weighted Scoring Section -->
+        <section class="metro-section scoring-section" id="weightedScoringSection">
+          <h3>Weighted Scoring <span style="font-size:12px; color:#e4002b; font-weight:700;">(Editable)</span></h3>
+          <p style="font-size:13px; color:#475569; margin-bottom:16px;">
+            Enter a <strong>Score</strong> and <strong>Weight</strong> for each criterion. The <strong>Weighted Score</strong> (Score &times; Weight) and <strong>Total</strong> are calculated automatically.
+          </p>
+          <div style="overflow-x:auto;">
+            <table class="metro-scoring-table" id="weightedScoringTable">
+              <thead>
+                <tr>
+                  <th style="min-width:220px;">Criterion</th>
+                  <th style="width:100px; text-align:center;">Score</th>
+                  <th style="width:100px; text-align:center;">Weight</th>
+                  <th style="width:130px; text-align:center;">Weighted Score</th>
+                </tr>
+              </thead>
+              <tbody id="weightedScoringBody"></tbody>
+              <tfoot>
+                <tr style="background:#f1f5f9;">
+                  <td style="text-align:right; font-weight:700; padding-right:12px;" colspan="3">Total Weighted Score</td>
+                  <td style="text-align:center; font-weight:700; font-size:16px; color:#e4002b;" id="weightedScoringTotal">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
         <!-- Assigned Evaluators Section -->
         <section class="metro-section scoring-section" id="evaluatorsSection">
           <h3>Assigned Evaluators</h3>
@@ -432,6 +517,80 @@
   };
 
   var SCORING_CATEGORY = 'Scoring / Criteria';
+
+  // Weighted scoring criteria (from evaluation spreadsheet)
+  var WEIGHTED_SCORING_CRITERIA = [
+    { id: 'physical_condition',       label: 'Physical Condition' },
+    { id: 'safety_issues',            label: 'Safety Issues' },
+    { id: 'project_priority',         label: 'Project Priority Ranking' },
+    { id: 'economic_growth',          label: 'Economic Growth & Connectivity' },
+    { id: 'match_pct',                label: 'Match % (from Budget)' },
+    { id: 'regional_impact',          label: 'Regional Impact' },
+    { id: 'average_daily_traffic',    label: 'Average Daily Traffic (ADT)' },
+    { id: 'relative_economic_strength', label: 'Relative Economic Strength' },
+    { id: 'transit_impact',           label: 'Transit Impact' },
+    { id: 'multimodal_infrastructure', label: 'Multimodal Infrastructure' },
+    { id: 'sustainability_measures',  label: 'Sustainability Measures' },
+    { id: 'past_performance',         label: 'Past Performance' },
+    { id: 'justification',            label: 'Justification Summary' }
+  ];
+
+  function buildWeightedScoringTable() {
+    var tbody = document.getElementById('weightedScoringBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + crit.label + '</td>' +
+        '<td style="text-align:center;"><input type="number" id="ws_score_' + crit.id + '" min="0" step="0.01" placeholder="0" /></td>' +
+        '<td style="text-align:center;"><input type="number" id="ws_weight_' + crit.id + '" min="0" step="0.01" placeholder="" /></td>' +
+        '<td class="weighted-score-cell" id="ws_result_' + crit.id + '">0</td>';
+      tbody.appendChild(tr);
+    });
+    tbody.addEventListener('input', recalcWeightedScores);
+  }
+
+  function recalcWeightedScores() {
+    var total = 0;
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      var weightEl = document.getElementById('ws_weight_' + crit.id);
+      var resultEl = document.getElementById('ws_result_' + crit.id);
+      var s = parseFloat(scoreEl ? scoreEl.value : '') || 0;
+      var w = parseFloat(weightEl ? weightEl.value : '') || 0;
+      var ws = Math.round((s * w) * 100) / 100;
+      if (resultEl) resultEl.textContent = ws || '0';
+      total += ws;
+    });
+    var totalEl = document.getElementById('weightedScoringTotal');
+    if (totalEl) totalEl.textContent = Math.round(total * 100) / 100;
+  }
+
+  function getWeightedScoringFields() {
+    var fields = [];
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      var weightEl = document.getElementById('ws_weight_' + crit.id);
+      var s = scoreEl ? scoreEl.value : '';
+      var w = weightEl ? weightEl.value : '';
+      if (s !== '') fields.push({ Name: 'ws_score_' + crit.id, Value: s });
+      if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
+    });
+    return fields;
+  }
+
+  function populateWeightedScoring(row) {
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var scoreVal = extractFieldValue(row, 'ws_score_' + crit.id);
+      var weightVal = extractFieldValue(row, 'ws_weight_' + crit.id);
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      var weightEl = document.getElementById('ws_weight_' + crit.id);
+      if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') scoreEl.value = scoreVal;
+      if (weightEl && weightVal !== null && weightVal !== undefined && weightVal !== '') weightEl.value = weightVal;
+    });
+    recalcWeightedScores();
+  }
 
   // Token helpers
   function looksLikeSaltedCiphertext(s) {
@@ -1074,6 +1233,9 @@
       }
     });
 
+    var wsFields = getWeightedScoringFields();
+    fieldsList = fieldsList.concat(wsFields);
+
     if (fieldsList.length === 0) {
       showToast('No scoring data to save', 'error');
       return Promise.resolve();
@@ -1295,6 +1457,7 @@
           document.getElementById('mtif_record_id').value = recordId;
 
           buildSections();
+          buildWeightedScoringTable();
 
           // Load all reports
           var reports = [
@@ -1329,6 +1492,17 @@
 
           Promise.all(reports).then(function() {
             console.log('[EVAL] All reports and evaluator assignments loaded');
+            // Populate weighted scoring from the main application report
+            queryReport(token, API_CONFIG.applicationsReportId).then(function(rows) {
+              for (var i = 0; i < rows.length; i++) {
+                if (String(rows[i].id || rows[i].Rid || '') === String(recordId)) {
+                  populateWeightedScoring(rows[i]);
+                  break;
+                }
+              }
+            }).catch(function(err) {
+              console.warn('[EVAL] Could not load weighted scoring data:', err);
+            });
           }).catch(function(err) {
             console.warn('[EVAL] Some reports failed to load:', err);
           });
