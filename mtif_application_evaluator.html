@@ -415,6 +415,51 @@
           </div>
         </section>
 
+        <!-- Documents Section -->
+        <section class="metro-section" id="documentsSection">
+          <h3 style="border-left-color: var(--metro-blue);">Documents</h3>
+          <p style="font-size:13px; color:#475569; margin-bottom:16px;">Upload supporting documents for this application. Files are stored in the documents table and linked to this application record.</p>
+
+          <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+            <div style="flex:1; min-width:200px;">
+              <label for="docUploadFile">Select file(s)</label>
+              <input type="file" id="docUploadFile" multiple style="width:100%; padding:8px; border:1px solid var(--metro-border); border-radius:10px; font-size:14px;" />
+            </div>
+            <div style="min-width:180px;">
+              <label for="docUploadType">Document type</label>
+              <select id="docUploadType" style="width:100%;">
+                <option value="Evaluator Upload">Evaluator Upload</option>
+                <option value="Supporting Document">Supporting Document</option>
+                <option value="Scoring Backup">Scoring Backup</option>
+                <option value="Correspondence">Correspondence</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <button class="metro-button secondary" type="button" id="docUploadBtn" style="white-space:nowrap;">Upload</button>
+            </div>
+          </div>
+          <div id="docUploadStatus" style="font-size:12px; min-height:18px; margin-bottom:12px;"></div>
+
+          <div id="docListLoading" style="font-size:13px; color:#475569; padding:12px 0;">Loading documents...</div>
+          <div id="docListEmpty" style="display:none; text-align:center; padding:30px 20px; color:#94a3b8; font-size:14px;">No documents uploaded yet.</div>
+          <div id="docTableWrap" style="display:none;">
+            <div style="border:1px solid var(--metro-border); border-radius:10px; overflow:hidden;">
+              <table style="width:100%; border-collapse:collapse;">
+                <thead style="background:var(--metro-blue); color:#fff;">
+                  <tr>
+                    <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Name</th>
+                    <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Type</th>
+                    <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Uploaded By</th>
+                    <th style="padding:12px 10px; text-align:center; font-size:13px; font-weight:700; width:140px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="docTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- Assigned Evaluators Section -->
         <section class="metro-section scoring-section" id="evaluatorsSection">
           <h3>Assigned Evaluators</h3>
@@ -510,6 +555,8 @@
     notificationsFromFieldKey: 'YOUR_NOTIFICATIONS_FROM_FIELD_KEY_HERE',
     notificationsDirectionFieldKey: 'YOUR_NOTIFICATIONS_DIRECTION_FIELD_KEY_HERE',
     documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
+    documentsReportId: 'YOUR_DOCUMENTS_REPORT_ID_HERE',
+    documentsRelAppFieldKey: 'YOUR_DOCUMENTS_REL_APP_FIELD_KEY_HERE',
     documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
     documentsFileFieldKey: 'YOUR_DOCUMENTS_FILE_FIELD_KEY_HERE',
     documentsNameFieldKey: 'YOUR_DOCUMENTS_NAME_FIELD_KEY_HERE',
@@ -654,6 +701,191 @@
       toast.classList.remove('show');
       setTimeout(function () { toast.remove(); }, 300);
     }, 3000);
+  }
+
+  // ---- Documents: upload, list, delete ----
+  function extractFieldValue(record, fieldName) {
+    if (record[fieldName] !== undefined) return record[fieldName];
+    var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+    for (var key in record) {
+      var kn = key.toLowerCase().replace(/[\s_]/g, '');
+      if (kn === norm || kn.endsWith(norm)) return record[key];
+    }
+    return null;
+  }
+
+  function uploadDocument(token, file, applicationRid, documentType) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function() {
+        var base64 = reader.result.split(',')[1];
+        var payload = {
+          ApplicationTableKey: API_CONFIG.documentsTableKey,
+          FieldsList: [
+            { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
+            { Key: API_CONFIG.documentsRelAppFieldKey, Name: 'related_applications', Value: String(applicationRid) },
+            { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
+            { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: documentType }
+          ]
+        };
+        fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+          method: 'POST',
+          headers: apiHeaders(token),
+          body: JSON.stringify(payload)
+        }).then(function(r) {
+          if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+          return r.json();
+        }).then(resolve).catch(reject);
+      };
+      reader.onerror = function() { reject(new Error('Read failed: ' + file.name)); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadDocuments(token, applicationRid) {
+    var loadingEl = document.getElementById('docListLoading');
+    var emptyEl = document.getElementById('docListEmpty');
+    var tableWrap = document.getElementById('docTableWrap');
+    var tbody = document.getElementById('docTableBody');
+    if (!loadingEl) return;
+
+    loadingEl.style.display = 'block';
+    emptyEl.style.display = 'none';
+    tableWrap.style.display = 'none';
+
+    var docReport = API_CONFIG.documentsReportId;
+    if (!docReport || docReport.indexOf('YOUR_') === 0) {
+      loadingEl.textContent = 'Documents report not configured.';
+      return;
+    }
+
+    fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify({
+        ApplicationTableKeyId: API_CONFIG.documentsTableKey,
+        ReportId: docReport,
+        PageNumber: 1,
+        PageSize: 500
+      })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Docs query ' + r.status);
+      return r.json();
+    }).then(function(result) {
+      var rows = (result && result.Records) || (Array.isArray(result) ? result : (result.data || result.Data || []));
+      var docs = rows.filter(function(row) {
+        var rel = extractFieldValue(row, 'related_applications') || '';
+        return String(rel) === String(applicationRid);
+      });
+
+      loadingEl.style.display = 'none';
+
+      if (docs.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      tableWrap.style.display = 'block';
+      tbody.innerHTML = '';
+
+      docs.forEach(function(doc) {
+        var rid = doc.id || doc.Rid || '';
+        var name = extractFieldValue(doc, 'document_name') || extractFieldValue(doc, 'name') || 'Unnamed';
+        var docType = extractFieldValue(doc, 'document_type') || '-';
+        var uploadedBy = extractFieldValue(doc, 'Created By') || extractFieldValue(doc, 'createdby') || '-';
+        var fileRid = doc.Rid || rid;
+
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px; font-weight:600;">' +
+            '<a href="' + API_CONFIG.baseURL + '/api/File/download/' + fileRid + '" target="_blank" style="color:var(--metro-blue); text-decoration:none;">' + escHtml(name) + '</a>' +
+          '</td>' +
+          '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px;">' + escHtml(docType) + '</td>' +
+          '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px;">' + escHtml(uploadedBy) + '</td>' +
+          '<td style="padding:10px; border-top:1px solid #eef2f7; text-align:center;">' +
+            '<a href="' + API_CONFIG.baseURL + '/api/File/download/' + fileRid + '" target="_blank" class="metro-button ghost" style="padding:5px 10px; font-size:12px; margin-right:4px;">Download</a>' +
+            '<button class="metro-button ghost" style="padding:5px 10px; font-size:12px; color:#dc2626; border-color:#fecaca;" data-delete-rid="' + rid + '">Delete</button>' +
+          '</td>';
+
+        var delBtn = tr.querySelector('[data-delete-rid]');
+        delBtn.addEventListener('click', function() {
+          var delRid = this.getAttribute('data-delete-rid');
+          if (!confirm('Delete this document?')) return;
+          deleteDocument(token, delRid, applicationRid);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }).catch(function(err) {
+      console.error('[EVAL] Load documents error:', err);
+      loadingEl.textContent = 'Failed to load documents.';
+    });
+  }
+
+  function deleteDocument(token, docRid, applicationRid) {
+    fetch(API_CONFIG.baseURL + '/api/FormAction/deletedata', {
+      method: 'DELETE',
+      headers: apiHeaders(token),
+      body: JSON.stringify({
+        TableKey: API_CONFIG.documentsTableKey,
+        RecordId: docRid
+      })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Delete ' + r.status);
+      showToast('Document deleted.', 'success');
+      loadDocuments(token, applicationRid);
+    }).catch(function(err) {
+      console.error('[EVAL] Delete document error:', err);
+      showToast('Failed to delete document.', 'error');
+    });
+  }
+
+  function attachDocumentListeners(token, applicationRid) {
+    var uploadBtn = document.getElementById('docUploadBtn');
+    if (!uploadBtn) return;
+
+    uploadBtn.addEventListener('click', function() {
+      var fileInput = document.getElementById('docUploadFile');
+      var typeSelect = document.getElementById('docUploadType');
+      var statusEl = document.getElementById('docUploadStatus');
+      var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+
+      if (files.length === 0) {
+        statusEl.textContent = 'Please select at least one file.';
+        statusEl.style.color = '#dc2626';
+        return;
+      }
+
+      var docTable = API_CONFIG.documentsTableKey;
+      if (!docTable || docTable.indexOf('YOUR_') === 0) {
+        statusEl.textContent = 'Documents table not configured in API_CONFIG.';
+        statusEl.style.color = '#dc2626';
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      statusEl.textContent = 'Uploading ' + files.length + ' file(s)...';
+      statusEl.style.color = 'var(--metro-ink)';
+
+      var documentType = typeSelect ? typeSelect.value : 'Evaluator Upload';
+
+      Promise.all(files.map(function(f) {
+        return uploadDocument(token, f, applicationRid, documentType);
+      })).then(function() {
+        statusEl.textContent = files.length + ' file(s) uploaded successfully.';
+        statusEl.style.color = '#059669';
+        showToast(files.length + ' file(s) uploaded.', 'success');
+        fileInput.value = '';
+        loadDocuments(token, applicationRid);
+      }).catch(function(err) {
+        console.error('[EVAL] Upload error:', err);
+        statusEl.textContent = 'Upload failed: ' + (err.message || err);
+        statusEl.style.color = '#dc2626';
+        showToast('Upload failed.', 'error');
+      }).finally(function() {
+        uploadBtn.disabled = false;
+      });
+    });
   }
 
   // Field mapping for scoring fields
@@ -1536,6 +1768,8 @@
           });
 
           attachSendMessageModalListeners();
+          attachDocumentListeners(token, recordId);
+          loadDocuments(token, recordId);
 
           renderEvaluators();
         });
