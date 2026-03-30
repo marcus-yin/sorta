@@ -925,17 +925,11 @@
   var SCORING_FIELD_MAPPING = {
     'field-scoring-criteria-physical-condition-narrative': { name: 'physical_condition_narrative' },
     'field-scoring-criteria-safety-issues-narrative': { name: 'safety_issues_narrative' },
-    'field-scoring-criteria-project-priority-ranking-1st-2nd-3rd-etc': { name: 'project_priority_ranking' },
     'field-scoring-criteria-economic-growth-connectivity-narrative': { name: 'economic_growth_narrative' },
-    'field-scoring-criteria-match-calculated-from-budget': { name: 'match_pct' },
     'field-scoring-criteria-regional-impact-narrative': { name: 'regional_impact_narrative' },
-    'field-scoring-criteria-average-daily-traffic-adt': { name: 'average_daily_traffic' },
-    'field-scoring-criteria-relative-economic-strength-score': { name: 'relative_economic_strength' },
     'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative' },
     'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details' },
-    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' },
-    'field-scoring-criteria-past-performance-score': { name: 'past_performance_score' },
-    'field-scoring-criteria-justification-summary': { name: 'justification_summary' }
+    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' }
   };
 
   // Full field mapping (same as applicant page)
@@ -1043,17 +1037,11 @@
     { "Category": "Schedule & ROW", "FieldName": "Design/engineering status (complete/in process/not started)" },
     { "Category": "Scoring / Criteria", "FieldName": "Physical condition narrative" },
     { "Category": "Scoring / Criteria", "FieldName": "Safety issues narrative" },
-    { "Category": "Scoring / Criteria", "FieldName": "Project priority ranking (1st/2nd/3rd/etc.)" },
     { "Category": "Scoring / Criteria", "FieldName": "Economic growth & connectivity narrative" },
-    { "Category": "Scoring / Criteria", "FieldName": "Match % (calculated from budget)" },
     { "Category": "Scoring / Criteria", "FieldName": "Regional impact narrative" },
-    { "Category": "Scoring / Criteria", "FieldName": "Average Daily Traffic (ADT)" },
-    { "Category": "Scoring / Criteria", "FieldName": "Relative Economic Strength score" },
     { "Category": "Scoring / Criteria", "FieldName": "Transit impact narrative" },
     { "Category": "Scoring / Criteria", "FieldName": "Multimodal infrastructure details" },
-    { "Category": "Scoring / Criteria", "FieldName": "Sustainability measures checklist" },
-    { "Category": "Scoring / Criteria", "FieldName": "Past performance score" },
-    { "Category": "Scoring / Criteria", "FieldName": "Justification summary", "Type": "textarea" }
+    { "Category": "Scoring / Criteria", "FieldName": "Sustainability measures checklist" }
   ];
 
   var JURISDICTION_NAMES = [
@@ -1256,17 +1244,11 @@
   var SC_COL_TO_FORM = {
     'physical_condition_narrative': 'field-scoring-criteria-physical-condition-narrative',
     'safety_issues_narrative': 'field-scoring-criteria-safety-issues-narrative',
-    'project_priority_ranking': 'field-scoring-criteria-project-priority-ranking-1st-2nd-3rd-etc',
     'economic_growth_narrative': 'field-scoring-criteria-economic-growth-connectivity-narrative',
-    'match_pct': 'field-scoring-criteria-match-calculated-from-budget',
     'regional_impact_narrative': 'field-scoring-criteria-regional-impact-narrative',
-    'average_daily_traffic': 'field-scoring-criteria-average-daily-traffic-adt',
-    'relative_economic_strength': 'field-scoring-criteria-relative-economic-strength-score',
     'transit_impact_narrative': 'field-scoring-criteria-transit-impact-narrative',
     'multimodal_infrastructure_details': 'field-scoring-criteria-multimodal-infrastructure-details',
-    'sustainability_measures': 'field-scoring-criteria-sustainability-measures-checklist',
-    'past_performance_score': 'field-scoring-criteria-past-performance-score',
-    'justification_summary': 'field-scoring-criteria-justification-summary'
+    'sustainability_measures': 'field-scoring-criteria-sustainability-measures-checklist'
   };
 
   function populateFromReport(rows, recordId, colMap) {
