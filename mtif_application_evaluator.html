@@ -414,6 +414,10 @@
               </tfoot>
             </table>
           </div>
+          <div style="margin-top:20px;">
+            <label for="ws_justification_summary" style="font-weight:600; font-size:14px; color:#1e293b; display:block; margin-bottom:6px;">Justification Summary</label>
+            <textarea id="ws_justification_summary" rows="5" placeholder="Provide an overall justification summary for the scores above..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:80px;"></textarea>
+          </div>
         </section>
 
         <!-- Documents Section -->
@@ -661,6 +665,8 @@
       if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
       if (c !== '') fields.push({ Name: 'ws_comment_' + crit.id, Value: c });
     });
+    var justEl = document.getElementById('ws_justification_summary');
+    if (justEl && justEl.value !== '') fields.push({ Name: 'ws_justification_summary', Value: justEl.value });
     return fields;
   }
 
@@ -673,6 +679,9 @@
       if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') scoreEl.value = scoreVal;
       if (commentEl && commentVal !== null && commentVal !== undefined && commentVal !== '') commentEl.value = commentVal;
     });
+    var justVal = extractFieldValue(row, 'ws_justification_summary');
+    var justEl = document.getElementById('ws_justification_summary');
+    if (justEl && justVal !== null && justVal !== undefined && justVal !== '') justEl.value = justVal;
     recalcWeightedScores();
   }
 
