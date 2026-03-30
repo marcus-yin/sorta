@@ -546,6 +546,8 @@
     evaluatorReportId: 'aqjsnp6w4',
     evalAssignmentTableKey: 'qynzr97g7',
     evalAssignmentReportId: 'n7r13epq2',
+    scoringWeightsTableKey: 'hhdlqrhq3',
+    scoringWeightsReportId: 'qks5wukq5',
     notificationsTableKey: 'ia2vnshw7',
     notificationsReportId: '48keiqwa8',
     notificationsSubjectFieldKey: 'YOUR_NOTIFICATIONS_SUBJECT_FIELD_KEY_HERE',
@@ -566,38 +568,64 @@
 
   var SCORING_CATEGORY = 'Scoring / Criteria';
 
-  // Weighted scoring criteria (from evaluation spreadsheet)
-  var WEIGHTED_SCORING_CRITERIA = [
-    { id: 'physical_condition',       label: 'Physical Condition' },
-    { id: 'safety_issues',            label: 'Safety Issues' },
-    { id: 'project_priority',         label: 'Project Priority Ranking' },
-    { id: 'economic_growth',          label: 'Economic Growth & Connectivity' },
-    { id: 'match_pct',                label: 'Match % (from Budget)' },
-    { id: 'regional_impact',          label: 'Regional Impact' },
-    { id: 'average_daily_traffic',    label: 'Average Daily Traffic (ADT)' },
-    { id: 'relative_economic_strength', label: 'Relative Economic Strength' },
-    { id: 'transit_impact',           label: 'Transit Impact' },
-    { id: 'multimodal_infrastructure', label: 'Multimodal Infrastructure' },
-    { id: 'sustainability_measures',  label: 'Sustainability Measures' },
-    { id: 'past_performance',         label: 'Past Performance' },
-    { id: 'justification',            label: 'Justification Summary' }
-  ];
+  var WEIGHTED_SCORING_CRITERIA = [];
+
+  function loadScoringWeights(token) {
+    return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify({ ReportId: API_CONFIG.scoringWeightsReportId, Filters: [] })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('Scoring weights report ' + r.status);
+      return r.json();
+    }).then(function(data) {
+      var rows = Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+      var active = [];
+      rows.forEach(function(row) {
+        var isActive = extractFieldValue(row, 'is active');
+        if (String(isActive).toLowerCase() === 'true') {
+          var rid = extractFieldValue(row, 'Record Id') || row.id || row.Rid;
+          active.push({
+            id: 'criterion_' + rid,
+            label: extractFieldValue(row, 'criterion label') || 'Criterion ' + rid,
+            weightPct: parseFloat(extractFieldValue(row, 'weight pct')) || 0,
+            scaleMin: parseFloat(extractFieldValue(row, 'scale min')) || 0,
+            scaleMax: parseFloat(extractFieldValue(row, 'scale max')) || 10
+          });
+        }
+      });
+      active.sort(function(a, b) {
+        var aNum = parseInt(a.id.replace('criterion_', ''), 10);
+        var bNum = parseInt(b.id.replace('criterion_', ''), 10);
+        return aNum - bNum;
+      });
+      WEIGHTED_SCORING_CRITERIA = active;
+      return active;
+    });
+  }
 
   function buildWeightedScoringTable() {
     var tbody = document.getElementById('weightedScoringBody');
     if (!tbody) return;
     tbody.innerHTML = '';
+    if (WEIGHTED_SCORING_CRITERIA.length === 0) {
+      var emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = '<td colspan="5" style="text-align:center; color:#94a3b8; padding:24px;">No active scoring criteria found.</td>';
+      tbody.appendChild(emptyRow);
+      return;
+    }
     WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + crit.label + '</td>' +
-        '<td style="text-align:center;"><input type="number" id="ws_score_' + crit.id + '" min="0" step="0.01" placeholder="0" /></td>' +
-        '<td style="text-align:center;"><input type="number" id="ws_weight_' + crit.id + '" min="0" step="0.01" placeholder="" /></td>' +
+        '<td style="text-align:center;"><input type="number" id="ws_score_' + crit.id + '" min="' + (crit.scaleMin || 0) + '" max="' + (crit.scaleMax || 10) + '" step="0.01" placeholder="0" /></td>' +
+        '<td style="text-align:center;"><input type="number" id="ws_weight_' + crit.id + '" value="' + (crit.weightPct || '') + '" readonly tabindex="-1" style="background:#f1f5f9; border-color:#e2e8f0; color:#64748b; cursor:default;" /></td>' +
         '<td class="weighted-score-cell" id="ws_result_' + crit.id + '">0</td>' +
         '<td><textarea id="ws_comment_' + crit.id + '" rows="2" placeholder="Comments..." style="width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; font-family:inherit; resize:vertical; min-height:36px;"></textarea></td>';
       tbody.appendChild(tr);
     });
     tbody.addEventListener('input', recalcWeightedScores);
+    recalcWeightedScores();
   }
 
   function recalcWeightedScores() {
@@ -635,13 +663,10 @@
   function populateWeightedScoring(row) {
     WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
       var scoreVal = extractFieldValue(row, 'ws_score_' + crit.id);
-      var weightVal = extractFieldValue(row, 'ws_weight_' + crit.id);
       var commentVal = extractFieldValue(row, 'ws_comment_' + crit.id);
       var scoreEl = document.getElementById('ws_score_' + crit.id);
-      var weightEl = document.getElementById('ws_weight_' + crit.id);
       var commentEl = document.getElementById('ws_comment_' + crit.id);
       if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') scoreEl.value = scoreVal;
-      if (weightEl && weightVal !== null && weightVal !== undefined && weightVal !== '') weightEl.value = weightVal;
       if (commentEl && commentVal !== null && commentVal !== undefined && commentVal !== '') commentEl.value = commentVal;
     });
     recalcWeightedScores();
@@ -1697,7 +1722,14 @@
           document.getElementById('mtif_record_id').value = recordId;
 
           buildSections();
-          buildWeightedScoringTable();
+
+          var weightsReady = loadScoringWeights(token).then(function() {
+            console.log('[EVAL] Loaded', WEIGHTED_SCORING_CRITERIA.length, 'active scoring criteria');
+            buildWeightedScoringTable();
+          }).catch(function(err) {
+            console.warn('[EVAL] Could not load scoring weights, table will be empty:', err);
+            buildWeightedScoringTable();
+          });
 
           // Load all reports
           var reports = [
@@ -1723,16 +1755,14 @@
           _currentToken = token;
           reports.push(
             loadEvaluatorAssignments(token, recordId).then(function() {
-              // Auto-add the current evaluator if not already assigned
               if (email && !assignedEvaluators.some(function(e) { return e.email === email.toLowerCase(); })) {
                 return addEvaluatorToTable(token, recordId, email.toLowerCase(), email.split('@')[0]);
               }
             })
           );
 
-          Promise.all(reports).then(function() {
-            console.log('[EVAL] All reports and evaluator assignments loaded');
-            // Populate weighted scoring from the main application report
+          Promise.all(reports.concat([weightsReady])).then(function() {
+            console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
             queryReport(token, API_CONFIG.applicationsReportId).then(function(rows) {
               for (var i = 0; i < rows.length; i++) {
                 if (String(rows[i].id || rows[i].Rid || '') === String(recordId)) {
