@@ -636,7 +636,7 @@
       var resultEl = document.getElementById('ws_result_' + crit.id);
       var s = parseFloat(scoreEl ? scoreEl.value : '') || 0;
       var w = parseFloat(weightEl ? weightEl.value : '') || 0;
-      var ws = Math.round((s * w) * 100) / 100;
+      var ws = Math.round((s * (w / 100)) * 100) / 100;
       if (resultEl) resultEl.textContent = ws || '0';
       total += ws;
     });
