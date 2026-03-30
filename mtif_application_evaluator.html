@@ -635,6 +635,10 @@
       var weightEl = document.getElementById('ws_weight_' + crit.id);
       var resultEl = document.getElementById('ws_result_' + crit.id);
       var s = parseFloat(scoreEl ? scoreEl.value : '') || 0;
+      var maxVal = crit.scaleMax || 10;
+      var minVal = crit.scaleMin || 0;
+      if (s > maxVal) { s = maxVal; if (scoreEl) scoreEl.value = maxVal; }
+      if (s < minVal) { s = minVal; if (scoreEl) scoreEl.value = minVal; }
       var w = parseFloat(weightEl ? weightEl.value : '') || 0;
       var ws = Math.round((s * (w / 100)) * 100) / 100;
       if (resultEl) resultEl.textContent = ws || '0';
