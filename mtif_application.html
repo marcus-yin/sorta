@@ -362,6 +362,80 @@
           width: 110px;
         }
       }
+
+      .scoring-guidance-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #003da5;
+        cursor: pointer;
+        margin-bottom: 8px;
+        user-select: none;
+        background: none;
+        border: none;
+        padding: 0;
+      }
+      .scoring-guidance-toggle:hover {
+        color: #1e40af;
+      }
+      .scoring-guidance-toggle .chevron {
+        display: inline-block;
+        transition: transform 0.2s ease;
+        font-size: 10px;
+      }
+      .scoring-guidance-toggle.open .chevron {
+        transform: rotate(90deg);
+      }
+      .scoring-guidance-panel {
+        display: none;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: #334155;
+      }
+      .scoring-guidance-panel.open {
+        display: block;
+      }
+      .scoring-guidance-panel .guidance-question {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+      .scoring-guidance-panel .guidance-rubric {
+        margin: 8px 0;
+        padding-left: 0;
+        list-style: none;
+      }
+      .scoring-guidance-panel .guidance-rubric li {
+        padding: 3px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .scoring-guidance-panel .guidance-rubric li:last-child {
+        border-bottom: none;
+      }
+      .scoring-guidance-panel .guidance-rubric strong {
+        color: #003da5;
+      }
+      .scoring-guidance-panel .guidance-note {
+        margin-top: 8px;
+        font-style: italic;
+        color: #64748b;
+        font-size: 12px;
+      }
+      .scoring-guidance-panel .guidance-docs {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 12px;
+        color: #475569;
+      }
     </style>
   </head>
   <body>
@@ -890,6 +964,108 @@
     'mtif_signer_title': { name: 'signer_title' },
     'mtif_signature_date': { name: 'signature_date' },
     'mtif_submit_acknowledgment': { name: 'submit_acknowledgment' }
+  };
+
+  // ============================================================
+  // Appendix E Scoring Guidance (per narrative criterion)
+  // ============================================================
+  var SCORING_GUIDANCE = {
+    'Physical condition narrative': {
+      question: 'Describe the physical condition of the infrastructure that is to be replaced or repaired. What is required to improve the infrastructure so that it will realize its stated useful life?',
+      description: 'Condition of the particular infrastructure to be repaired, reconstructed or replaced shall be a measure of the degree of reduction in condition from its original state. Capacity, serviceability, safety and health shall not be considered in this criterion.',
+      rubric: [
+        { score: '10', label: 'Failed or Banned', desc: 'Requires complete reconstruction or replacement' },
+        { score: '9', label: 'Critical', desc: 'Requires major reconstruction to maintain integrity' },
+        { score: '8', label: 'Extremely Poor', desc: 'Requires partial reconstruction or extensive rehabilitation to maintain integrity' },
+        { score: '7', label: 'Poor', desc: 'Requires standard rehabilitation to maintain integrity' },
+        { score: '6', label: 'Moderately Poor', desc: 'Requires minor rehabilitation to maintain integrity' },
+        { score: '5', label: 'Fair', desc: 'Requires extensive maintenance and periodic repairs to maintain integrity' },
+        { score: '4', label: 'Moderately Fair', desc: 'Requires routine maintenance to maintain integrity' },
+        { score: '2', label: 'Good', desc: 'Requires periodic minor maintenance to maintain integrity' },
+        { score: '0', label: 'Excellent/New', desc: 'Requires little or no maintenance to maintain integrity' }
+      ],
+      docs: 'Provide a statement detailing the deficient conditions of the existing infrastructure. If known, give the approximate age of the infrastructure. Documentation may include: ODOT BR86 reports, pavement management condition reports, televised underground system reports, age inventory reports, maintenance records, etc. Infrastructure will likely rate no better than Good if evidence or documentation is not provided.',
+      notes: 'The nine examples above are to be used as a guide. Rating teams should not feel the need to award a score that matches one of the examples. If the infrastructure is in "excellent or new" condition it will not be considered for funding unless it is an expansion project.'
+    },
+    'Safety issues narrative': {
+      question: 'How important is the project to the safety of the public & citizens of Hamilton County and/or service area?',
+      description: 'The applicant shall submit documentation of the deficiencies cited and explain how the project will address these deficiencies. Sidewalks and non-motorized safety are taken into consideration. Improvements to street lighting are eligible provided they improve the safety level.',
+      rubric: [
+        { score: '10', label: 'Highly Critical Importance', desc: 'Ongoing documented safety problems with multiple critical factors' },
+        { score: '8', label: 'Critical Importance', desc: 'Ongoing documented safety problems with critical factors' },
+        { score: '6', label: 'Considerably Significant Importance', desc: 'Ongoing documented safety problems' },
+        { score: '4', label: 'Moderate Importance', desc: 'Intermittent documented safety problems with severe factors' },
+        { score: '2', label: 'Minor Importance', desc: 'Minor or potential safety problems noted by the applicant and observed by the rating team' },
+        { score: '0', label: 'No Measurable Impact', desc: 'Application does not indicate a safety problem' }
+      ],
+      docs: 'Provide a statement detailing the project\'s effect on the safety of the service area, noting how the design is intended to reduce existing accident rates, promote safer conditions, and reduce the danger of risk or injury. Examples may include the effect on accident rates, emergency response time, fire protection, highway capacity, and transit/traffic conflicts. In all cases, specific documentation is required. Problems cited which are poorly documented generally will not receive more than 4 points.',
+      notes: 'Each project is rated on an individual basis. Examples provided above are not intended to be exclusive.'
+    },
+    'Economic growth & connectivity narrative': {
+      question: 'How will the project enhance economic growth and/or improve community connectivity?',
+      description: 'Provide a statement detailing how the project will enhance economic growth and/or improve community connectivity by providing access to adjacent community facilities such as parks, schools, municipal offices, or other public facilities. Improvements may comprise new or improved sidewalks, shared-use paths, roadways, bridges, or bicycle facilities.',
+      rubric: [
+        { score: '10', label: 'Direct economic development / new connectivity', desc: 'The project will directly secure preferred economic development and/or provide new connectivity to community facilities where none exists. Transit oriented development including mixed-use developments would fall under this score.' },
+        { score: '5', label: 'Permit development / enhance existing connectivity', desc: 'The project will provide access (including transit) to an underutilized or undeveloped site, or will repair/replace portions of existing vehicular or pedestrian connectivity to a community facility.' },
+        { score: '0', label: 'No impact on development or connectivity', desc: 'The project will have no impact on business development/employment or existing vehicular or pedestrian connectivity to a community facility.' }
+      ],
+      docs: 'The applicant must provide site-specific details demonstrating the project\'s ability to address existing deficiencies and enhance connectivity with public facilities. Documentation should describe the purpose and need for improvements. The applicant must provide documentation of expressed cooperation between the applicant and adjacent facilities (if owned or managed by a separate entity). In all cases, site-specific documentation is required.',
+      notes: 'Rating teams will consider the effect development will have both on Hamilton County and the applying jurisdiction, such as number of jobs created, revenue generated, connectivity with community facilities, and how long the site has gone undeveloped.'
+    },
+    'Regional impact narrative': {
+      question: 'Does the infrastructure have regional impact?',
+      description: 'For roads and bridges: consider the origination and destination of traffic, functional classifications, average amount of daily traffic, size of service area, and number of jurisdictions served. For all other infrastructure: regional impact will be determined on a case-by-case basis.',
+      rubric: [
+        { score: '10', label: 'Major Impact', desc: 'Major Arterial (25,000+ ADT) \u2014 Crosses multiple jurisdictions, provides great mobility, conveys large traffic volumes, is of regional importance' },
+        { score: '8', label: 'Significant Impact', desc: 'Minor Arterial (15,000\u201324,999 ADT) \u2014 Similar function to major arterial but lower volumes and shorter distances' },
+        { score: '6', label: 'Moderate Impact', desc: 'Major Collector (10,000\u201314,999 ADT) \u2014 Provides traffic movement between local roads and arterials or community-wide activity centers' },
+        { score: '4', label: 'Minor Impact', desc: 'Minor Collector (5,000\u20139,999 ADT) \u2014 Carries lower traffic volumes over shorter distances with higher degree of property access' },
+        { score: '2', label: 'Minimal Impact', desc: 'Local (4,999 and under) \u2014 Primarily intended to provide access to abutting properties, lower traffic volumes' },
+        { score: '0', label: 'No Impact', desc: 'Not located on road network' }
+      ],
+      docs: 'Provide a statement concerning the regional significance of the infrastructure to be replaced, repaired, or expanded.',
+      notes: null
+    },
+    'Transit impact narrative': {
+      question: 'What is the impact to the Transit Authority\'s transit system by completing the project?',
+      description: 'If the Transit Authority\'s fixed route bus service operates on the street included in the application, use section (A) for scoring; otherwise, use section (B). A project must score 1 or higher in this criterion to be eligible for MTIF funding.',
+      rubric: [
+        { score: '10', label: '125+ fixed-route weekday trips', desc: 'Or located on a BRT Corridor designated by the Transit Authority' },
+        { score: '8', label: '80\u2013124 fixed-route weekday trips', desc: '' },
+        { score: '6', label: '50\u201379 fixed-route weekday trips', desc: '' },
+        { score: '4', label: '20\u201349 fixed-route weekday trips', desc: '' },
+        { score: '2', label: '10\u201319 fixed-route weekday trips', desc: '' },
+        { score: '1', label: '1\u20139 fixed-route weekday trips', desc: '' },
+        { score: '0', label: 'No fixed-route bus service', desc: '' }
+      ],
+      docs: 'Paratransit Only (if scored 0 on Fixed Route): 10 = within 1/3 mile of fixed route; 6 = within 1/2 mile; 4 = within 3/4 mile; 0 = over 3/4 mile. Describe the impact to the Transit Authority\'s transit system by completing the project.',
+      notes: 'At least 75% of the proposed project length must be served by the fixed route to receive corresponding points. Any project receiving a score of zero (0) in this criterion will not be eligible for MTIF funding.'
+    },
+    'Multimodal infrastructure details': {
+      question: 'Detail the accommodation of multiple modes of transportation supported by the project.',
+      description: 'Points are awarded based on how the project accommodates multiple modes of transportation.',
+      rubric: [
+        { score: '10', label: 'New facilities', desc: 'New sidewalks, multi-use path, or other dedicated pedestrian, transit (bus lane, bus bay, BRT station) or bicycle lanes' },
+        { score: '5', label: 'Improved facilities', desc: 'Repair or replacement of existing dedicated bike, pedestrian or transit facilities including adding a bus shelter' },
+        { score: '2', label: 'Minor improvements', desc: 'New ADA ramps, pavement markings, signs or designated crosswalks supporting additional modes of transportation' }
+      ],
+      docs: 'All multimodal infrastructure improvements must be in accordance with AASHTO, OMUTCD, local jurisdiction requirements and SORTA bus stop design guidance where applicable.',
+      notes: null
+    },
+    'Sustainability measures checklist': {
+      question: 'What sustainability measures are included in the project?',
+      description: 'The inclusion of sustainability in a project from the earliest stage produces the largest benefits. Points awarded will be the sum of points from the categories below.',
+      rubric: [
+        { score: '1', label: 'Energy Efficiency', desc: 'Removal or replacement of existing traffic signals, pedestrian or roadway lighting with LED lighting' },
+        { score: '2', label: 'Recycled Materials', desc: 'New pavement, structures or ancillary materials incorporate recycled materials' },
+        { score: '2', label: 'Traffic Signal Improvements', desc: 'Signal synchronization, adaptive control, transit signal priority, or transit queue jump phase' },
+        { score: '1', label: 'Trees or Open Space', desc: 'Reducing impervious area and/or providing additional trees (cost of trees should not exceed 2% of total project cost)' },
+        { score: '1\u20132', label: 'Electric Vehicle/Bus Charging', desc: '2 pts for charging stations, 1 pt for conduits for future use' },
+        { score: '1', label: 'Permeable Pavement', desc: 'Use permeable pavement for more than 25% of areas on the project' }
+      ],
+      docs: 'Please provide details on all proposed sustainability components. Categories include: energy efficiency, recycled materials, air quality factors (traffic signal improvements, trees/open space, EV charging accommodations), and permeable pavement.',
+      notes: 'Points are cumulative across categories. Maximum possible score is 10.'
+    }
   };
 
   // ============================================================
@@ -1488,6 +1664,54 @@
         if (config.title) input.title = config.title;
 
         fieldWrap.appendChild(label);
+
+        var guidance = SCORING_GUIDANCE[fieldName];
+        if (guidance && category === 'Scoring / Criteria') {
+          var toggleId = 'guidance-toggle-' + slugify(fieldName);
+          var panelId = 'guidance-panel-' + slugify(fieldName);
+
+          var toggleBtn = document.createElement('button');
+          toggleBtn.type = 'button';
+          toggleBtn.className = 'scoring-guidance-toggle';
+          toggleBtn.id = toggleId;
+          toggleBtn.innerHTML = '<span class="chevron">&#9654;</span> View scoring guidance';
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          toggleBtn.setAttribute('aria-controls', panelId);
+
+          var panel = document.createElement('div');
+          panel.className = 'scoring-guidance-panel';
+          panel.id = panelId;
+
+          var html = '<div class="guidance-question">' + guidance.question + '</div>';
+          if (guidance.description) {
+            html += '<p>' + guidance.description + '</p>';
+          }
+          html += '<ul class="guidance-rubric">';
+          guidance.rubric.forEach(function(r) {
+            html += '<li><strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
+            if (r.desc) html += ' \u2014 ' + r.desc;
+            html += '</li>';
+          });
+          html += '</ul>';
+          if (guidance.docs) {
+            html += '<div class="guidance-docs"><strong>Documentation:</strong> ' + guidance.docs + '</div>';
+          }
+          if (guidance.notes) {
+            html += '<div class="guidance-note"><strong>Note:</strong> ' + guidance.notes + '</div>';
+          }
+          panel.innerHTML = html;
+
+          toggleBtn.addEventListener('click', function() {
+            var p = document.getElementById(panelId);
+            var isOpen = p.classList.toggle('open');
+            this.classList.toggle('open', isOpen);
+            this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          });
+
+          fieldWrap.appendChild(toggleBtn);
+          fieldWrap.appendChild(panel);
+        }
+
         fieldWrap.appendChild(input);
 
         if (config.type === 'tel') {
