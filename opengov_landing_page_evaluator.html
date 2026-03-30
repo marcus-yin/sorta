@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Measure Q - Application Evaluations</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f8fc;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+    
+    .mq-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Banner Section */
+    .mq-banner {
+      background: linear-gradient(135deg, #1f8a70 0%, #0b5a73 100%);
+      padding: 24px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.1);
+    }
+    
+    .mq-logo {
+      height: 72px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .mq-banner-title {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Header Card */
+    .mq-header {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .mq-header h1 {
+      font-size: 24px;
+      color: #0f172a;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .mq-user-info {
+      font-size: 13px;
+      color: #475569;
+      text-align: right;
+    }
+    
+    #mq_vendor_name {
+      font-weight: 700;
+      color: #1f8a70;
+      font-size: 14px;
+    }
+    
+    /* Evaluation Status Badges */
+    .mq-status-pending-evaluation {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .mq-status-evaluation-in-progress {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .mq-status-evaluation-complete {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    /* Metrics Dashboard */
+    .mq-metrics-dashboard {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .mq-metric-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    
+    .mq-metric-card h3 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f8a70;
+      margin: 0 0 8px 0;
+    }
+    
+    .mq-metric-card p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Filters Section */
+    .mq-filters-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    
+    .mq-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      align-items: end;
+    }
+    
+    .mq-filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mq-filter-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .mq-filter-group input,
+    .mq-filter-group select {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #ffffff;
+      transition: border-color 0.2s;
+    }
+    
+    .mq-filter-group input:focus,
+    .mq-filter-group select:focus {
+      outline: none;
+      border-color: #1f8a70;
+      box-shadow: 0 0 0 3px rgba(31, 138, 112, 0.1);
+    }
+    
+    .mq-button {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(11, 90, 115, 0.25);
+      background: rgba(11, 90, 115, 0.08);
+      color: #09495d;
+      font-weight: 750;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+    
+    .mq-button:hover {
+      background: rgba(11, 90, 115, 0.14);
+    }
+    
+    .mq-button:active {
+      transform: translateY(1px);
+    }
+    
+    .mq-button:disabled {
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-color: #e2e8f0;
+      opacity: 0.6;
+    }
+    
+    .mq-button-success {
+      background: #1f8a70;
+      border-color: #1f8a70;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    
+    .mq-button-success:hover {
+      background: #0b5a73;
+      border-color: #0b5a73;
+    }
+    
+    /* Applications Section */
+    .mq-applications-section {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .mq-applications-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #0f172a;
+      font-weight: 700;
+      padding-left: 12px;
+      border-left: 4px solid #1f8a70;
+    }
+    
+    /* Loading Spinner */
+    .mq-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #475569;
+    }
+    
+    .mq-spinner {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #1f8a70;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Alert Messages */
+    .mq-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .mq-info {
+      background: #dbeafe;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    /* Table Styles */
+    .mq-table-container {
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      margin-top: 20px;
+    }
+    
+    .mq-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .mq-table thead {
+      background: #1f8a70;
+      color: #ffffff;
+    }
+    
+    .mq-table thead th {
+      padding: 14px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+    }
+    
+    .mq-table tbody td {
+      padding: 14px 12px;
+      border-top: 1px solid #eef2f7;
+      font-size: 13px;
+      color: #0f172a;
+      vertical-align: middle;
+    }
+    
+    .mq-table tbody tr:hover {
+      background-color: #f9fbff;
+    }
+    
+    .mq-table tbody td:first-child {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    /* Status Badges */
+    .mq-status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .mq-status-draft {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .mq-status-submitted {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .mq-status-under-review {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .mq-status-approved {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .mq-status-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    /* Button Sizes */
+    .mq-button-small {
+      padding: 8px 14px;
+      font-size: 13px;
+      margin-right: 6px;
+      font-weight: 600;
+    }
+    
+    /* Empty State */
+    .mq-empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94a3b8;
+    }
+    
+    .mq-empty-state-icon {
+      font-size: 72px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+    
+    .mq-empty-state h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .mq-empty-state p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 860px) {
+      .mq-banner {
+        padding: 20px 16px;
+      }
+      
+      .mq-logo {
+        height: 56px;
+        margin-bottom: 10px;
+      }
+      
+      .mq-banner-title {
+        font-size: 18px;
+      }
+      
+      .mq-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      
+      .mq-user-info {
+        text-align: left;
+      }
+      
+      .mq-table-container {
+        overflow-x: auto;
+      }
+      
+      .mq-table {
+        min-width: 800px;
+      }
+      
+      .mq-filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mq-container">
+    <!-- Banner with Logo -->
+    <div class="mq-banner">
+      <img class="mq-logo" src="https://www.santacruzcountyca.gov/Portals/_default/skins/SccMeasureQ/assets/images/SCC_WWPA_Logo_final2.svg" alt="Measure Q Logo" />
+      <h3 class="mq-banner-title">Application Evaluations</h3>
+    </div>
+    
+    <!-- Header -->
+    <div class="mq-header">
+      <div>
+        <h1>Evaluation Dashboard</h1>
+      </div>
+      <div class="mq-user-info">
+        <div id="mq_user_email">Loading...</div>
+        <div id="mq_vendor_name"></div>
+        <div style="margin-top: 8px;">
+          <button id="mq_profile_btn" class="mq-button mq-button-small" style="padding: 6px 12px; font-size: 12px;">
+            ⚙️ My Profile
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Evaluation Metrics Dashboard -->
+    <div class="mq-metrics-dashboard" id="mq_metrics_dashboard" style="display: none;">
+      <div class="mq-metric-card">
+        <h3 id="mq_metric_total">0</h3>
+        <p>Total Applications</p>
+      </div>
+      <div class="mq-metric-card">
+        <h3 id="mq_metric_pending">0</h3>
+        <p>Pending Evaluation</p>
+      </div>
+      <div class="mq-metric-card">
+        <h3 id="mq_metric_in_progress">0</h3>
+        <p>In Progress</p>
+      </div>
+      <div class="mq-metric-card">
+        <h3 id="mq_metric_complete">0</h3>
+        <p>Evaluations Complete</p>
+      </div>
+    </div>
+    
+    <!-- Filters Section -->
+    <div class="mq-filters-section">
+      <div class="mq-filters-grid">
+        <div class="mq-filter-group">
+          <label for="mq_filter_search">Search</label>
+          <input type="text" id="mq_filter_search" placeholder="Project title, applicant..." />
+        </div>
+        <div class="mq-filter-group">
+          <label for="mq_filter_status">Application Status</label>
+          <select id="mq_filter_status">
+            <option value="">All Statuses</option>
+            <option value="Draft">Draft</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="mq-filter-group">
+          <label for="mq_filter_project_type">Project Type</label>
+          <select id="mq_filter_project_type">
+            <option value="">All Types</option>
+          </select>
+        </div>
+        <div class="mq-filter-group">
+          <label for="mq_filter_eval_status">Evaluation Status</label>
+          <select id="mq_filter_eval_status">
+            <option value="">All Evaluations</option>
+            <option value="pending">Pending Evaluation</option>
+            <option value="in-progress">Evaluation In Progress</option>
+            <option value="complete">Evaluation Complete</option>
+          </select>
+        </div>
+        <div class="mq-filter-group">
+          <label>&nbsp;</label>
+          <button id="mq_clear_filters_btn" class="mq-button" style="width: 100%;">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Applications List -->
+    <div class="mq-applications-section">
+      <h2>Applications for Evaluation</h2>
+      
+      <div id="mq_error_message" class="mq-error" style="display: none;"></div>
+      <div id="mq_info_message" class="mq-info" style="display: none;"></div>
+      
+      <div id="mq_loading" class="mq-loading">
+        <div class="mq-spinner"></div>
+        <p>Loading applications...</p>
+      </div>
+      
+      <div id="mq_applications_table_container" style="display: none;">
+        <table class="mq-table">
+          <thead>
+            <tr>
+              <th>Record ID</th>
+              <th>Project Title</th>
+              <th>Project Type</th>
+              <th>Vendor</th>
+              <th>Applicant</th>
+              <th>Status</th>
+              <th>Date Submitted</th>
+              <th>Evaluation Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="mq_applications_tbody">
+          </tbody>
+        </table>
+      </div>
+      
+      <div id="mq_empty_state" class="mq-empty-state" style="display: none;">
+        <div class="mq-empty-state-icon">📋</div>
+        <h3>No Applications Found</h3>
+        <p>No applications match your current filters, or all applications have been evaluated.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // API Configuration
+    // ============================================
+    const API_CONFIG = {
+      baseURL: 'https://api.ignatius.io',
+      aesKey: 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9',
+      applicationTableKey: '97fiqdua5',
+      vendorContactsTableKey: 'qdvjrsbg4',
+      vendorContactsReportId: 'iirmh2og3',
+      applicationsReportId: 'weu56yag1',
+      applicationsCreatedByFieldKey: 'qgmrj5ra1',
+      applicationsVendorRidFieldKey: 'yi4bhidw2',
+      applicationsVendorNameFieldKey: 'lteokb2g3',
+      vendorTableKey: '7ucktphg6',
+      vendorReportId: 'hlecvvbg1'
+    };
+
+    // ============================================
+    // Token Management
+    // ============================================
+    async function getAuthToken() {
+      const encrypted = localStorage.getItem('token');
+
+      if (!encrypted) {
+        throw new Error('No authentication token found. Please log in.');
+      }
+
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encrypted, API_CONFIG.aesKey)
+          .toString(CryptoJS.enc.Utf8);
+
+        if (!decrypted) {
+          throw new Error('Failed to decrypt token. It may be invalid or expired.');
+        }
+
+        console.log('[MeasureQ Evaluator] Token decrypted successfully');
+        return decrypted;
+        
+      } catch (err) {
+        console.log('[MeasureQ Evaluator] Error decrypting authentication token:', err);
+        throw new Error('Error decrypting authentication token.');
+      }
+    }
+
+    // ============================================
+    // User Profile
+    // ============================================
+    async function getUserProfile() {
+      try {
+        const token = await getAuthToken();
+        
+        const response = await fetch(`${API_CONFIG.baseURL}/api/user/getprofile`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to get user profile: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('[MeasureQ Evaluator] User profile retrieved');
+        return result;
+      } catch (error) {
+        console.error('[MeasureQ Evaluator] Error getting user profile:', error);
+        throw error;
+      }
+    }
+
+    // ============================================
+    // Get All Applications (for evaluators - no filtering by user/vendor)
+    // ============================================
+    async function getAllApplications() {
+      try {
+        const token = await getAuthToken();
+        if (!token) return [];
+
+        // Query ALL applications (no filters)
+        const payload = {
+          ReportId: API_CONFIG.applicationsReportId,
+          Filters: []
+        };
+
+        console.log('[MeasureQ Evaluator] Querying all applications...');
+
+        const response = await fetch(`${API_CONFIG.baseURL}/api/Report/queryreport`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          console.error('[MeasureQ Evaluator] Failed to query applications:', response.status);
+          return [];
+        }
+
+        const result = await response.json();
+        const applications = Array.isArray(result) ? result : (result.data || []);
+
+        console.log('[MeasureQ Evaluator] Found', applications.length, 'applications');
+        return applications;
+      } catch (error) {
+        console.error('[MeasureQ Evaluator] Error getting applications:', error);
+        return [];
+      }
+    }
+
+    // ============================================
+    // Format Date
+    // ============================================
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      } catch {
+        return dateString;
+      }
+    }
+
+    // ============================================
+    // Get Status Badge HTML
+    // ============================================
+    function getStatusBadge(status) {
+      if (!status) return '<span class="mq-status-badge mq-status-draft">Draft</span>';
+      
+      const statusLower = status.toLowerCase();
+      let badgeClass = 'mq-status-draft';
+      
+      if (statusLower.includes('submit')) badgeClass = 'mq-status-submitted';
+      else if (statusLower.includes('review')) badgeClass = 'mq-status-under-review';
+      else if (statusLower.includes('approve')) badgeClass = 'mq-status-approved';
+      else if (statusLower.includes('reject')) badgeClass = 'mq-status-rejected';
+      
+      return `<span class="mq-status-badge ${badgeClass}">${status}</span>`;
+    }
+
+    // ============================================
+    // Get Evaluation Status Badge HTML
+    // ============================================
+    function getEvaluationStatusBadge(evalStatus) {
+      if (!evalStatus || evalStatus === 'pending') {
+        return '<span class="mq-status-badge mq-status-pending-evaluation">Pending Evaluation</span>';
+      } else if (evalStatus === 'in-progress') {
+        return '<span class="mq-status-badge mq-status-evaluation-in-progress">Evaluation In Progress</span>';
+      } else if (evalStatus === 'complete') {
+        return '<span class="mq-status-badge mq-status-evaluation-complete">Evaluation Complete</span>';
+      }
+      return '<span class="mq-status-badge mq-status-pending-evaluation">Pending Evaluation</span>';
+    }
+
+    // ============================================
+    // Determine Evaluation Status
+    // ============================================
+    function determineEvaluationStatus(application) {
+      // TODO: Replace with actual field from API when available
+      // For now, use a placeholder logic based on application status
+      const status = extractFieldValue(application, 'application_status') || '';
+      const statusLower = status.toLowerCase();
+      
+      // If application is submitted or under review, check if evaluation has started
+      // This is a placeholder - replace with actual evaluation status field
+      if (statusLower.includes('submit') || statusLower.includes('review')) {
+        // Check if evaluation fields exist (placeholder logic)
+        // In real implementation, check for evaluation score/comments fields
+        return 'pending'; // Default to pending for now
+      }
+      
+      return 'pending';
+    }
+
+    // ============================================
+    // Extract Field Value (handle table prefixes)
+    // ============================================
+    function extractFieldValue(record, fieldName) {
+      // Try exact match first
+      if (record[fieldName] !== undefined) return record[fieldName];
+      
+      // Try with table prefix
+      for (const key in record) {
+        if (key.endsWith('_' + fieldName) || key.includes(fieldName)) {
+          return record[key];
+        }
+      }
+      
+      return null;
+    }
+
+    // ============================================
+    // Filter Applications
+    // ============================================
+    function filterApplications(applications) {
+      const searchTerm = (document.getElementById('mq_filter_search').value || '').toLowerCase();
+      const statusFilter = document.getElementById('mq_filter_status').value;
+      const projectTypeFilter = document.getElementById('mq_filter_project_type').value;
+      const evalStatusFilter = document.getElementById('mq_filter_eval_status').value;
+
+      return applications.filter(function(app) {
+        // Search filter
+        if (searchTerm) {
+          const projectTitle = (extractFieldValue(app, 'project_title') || '').toLowerCase();
+          const applicant = (extractFieldValue(app, 'createdby') || '').toLowerCase();
+          const vendorName = (extractFieldValue(app, 'vendor_name') || '').toLowerCase();
+          
+          if (!projectTitle.includes(searchTerm) && 
+              !applicant.includes(searchTerm) && 
+              !vendorName.includes(searchTerm)) {
+            return false;
+          }
+        }
+
+        // Status filter
+        if (statusFilter) {
+          const status = extractFieldValue(app, 'application_status') || 'Draft';
+          if (status !== statusFilter) {
+            return false;
+          }
+        }
+
+        // Project type filter
+        if (projectTypeFilter) {
+          const projectType = extractFieldValue(app, 'project_type') || '';
+          if (projectType !== projectTypeFilter) {
+            return false;
+          }
+        }
+
+        // Evaluation status filter
+        if (evalStatusFilter) {
+          const evalStatus = determineEvaluationStatus(app);
+          if (evalStatus !== evalStatusFilter) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
+    // ============================================
+    // Calculate Metrics
+    // ============================================
+    function calculateMetrics(applications) {
+      const metrics = {
+        total: applications.length,
+        pending: 0,
+        inProgress: 0,
+        complete: 0
+      };
+
+      applications.forEach(function(app) {
+        const evalStatus = determineEvaluationStatus(app);
+        if (evalStatus === 'pending') metrics.pending++;
+        else if (evalStatus === 'in-progress') metrics.inProgress++;
+        else if (evalStatus === 'complete') metrics.complete++;
+      });
+
+      return metrics;
+    }
+
+    // ============================================
+    // Update Metrics Display
+    // ============================================
+    function updateMetrics(metrics) {
+      document.getElementById('mq_metric_total').textContent = metrics.total;
+      document.getElementById('mq_metric_pending').textContent = metrics.pending;
+      document.getElementById('mq_metric_in_progress').textContent = metrics.inProgress;
+      document.getElementById('mq_metric_complete').textContent = metrics.complete;
+      document.getElementById('mq_metrics_dashboard').style.display = 'grid';
+    }
+
+    // ============================================
+    // Populate Project Type Dropdown
+    // ============================================
+    function populateProjectTypeDropdown(applications) {
+      const projectTypes = new Set();
+      applications.forEach(function(app) {
+        const projectType = extractFieldValue(app, 'project_type');
+        if (projectType) {
+          projectTypes.add(projectType);
+        }
+      });
+
+      const select = document.getElementById('mq_filter_project_type');
+      const currentValue = select.value;
+      
+      // Clear existing options except "All Types"
+      while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+      }
+
+      // Add unique project types
+      Array.from(projectTypes).sort().forEach(function(type) {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        select.appendChild(option);
+      });
+
+      // Restore previous selection if still valid
+      if (currentValue) {
+        select.value = currentValue;
+      }
+    }
+
+    // ============================================
+    // Render Applications Table
+    // ============================================
+    function renderApplicationsTable(applications) {
+      const tbody = document.getElementById('mq_applications_tbody');
+      const tableContainer = document.getElementById('mq_applications_table_container');
+      const emptyState = document.getElementById('mq_empty_state');
+      
+      // Filter applications
+      const filteredApps = filterApplications(applications);
+      
+      if (!filteredApps || filteredApps.length === 0) {
+        tableContainer.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      // Sort by date created (newest first)
+      const sortedApps = [...filteredApps].sort(function(a, b) {
+        const dateA = new Date(extractFieldValue(a, 'datecreated') || extractFieldValue(a, 'datemodified') || 0);
+        const dateB = new Date(extractFieldValue(b, 'datecreated') || extractFieldValue(b, 'datemodified') || 0);
+        return dateB - dateA;
+      });
+      
+      tableContainer.style.display = 'block';
+      emptyState.style.display = 'none';
+      
+      tbody.innerHTML = '';
+      
+      sortedApps.forEach(function(app) {
+        const recordId = extractFieldValue(app, 'record_id') || extractFieldValue(app, 'id') || app.Rid;
+        const projectTitle = extractFieldValue(app, 'project_title') || 'Untitled Project';
+        const projectType = extractFieldValue(app, 'project_type') || '-';
+        const vendorName = extractFieldValue(app, 'vendor_name') || '-';
+        const applicant = extractFieldValue(app, 'createdby') || '-';
+        let status = extractFieldValue(app, 'application_status') || 'Draft';
+        
+        // Clean up legacy data: if status looks like a URL, default to "Draft"
+        if (status && (status.toLowerCase().startsWith('http://') || status.toLowerCase().startsWith('https://'))) {
+          status = 'Draft';
+        }
+        
+        const dateSubmitted = extractFieldValue(app, 'datecreated');
+        const evalStatus = determineEvaluationStatus(app);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${recordId || '-'}</td>
+          <td><strong>${projectTitle}</strong></td>
+          <td>${projectType}</td>
+          <td>${vendorName}</td>
+          <td>${applicant}</td>
+          <td>${getStatusBadge(status)}</td>
+          <td>${formatDate(dateSubmitted)}</td>
+          <td>${getEvaluationStatusBadge(evalStatus)}</td>
+          <td>
+            <button class="mq-button mq-button-small mq-button-success" onclick="evaluateApplication('${recordId}')">Evaluate</button>
+          </td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+
+      // Update metrics with filtered results
+      const metrics = calculateMetrics(filteredApps);
+      updateMetrics(metrics);
+    }
+
+    // ============================================
+    // Evaluate Application
+    // ============================================
+    function evaluateApplication(recordId) {
+      if (!recordId) return;
+      localStorage.setItem('mq_current_application_id', String(recordId));
+      // Pass record ID in URL so evaluator page can read it (e.g. if localStorage not shared)
+      const base = 'https://apps.opengov.com/apps/4rtlvxxg7/settings/user-interface/pages/view/x777oj7q7';
+      window.top.location.href = base + '?recordId=' + encodeURIComponent(String(recordId));
+    }
+
+    // ============================================
+    // Show Error
+    // ============================================
+    function showError(message) {
+      const errorDiv = document.getElementById('mq_error_message');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+
+    // ============================================
+    // Show Info
+    // ============================================
+    function showInfo(message) {
+      const infoDiv = document.getElementById('mq_info_message');
+      infoDiv.textContent = message;
+      infoDiv.style.display = 'block';
+      setTimeout(function() {
+        infoDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    // ============================================
+    // Initialize Dashboard
+    // ============================================
+    let allApplications = [];
+
+    async function initializeDashboard() {
+      try {
+        // Get user profile
+        console.log('[MeasureQ Evaluator] Initializing dashboard...');
+        const profile = await getUserProfile();
+        
+        if (!profile) {
+          throw new Error('No user profile returned from API');
+        }
+        
+        if (!profile.Email) {
+          throw new Error('User profile missing email address');
+        }
+
+        document.getElementById('mq_user_email').textContent = profile.Email;
+        console.log('[MeasureQ Evaluator] User email set:', profile.Email);
+
+        // Load ALL applications (no user/vendor filtering for evaluators)
+        console.log('[MeasureQ Evaluator] Loading all applications...');
+        allApplications = await getAllApplications();
+        
+        // Populate project type dropdown
+        populateProjectTypeDropdown(allApplications);
+        
+        // Hide loading, show table
+        document.getElementById('mq_loading').style.display = 'none';
+        renderApplicationsTable(allApplications);
+
+      } catch (error) {
+        console.error('[MeasureQ Evaluator] Error initializing dashboard:', error);
+        showError('Error loading dashboard. Please refresh the page.');
+        document.getElementById('mq_loading').style.display = 'none';
+      }
+    }
+
+    // ============================================
+    // Filter Event Listeners
+    // ============================================
+    document.getElementById('mq_filter_search').addEventListener('input', function() {
+      renderApplicationsTable(allApplications);
+    });
+
+    document.getElementById('mq_filter_status').addEventListener('change', function() {
+      renderApplicationsTable(allApplications);
+    });
+
+    document.getElementById('mq_filter_project_type').addEventListener('change', function() {
+      renderApplicationsTable(allApplications);
+    });
+
+    document.getElementById('mq_filter_eval_status').addEventListener('change', function() {
+      renderApplicationsTable(allApplications);
+    });
+
+    document.getElementById('mq_clear_filters_btn').addEventListener('click', function() {
+      document.getElementById('mq_filter_search').value = '';
+      document.getElementById('mq_filter_status').value = '';
+      document.getElementById('mq_filter_project_type').value = '';
+      document.getElementById('mq_filter_eval_status').value = '';
+      renderApplicationsTable(allApplications);
+    });
+
+    // ============================================
+    // Profile Page Navigation
+    // ============================================
+    document.getElementById('mq_profile_btn').addEventListener('click', function() {
+      window.top.location.href = 'https://apps.opengov.com/apps/4rtlvxxg7/settings/user-interface/pages/view/ng3y0jpq3';
+    });
+
+    // ============================================
+    // Initialize on page load
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('[MeasureQ Evaluator] CryptoJS loaded:', typeof CryptoJS !== 'undefined');
+      console.log('[MeasureQ Evaluator] localStorage token exists:', !!localStorage.getItem('token'));
+      
+      initializeDashboard();
+    });
+  </script>
+</body>
+</html>

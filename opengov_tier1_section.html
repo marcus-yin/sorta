@@ -1,0 +1,3440 @@
+<!-- Measure Q Tier 1 Section - OpenGov HTML Snippet -->
+<!-- Marcus @ 2.27.26 1230p EST -->
+
+<!-- CryptoJS library for token decryption (required for API integration) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+<!-- Banner with Logo -->
+<div class="mq-banner">
+  <img class="mq-logo" src="https://www.santacruzcountyca.gov/Portals/_default/skins/SccMeasureQ/assets/images/SCC_WWPA_Logo_final2.svg" alt="Measure Q Logo" />
+  <h3 class="mq-banner-title">Measure Q Grant Proposal Application</h3>
+</div>
+
+<div class="mq-card">
+  <style>
+    .mq-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 18px;
+      margin: 14px 0;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+    }
+    .mq-h2 {
+      font-size: 16px;
+      font-weight: 850;
+      margin: 0 0 12px;
+      padding-left: 10px;
+      border-left: 4px solid #1f8a70;
+    }
+    .mq-sub {
+      font-size: 12px;
+      color: #475569;
+      margin: 0 0 10px;
+    }
+    .mq-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+    .mq-col-12 { grid-column: span 12; }
+    .mq-col-6 { grid-column: span 6; }
+    .mq-col-4 { grid-column: span 4; }
+    .mq-divider {
+      height: 1px;
+      background: #eef2f7;
+      margin: 14px 0;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 6px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cfd8e3;
+      border-radius: 12px;
+      font-size: 14px;
+      background: #fff;
+      box-sizing: border-box;
+      outline: none;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    input[type="file"] {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(11, 90, 115, 0.55);
+      box-shadow: 0 0 0 4px rgba(11, 90, 115, 0.15);
+    }
+    .mq-help {
+      font-size: 11px;
+      color: #475569;
+      margin: 6px 0 0;
+    }
+    .mq-hidden {
+      display: none !important;
+    }
+    .mq-checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 14px;
+    }
+    .mq-check {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      font-size: 13px;
+      color: #111827;
+    }
+    .mq-check input {
+      margin-top: 3px;
+      width: auto;
+    }
+    .mq-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eef2f7;
+    }
+    .mq-button {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(11, 90, 115, 0.25);
+      background: rgba(11, 90, 115, 0.08);
+      color: #09495d;
+      font-weight: 750;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease;
+    }
+    .mq-button:hover {
+      background: rgba(11, 90, 115, 0.14);
+    }
+    .mq-button:active {
+      transform: translateY(1px);
+    }
+    .mq-button-primary {
+      background: rgba(11, 90, 115, 0.15);
+      border-color: rgba(11, 90, 115, 0.4);
+      color: #09495d;
+    }
+    .mq-button-primary:hover {
+      background: rgba(11, 90, 115, 0.22);
+    }
+    @media (max-width: 860px) {
+      .mq-col-6, .mq-col-4 {
+        grid-column: span 12;
+      }
+      .mq-checks {
+        grid-template-columns: 1fr;
+      }
+    }
+    .mq-section {
+      background: #f9fbff;
+      border: 1px solid #cfd9e6;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .mq-word-count {
+      font-size: 11px;
+      color: #475569;
+      margin-top: 4px;
+      text-align: right;
+    }
+    .mq-word-count.mq-word-limit-reached {
+      color: #dc2626;
+      font-weight: 600;
+    }
+    /* Banner Section */
+    .mq-banner {
+      background: linear-gradient(135deg, #1f8a70 0%, #0b5a73 100%);
+      padding: 24px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.1);
+    }
+    .mq-logo {
+      height: 72px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .mq-banner-title {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 860px) {
+      .mq-banner {
+        padding: 20px 16px;
+      }
+      .mq-logo {
+        height: 56px;
+        margin-bottom: 10px;
+      }
+      .mq-banner-title {
+        font-size: 18px;
+      }
+    }
+    /* Status Section */
+    .mq-status-container {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .mq-status-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      padding: 0 10px;
+    }
+    .mq-status-line {
+      position: absolute;
+      top: 24px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #e2e8f0;
+      z-index: 0;
+    }
+    .mq-status-line-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #1f8a70 0%, #0b5a73 100%);
+      z-index: 1;
+      transition: width 0.6s ease;
+    }
+    .mq-status-step {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 140px;
+    }
+    .mq-status-step-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: #ffffff;
+      border: 3px solid #e2e8f0;
+      color: #475569;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+    .mq-status-step.active .mq-status-step-icon {
+      background: #1f8a70;
+      border-color: #1f8a70;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(31, 138, 112, 0.3);
+      transform: scale(1.08);
+    }
+    .mq-status-step-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      text-align: center;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+    .mq-status-step.active .mq-status-step-label {
+      color: #1f8a70;
+    }
+    @media (max-width: 860px) {
+      .mq-status-steps {
+        padding: 0 5px;
+      }
+      .mq-status-step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+      }
+      .mq-status-step-label {
+        font-size: 11px;
+      }
+      .mq-status-step {
+        max-width: 100px;
+      }
+    }
+    
+    /* Print styles for PDF generation */
+    @media print {
+      /* Hide elements that shouldn't be in PDF */
+      .mq-actions,
+      .mq-button {
+        display: none !important;
+      }
+      
+      /* Page break control */
+      .mq-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 20px;
+      }
+      
+      .mq-banner {
+        page-break-after: avoid;
+      }
+      
+      .mq-status-container {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+      }
+      
+      /* Ensure text areas and inputs are visible */
+      textarea,
+      input,
+      select {
+        border: 1px solid #ccc !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      /* Adjust layout for print */
+      .mq-card {
+        box-shadow: none;
+        border: none;
+        padding: 10px;
+      }
+      
+      /* Ensure proper spacing */
+      .mq-grid {
+        page-break-inside: avoid;
+      }
+      
+      .mq-col-12,
+      .mq-col-6,
+      .mq-col-4 {
+        page-break-inside: avoid;
+      }
+      
+      /* Keep labels with their inputs */
+      label {
+        page-break-after: avoid;
+      }
+      
+      /* Table print handling */
+      table {
+        page-break-inside: auto;
+      }
+      
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      
+      thead {
+        display: table-header-group;
+      }
+      
+      /* Avoid orphaned content */
+      h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+      }
+      
+      .mq-h2 {
+        page-break-after: avoid;
+      }
+    }
+    
+    /* File Upload Styles */
+    .mq-file-status {
+      font-size: 12px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .mq-file-status.uploading {
+      display: block;
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    .mq-file-status.success {
+      display: block;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .mq-file-status.error {
+      display: block;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .mq-file-list {
+      margin-top: 8px;
+    }
+    .mq-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin-top: 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .mq-file-item-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .mq-file-item-name {
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mq-file-item-size {
+      color: #64748b;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .mq-file-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .mq-file-btn {
+      padding: 4px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .mq-file-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .mq-file-btn.delete {
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+    .mq-file-btn.delete:hover {
+      background: #fef2f2;
+      border-color: #dc2626;
+    }
+  </style>
+
+  <!-- Status Section -->
+  <div class="mq-status-container">
+    <div class="mq-status-steps">
+      <div class="mq-status-line">
+        <div class="mq-status-line-fill" style="width: 100%"></div>
+      </div>
+
+      <div class="mq-status-step" id="mq_status_step_overview">
+        <div class="mq-status-step-icon">1</div>
+        <div class="mq-status-step-label">Project<br><small>Overview</small></div>
+      </div>
+
+      <div class="mq-status-step active" id="mq_status_step_tier">
+        <div class="mq-status-step-icon">2</div>
+        <div class="mq-status-step-label">Tier 1<br><small>Application</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mq-h2">Tier 1 - Community Catalyst Grant (Complete only if Funding Requested &lt; $50,000)</div>
+  <div class="mq-divider"></div>
+
+  <!-- Application Record ID (Read-only) -->
+  <div class="mq-section">
+    <div class="mq-grid">
+      <div class="mq-col-6">
+        <label for="mq_t1_record_id">Application Record ID</label>
+        <input type="text" id="mq_t1_record_id" name="mq_t1_record_id" readonly style="background-color: #f1f5f9; cursor: not-allowed;" />
+        <p class="mq-help">This is the unique Record ID of your application.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alignment with Measure Q Vision Plan Priorities Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">1. Alignment with Measure Q Vision Plan Priorities</div>
+    <p class="mq-help" style="margin-bottom: 12px;">
+      <a href="https://parks.santacruzcountyca.gov/Portals/12/pdfs/Measure%20Q/MeasureQVisionDocument_20251017_v2.pdf?ver=hAmyJ5Br-wD0HdkhGSSUYQ%3d%3d" target="_blank" style="color: #1f8a70; text-decoration: underline;">Measure Q Five-Year Vision Plan →</a>
+      &nbsp;|&nbsp;
+      <a href="https://parks.santacruzcountyca.gov/Portals/12/pdfs/Measure%20Q/MeasureQAppendices_20251017.pdf?ver=k0kYGdolfQAUoFQd4llf3A%3d%3d" target="_blank" style="color: #1f8a70; text-decoration: underline;">Appendices →</a>
+    </p>
+    <div class="mq-grid">
+      <div class="mq-col-12">
+        <label>Thematic Areas (must select at least one, check all that apply) <span style="color: #dc2626;">*</span></label>
+        <div class="mq-checks">
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_water" name="mq_t1_thematic_areas[]" value="Water Resource Management" />
+            Water Resource Management
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_wildfire" name="mq_t1_thematic_areas[]" value="Wildfire Risk Reduction and Forest Health" />
+            Wildfire Risk Reduction and Forest Health
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_parks" name="mq_t1_thematic_areas[]" value="Parks, Recreation, Access, and Equity" />
+            Parks, Recreation, Access, and Equity
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_wildlife" name="mq_t1_thematic_areas[]" value="Wildlife and Habitat Protection" />
+            Wildlife and Habitat Protection
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_coastal" name="mq_t1_thematic_areas[]" value="Coastal Protection and Adaptation" />
+            Coastal Protection and Adaptation
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_thematic_areas_agricultural" name="mq_t1_thematic_areas[]" value="Agricultural and Work Land Protection" />
+            Agricultural and Work Land Protection
+          </label>
+        </div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_thematic_areas_narrative">Thematic Areas Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_thematic_areas_narrative" name="mq_t1_thematic_areas_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_thematic_areas_narrative_word_count">0 / 500 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label>Project Prioritization Principles (must select at least one, check all that apply) <span style="color: #dc2626;">*</span></label>
+        <div class="mq-checks">
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_prioritization_multi" name="mq_t1_prioritization_principles[]" value="Multi-Benefit Outcomes" />
+            Multi-Benefit Outcomes
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_prioritization_match" name="mq_t1_prioritization_principles[]" value="Match Funding and Leveraging Potential" />
+            Match Funding and Leveraging Potential
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_prioritization_equity" name="mq_t1_prioritization_principles[]" value="Equity Impact" />
+            Equity Impact
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_prioritization_climate" name="mq_t1_prioritization_principles[]" value="Climate Resilience Value" />
+            Climate Resilience Value
+          </label>
+        </div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_prioritization_narrative">Prioritization Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_prioritization_narrative" name="mq_t1_prioritization_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_prioritization_narrative_word_count">0 / 500 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label>Secondary Prioritization Principles (must select at least one, check all that apply) <span style="color: #dc2626;">*</span></label>
+        <div class="mq-checks">
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_secondary_prioritization_public" name="mq_t1_secondary_prioritization_principles[]" value="Public Benefit" />
+            Public Benefit
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_secondary_prioritization_strategic" name="mq_t1_secondary_prioritization_principles[]" value="Strategic Alignment" />
+            Strategic Alignment
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_secondary_prioritization_readiness" name="mq_t1_secondary_prioritization_principles[]" value="Readiness" />
+            Readiness
+          </label>
+        </div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_secondary_prioritization_narrative">Secondary Prioritization Principle Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_secondary_prioritization_narrative" name="mq_t1_secondary_prioritization_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_secondary_prioritization_narrative_word_count">0 / 500 words</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Community Benefit Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">2. Community Benefit</div>
+    <div class="mq-grid">
+      <div class="mq-col-12">
+        <label for="mq_t1_target_community">Target Community / User Groups (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_target_community" name="mq_t1_target_community"></textarea>
+        <div class="mq-word-count" id="mq_t1_target_community_word_count">0 / 500 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label>Community Value areas (must select at least one, check all that apply) <span style="color: #dc2626;">*</span></label>
+        <div class="mq-checks">
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_safety" name="mq_t1_community_value_areas[]" value="Public safety" />
+            Public safety
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_health" name="mq_t1_community_value_areas[]" value="Health and well-being" />
+            Health and well-being
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_nature" name="mq_t1_community_value_areas[]" value="Access to nature" />
+            Access to nature
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_recreation" name="mq_t1_community_value_areas[]" value="Recreation opportunities" />
+            Recreation opportunities
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_access_recreation" name="mq_t1_community_value_areas[]" value="Access to recreation" />
+            Access to recreation
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_community_value_identity" name="mq_t1_community_value_areas[]" value="Community identity or livability" />
+            Community identity or livability
+          </label>
+        </div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_community_value_narrative">Community Value Narrative + outreach/engagement (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_community_value_narrative" name="mq_t1_community_value_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_community_value_narrative_word_count">0 / 500 words</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feasibility Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">3. Feasibility</div>
+    <div class="mq-grid">
+      <div class="mq-col-4">
+        <label for="mq_t1_ground_disturbance">Does the project include ground disturbance/capital/site improvements? <span style="color: #dc2626;">*</span></label>
+        <select id="mq_t1_ground_disturbance" name="mq_t1_ground_disturbance">
+          <option value="">Select…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <div id="mq_t1_ground_disturbance_no_wrap" class="mq-col-12 mq-hidden">
+        <label for="mq_t1_no_ground_disturbance_explain">If No, explain ability to execute proposed program (max 300 words)</label>
+        <textarea id="mq_t1_no_ground_disturbance_explain" name="mq_t1_no_ground_disturbance_explain"></textarea>
+        <div class="mq-word-count" id="mq_t1_no_ground_disturbance_explain_word_count">0 / 300 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <div class="mq-divider" style="margin: 20px 0;"></div>
+        <label style="margin-bottom: 12px; font-weight: 700;">Site Control (must select at least one, check all that apply) <span style="color: #dc2626;">*</span></label>
+        <div style="margin-top: 10px;">
+          <label class="mq-check" style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <input type="checkbox" id="mq_t1_site_control_owns_property" name="mq_t1_site_control[]" value="Applicant owns the property for the proposed project" style="margin-top: 4px; margin-right: 8px; width: auto;" />
+            <span>Applicant owns the property for the proposed project.</span>
+          </label>
+          <label class="mq-check" style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <input type="checkbox" id="mq_t1_site_control_written_agreement" name="mq_t1_site_control[]" value="Applicant has a written agreement with the landowner to conduct the project on their land" style="margin-top: 4px; margin-right: 8px; width: auto;" />
+            <span>Applicant has a written agreement with the landowner to conduct the project on their land.</span>
+          </label>
+          <label class="mq-check" style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <input type="checkbox" id="mq_t1_site_control_no_written_agreement" name="mq_t1_site_control[]" value="Applicant does not have a written agreement with the landowner to conduct the project on their land" style="margin-top: 4px; margin-right: 8px; width: auto;" />
+            <span>Applicant does not have a written agreement with the landowner to conduct the project on their land. If this answer is checked, explain the landowner's involvement in the project in Section 3.</span>
+          </label>
+          <label class="mq-check" style="display: flex; align-items: flex-start; margin-bottom: 12px;">
+            <input type="checkbox" id="mq_t1_site_control_other" name="mq_t1_site_control[]" value="Other" style="margin-top: 4px; margin-right: 8px; width: auto;" />
+            <span>Other</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="mq_t1_site_control_other_wrap" class="mq-col-12 mq-hidden">
+        <label for="mq_t1_site_control_other_text">Please specify (if Other is selected) (max 300 words)</label>
+        <textarea id="mq_t1_site_control_other_text" name="mq_t1_site_control_other_text" rows="3" placeholder="Enter additional details about site control..."></textarea>
+        <div class="mq-word-count" id="mq_t1_site_control_other_text_word_count">0 / 300 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_project_scope_narrative">Project Scope Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_project_scope_narrative" name="mq_t1_project_scope_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_project_scope_narrative_word_count">0 / 500 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_budget_narrative">Budget Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_budget_narrative" name="mq_t1_budget_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_budget_narrative_word_count">0 / 500 words</div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_timeline_narrative">Timeline Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_timeline_narrative" name="mq_t1_timeline_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_timeline_narrative_word_count">0 / 500 words</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Innovation & Capacity Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">4. Innovation & Capacity</div>
+    <div class="mq-grid">
+      <div class="mq-col-12">
+        <label for="mq_t1_innovation_capacity">Innovation & Capacity Narrative (max 500 words) <span style="color: #dc2626;">*</span></label>
+        <textarea id="mq_t1_innovation_capacity" name="mq_t1_innovation_capacity"></textarea>
+        <div class="mq-word-count" id="mq_t1_innovation_capacity_word_count">0 / 500 words</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bonus Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">5. Bonus</div>
+    <div class="mq-grid">
+      <div class="mq-col-12">
+        <label>Bonus Categories (check all that apply)</label>
+        <div class="mq-checks">
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_bonus_partnership" name="mq_t1_bonus_categories[]" value="Strong Partnership/Collaboration" />
+            Strong Partnership/Collaboration
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_bonus_volunteer" name="mq_t1_bonus_categories[]" value="Volunteer Hours Leverage" />
+            Volunteer Hours Leverage
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_bonus_funds" name="mq_t1_bonus_categories[]" value="Leveraged Funds" />
+            Leveraged Funds
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_bonus_efficient_funds" name="mq_t1_bonus_categories[]" value="Efficient Use of Funds" />
+            Efficient Use of Funds
+          </label>
+          <label class="mq-check">
+            <input type="checkbox" id="mq_t1_bonus_other" name="mq_t1_bonus_categories[]" value="Other" />
+            Other
+          </label>
+        </div>
+      </div>
+
+      <div class="mq-col-12">
+        <label for="mq_t1_bonus_narrative">Bonus Narrative (max 500 words)</label>
+        <textarea id="mq_t1_bonus_narrative" name="mq_t1_bonus_narrative"></textarea>
+        <div class="mq-word-count" id="mq_t1_bonus_narrative_word_count">0 / 500 words</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tier 1 Attachments Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">Tier 1 Attachments</div>
+    <div class="mq-grid">
+      <div class="mq-col-6">
+        <label for="mq_t1_attachment_budget">Budget Spreadsheet (optional)</label>
+        <input id="mq_t1_attachment_budget" name="mq_t1_attachment_budget" type="file" />
+        <div id="mq_t1_attachment_budget_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_budget_list" class="mq-file-list"></div>
+      </div>
+      <div class="mq-col-6">
+        <label for="mq_t1_attachment_timeline">Project Timeline (optional)</label>
+        <input id="mq_t1_attachment_timeline" name="mq_t1_attachment_timeline" type="file" />
+        <div id="mq_t1_attachment_timeline_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_timeline_list" class="mq-file-list"></div>
+      </div>
+      <div class="mq-col-6">
+        <label for="mq_t1_attachment_site_map">Project Site Map (optional)</label>
+        <input id="mq_t1_attachment_site_map" name="mq_t1_attachment_site_map" type="file" />
+        <div id="mq_t1_attachment_site_map_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_site_map_list" class="mq-file-list"></div>
+      </div>
+      <div class="mq-col-6">
+        <label for="mq_t1_attachment_letters_support">Letters of Support (optional)</label>
+        <input id="mq_t1_attachment_letters_support" name="mq_t1_attachment_letters_support" type="file" multiple />
+        <div id="mq_t1_attachment_letters_support_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_letters_support_list" class="mq-file-list"></div>
+      </div>
+      <div class="mq-col-6">
+        <label for="mq_t1_attachment_org_info">Organizational Information (optional)</label>
+        <input id="mq_t1_attachment_org_info" name="mq_t1_attachment_org_info" type="file" />
+        <div id="mq_t1_attachment_org_info_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_org_info_list" class="mq-file-list"></div>
+      </div>
+      <div class="mq-col-12">
+        <label for="mq_t1_attachment_photos">Photos (optional)</label>
+        <input id="mq_t1_attachment_photos" name="mq_t1_attachment_photos" type="file" multiple accept="image/*" />
+        <div id="mq_t1_attachment_photos_status" class="mq-file-status"></div>
+        <div id="mq_t1_attachment_photos_list" class="mq-file-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tier 1 Grant Administration & Certification Section -->
+  <div class="mq-section">
+    <div class="mq-h2" style="font-size:15px;">Tier 1 Grant Administration & Certification</div>
+    <div class="mq-grid">
+      <div class="mq-col-6">
+        <label for="mq_t1_certification">Certification <span style="color: #dc2626;">*</span></label>
+        <select id="mq_t1_certification" name="mq_t1_certification">
+          <option value="">Select…</option>
+          <option value="I certify">I certify</option>
+          <option value="I do not certify">I do not certify</option>
+        </select>
+      </div>
+
+    <div class="mq-col-6">
+      <label for="mq_t1_signature">Signature (type name) <span style="color: #dc2626;">*</span></label>
+      <input id="mq_t1_signature" name="mq_t1_signature" type="text" />
+    </div>
+
+    <div class="mq-col-6">
+      <label for="mq_t1_signer_name_title">Name & Title <span style="color: #dc2626;">*</span></label>
+      <input id="mq_t1_signer_name_title" name="mq_t1_signer_name_title" type="text" />
+    </div>
+
+    <div class="mq-col-6">
+      <label for="mq_t1_signature_date">Date (YYYY-MM-DD) <span style="color: #dc2626;">*</span></label>
+      <input id="mq_t1_signature_date" name="mq_t1_signature_date" type="text" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" maxlength="10" />
+    </div>
+
+    <div class="mq-col-12" style="margin-top: 20px;">
+      <label class="mq-check" style="display: flex; align-items: flex-start; gap: 10px; padding: 15px; background: #f9fbff; border: 1px solid #cfd9e6; border-radius: 8px; cursor: pointer;">
+        <input type="checkbox" id="mq_t1_submit_acknowledgment" name="mq_t1_submit_acknowledgment" style="margin-top: 3px; width: auto; cursor: pointer;" />
+        <span style="font-size: 14px; line-height: 1.5; color: #0f172a; font-weight: 700;">
+          I acknowledge that all application materials and scoring will be made public as part of grant selection process. <span style="color: #dc2626;">*</span>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="mq-actions">
+    <button type="button" class="mq-button" id="mq_t1_back_btn">
+      Back to Project Overview
+    </button>
+    <button type="button" class="mq-button mq-button-primary" id="mq_t1_submit_btn">
+      Submit
+    </button>
+    <button type="button" class="mq-button" id="mq_t1_save_draft_btn">
+      Save Draft
+    </button>
+    <button type="button" class="mq-button" id="mq_t1_download_pdf_btn">
+      Print / Save as PDF
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  
+  const STORAGE_KEY = 'measure_q_draft';
+  const PROJECT_OVERVIEW_URL = 'https://apps.opengov.com/apps/4rtlvxxg7/settings/user-interface/pages/view/l0phaflg1';
+  
+  // ============================================
+  // API Configuration
+  // ============================================
+  // TODO: Configure these values when API integration is ready
+  const API_CONFIG = {
+    baseURL: 'https://api.ignatius.io', // OpenGov API base URL
+    pushURL: 'YOUR_PUSH_URL_HERE', // Next page URL for application stage
+    aesKey: 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9', // Encryption key for token decryption
+    applicationTableKey: '97fiqdua5', // Table key for Measure Q applications
+    documentsTableKey: '3hzlmokw5', // Documents/Attachments table
+    documentFieldKey: 'in42ej6w6', // Field key for the document/file field in documents table
+    documentsReportId: 'bhynxkjg5', // Documents report for retrieving files
+    // Document metadata field keys
+    relatedApplicationFieldKey: 'lmm54vba5', // Related Application field (for posting)
+    documentsRelationshipFieldKey: 'lnms4vba5', // Related Applications field key in documents report
+    documentNameFieldKey: '15lhnovq4', // Document Name field
+    documentTypeFieldKey: 'koeput6a4', // Document Type field
+    documentStatusFieldKey: 'rekzi2qw2', // Status field (Active/Deleted)
+    programsReportId: 'YOUR_PROGRAMS_REPORT_ID_HERE', // For programs dropdown (if needed)
+    applicationsReportId: 'qgu3ohhq3', // Tier 1 applications report (includes all Tier 1 fields)
+    applicationStageFieldKey: 'YOUR_APPLICATION_STAGE_FIELD_KEY_HERE', // For dashboard filtering (if needed)
+    // Application deadlines table - block submit if current deadline has passed
+    applicationDeadlinesTableKey: 'hsxvfj2w5',
+    applicationDeadlinesReportId: 'y2u6qxuw4',
+    applicationDeadlineDateFieldKey: 'lszzg1ha1',
+    applicationDeadlineCurrentFieldKey: '8isxmfbw8'
+  };
+  
+  // Field mapping for API - maps form field IDs (with mq_ prefix) to shortened API field names
+  const FIELD_MAPPING = {
+    // Tier 1 fields (using shortened names for OpenGov field name limits)
+    'mq_t1_thematic_areas': { name: 't1_theme_areas', type: 'ARRAY' },
+    'mq_t1_thematic_areas_narrative': { name: 't1_theme_narr' },
+    'mq_t1_prioritization_principles': { name: 't1_prior_princ', type: 'ARRAY' },
+    'mq_t1_prioritization_narrative': { name: 't1_prior_narr' },
+    'mq_t1_secondary_prioritization_principles': { name: 't1_sec_prior', type: 'ARRAY' },
+    'mq_t1_secondary_prioritization_narrative': { name: 't1_sec_prior_narr' },
+    'mq_t1_target_community': { name: 't1_target_comm' },
+    'mq_t1_community_value_areas': { name: 't1_comm_value', type: 'ARRAY' },
+    'mq_t1_community_value_narrative': { name: 't1_comm_val_narr' },
+    'mq_t1_ground_disturbance': { name: 't1_ground_dist' },
+    'mq_t1_site_control[]': { name: 't1_site_ctrl', type: 'ARRAY' },
+    'mq_t1_site_control_other_text': { name: 't1_site_ctrl_othr' },
+    'mq_t1_no_ground_disturbance_explain': { name: 't1_no_gnd_explain' },
+    'mq_t1_project_scope_narrative': { name: 't1_scope_narr' },
+    'mq_t1_budget_narrative': { name: 't1_budget_narr' },
+    'mq_t1_timeline_narrative': { name: 't1_timeline_narr' },
+    'mq_t1_innovation_capacity': { name: 't1_innov_cap' },
+    'mq_t1_bonus_categories': { name: 't1_bonus_cat', type: 'ARRAY' },
+    'mq_t1_bonus_narrative': { name: 't1_bonus_narr' },
+    'mq_t1_attachment_budget': { name: 't1_attachment_budget', type: 'FILE' },
+    'mq_t1_attachment_timeline': { name: 't1_attachment_timeline', type: 'FILE' },
+    'mq_t1_attachment_site_map': { name: 't1_attachment_site_map', type: 'FILE' },
+    'mq_t1_attachment_letters_support': { name: 't1_attachment_letters_support', type: 'FILE' },
+    'mq_t1_attachment_org_info': { name: 't1_attachment_org_info', type: 'FILE' },
+    'mq_t1_attachment_photos': { name: 't1_attachment_photos', type: 'FILE' },
+    'mq_t1_certification': { name: 't1_cert' },
+    'mq_t1_signature': { name: 't1_signature' },
+    'mq_t1_signer_name_title': { name: 't1_signer_title' },
+    'mq_t1_signature_date': { name: 't1_sign_date', type: 'DATE' },
+    'mq_t1_submit_acknowledgment': { name: 't1_submit_ack' },
+    // System fields
+    'application_stage': { name: 'application_stage' },
+    'application_status': { name: 'application_status' },
+    'date_submitted': { name: 'date_submitted', type: 'DATE' }
+  };
+  
+  // ============================================
+  // Token Management
+  // ============================================
+  // Keep token handling minimal: just read it if present.
+  // We can still *attempt* AES decrypt safely and log whether we got an access_token,
+  // without throwing or spamming logs.
+  let authToken = null;
+  let userToken = '';
+
+  function looksLikeCryptoJsSaltedCiphertext(s) {
+    // CryptoJS AES default format begins with "Salted__" which base64-encodes as "U2FsdGVkX1".
+    return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+  }
+
+  function safeJsonParse(s) {
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  }
+
+  function extractAccessTokenFromDecryptedString(decrypted) {
+    if (typeof decrypted !== 'string') return '';
+    const trimmed = decrypted.trim();
+    if (!trimmed) return '';
+    const maybeJson = safeJsonParse(trimmed);
+    if (maybeJson && typeof maybeJson === 'object') {
+      if (maybeJson.access_token) return String(maybeJson.access_token);
+      if (maybeJson.token) return String(maybeJson.token);
+    }
+    return trimmed;
+  }
+
+  function bootstrapUserTokenFromLocalStorage() {
+    let encryptedToken = '';
+    try {
+      encryptedToken = localStorage.getItem('token') || '';
+    } catch {
+      encryptedToken = '';
+    }
+
+    if (!encryptedToken) {
+      console.log('[MeasureQ-T1] token: no localStorage("token") found');
+      return '';
+    }
+    console.log(`[MeasureQ-T1] token: found localStorage("token") (len=${encryptedToken.length})`);
+
+    if (typeof CryptoJS === 'undefined') {
+      console.warn('[MeasureQ-T1] token: CryptoJS not available; cannot decrypt');
+      return '';
+    }
+
+    const keysToTry = [API_CONFIG?.aesKey].filter(Boolean).map((k) => String(k));
+
+    if (!keysToTry.length) {
+      console.warn('[MeasureQ-T1] token: missing AES key(s); cannot decrypt');
+      return '';
+    }
+
+    for (const key of keysToTry) {
+      const keyTag = 'primary';
+      try {
+        // IMPORTANT: CryptoJS throws "Malformed UTF-8 data" here when the key is wrong.
+        const decrypted = CryptoJS.AES.decrypt(encryptedToken, key).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) {
+          console.warn(`[MeasureQ-T1] token: decrypt returned empty string (key=${keyTag})`);
+          continue;
+        }
+
+        console.log(`[MeasureQ-T1] token: decrypt ok (key=${keyTag}, len=${decrypted.length})`);
+
+        const extracted = extractAccessTokenFromDecryptedString(decrypted);
+        const best = String((extracted || decrypted || '')).trim();
+        if (!best) {
+          console.warn(`[MeasureQ-T1] token: decrypted value empty after trim (key=${keyTag})`);
+          continue;
+        }
+        if (looksLikeCryptoJsSaltedCiphertext(best)) {
+          console.warn(`[MeasureQ-T1] token: decrypted value still looks like ciphertext (key=${keyTag}); refusing`);
+          continue;
+        }
+        if (extracted && extracted !== decrypted) {
+          console.log('[MeasureQ-T1] token: extracted access_token from decrypted JSON ✅');
+        } else {
+          console.log('[MeasureQ-T1] token: using decrypted string ✅');
+        }
+        return best;
+      } catch (e) {
+        console.warn(`[MeasureQ-T1] token: decrypt failed (key=${keyTag}): ${e?.message || e}`);
+      }
+    }
+
+    console.warn('[MeasureQ-T1] token: unable to decrypt token with configured key(s)');
+    return '';
+  }
+
+  // Simple conditional token bootstrap (runs immediately on script load).
+  userToken = bootstrapUserTokenFromLocalStorage();
+  
+  async function getAuthToken() {
+    // Check if token is already available
+    if (authToken) {
+      return authToken;
+    }
+    
+    // Use the bootstrapped token
+    if (userToken) {
+      authToken = userToken;
+      return authToken;
+    }
+    
+    console.warn('[MeasureQ-T1] No authentication token available. API calls will fail.');
+    return null;
+  }
+  
+  // ============================================
+  // API Functions
+  // ============================================
+  
+  /**
+   * Get user profile from API
+   * @returns {Promise<Object>} User profile data
+   */
+  async function getUserProfile() {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.baseURL === 'YOUR_API_BASE_URL_HERE') {
+        console.log('API not configured or token unavailable. Skipping user profile fetch.');
+        return null;
+      }
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/user/getprofile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get user profile: ${response.status} - ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Upload a file to OpenGov API
+   * @param {File} file - File object to upload
+   * @param {string} applicationRid - Record ID of the application
+   * @param {string} fieldName - Field name/category for the file (e.g., 't1_attachment_budget')
+   * @param {string} documentType - Document type (e.g., 'Tier 1 Attachment')
+   * @returns {Promise<Object>} Upload response with file ID
+   */
+  async function uploadFile(file, applicationRid, fieldName, documentType) {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.documentsTableKey === 'YOUR_DOCUMENTS_TABLE_KEY_HERE') {
+        console.log('[MeasureQ Tier 1] Documents table not configured. Skipping file upload.');
+        return null;
+      }
+      
+      console.log(`[MeasureQ Tier 1] Uploading file: ${file.name} (${file.type}, ${file.size} bytes) for field: ${fieldName}, type: ${documentType}`);
+      
+      const base64File = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const payload = {
+        ApplicationTableKey: API_CONFIG.documentsTableKey,
+        FieldsList: [
+          {
+            Key: API_CONFIG.documentFieldKey,
+            Name: 'file',
+            Value: file.name,
+            base64EncodedFile: base64File,
+            fileName: file.name
+          },
+          {
+            Key: API_CONFIG.relatedApplicationFieldKey,
+            Name: 'related_applications',
+            Value: String(applicationRid)
+          },
+          {
+            Key: API_CONFIG.documentNameFieldKey,
+            Name: 'document_name',
+            Value: file.name
+          },
+          {
+            Key: API_CONFIG.documentTypeFieldKey,
+            Name: 'document_type',
+            Value: documentType
+          },
+          {
+            Key: API_CONFIG.documentStatusFieldKey,
+            Name: 'status',
+            Value: 'Active'
+          }
+        ]
+      };
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/formaction/postdata`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`File upload failed: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      const documentRid = result.recordId || result.Rid;
+      console.log(`[MeasureQ Tier 1] File uploaded successfully. Document ID: ${documentRid}`);
+      return result;
+      
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error uploading file:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get uploaded files for an application
+   * @param {string} applicationRid - Record ID of the application
+   * @param {string} fieldName - Optional field name to filter by
+   * @returns {Promise<Array>} Array of file metadata
+   */
+  async function getUploadedFiles(applicationRid, fieldName = null) {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.documentsReportId === 'YOUR_DOCUMENTS_REPORT_ID_HERE') {
+        console.log('[MeasureQ Tier 1] Documents report not configured. Skipping file retrieval.');
+        return [];
+      }
+      
+      console.log(`[MeasureQ Tier 1] Fetching uploaded files for application: ${applicationRid}`);
+      
+      const payload = {
+        ReportId: API_CONFIG.documentsReportId,
+        ConditionGroups: [
+          {
+            Type: 'all',
+            Conditions: [
+              {
+                ConditionField: { Key: API_CONFIG.documentsRelationshipFieldKey },
+                OperationType: 'is equal',
+                Value: String(applicationRid)
+              },
+              {
+                ConditionField: { Key: API_CONFIG.documentStatusFieldKey },
+                OperationType: 'is equal',
+                Value: 'Active'
+              }
+            ]
+          }
+        ]
+      };
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/Report/queryreport`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch files: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      let files = Array.isArray(result) ? result : (result.data || result.Data || []);
+      
+      console.log(`[MeasureQ Tier 1] Query returned ${files.length} active files`);
+      if (files.length > 0) {
+        console.log('[MeasureQ Tier 1] Sample file record:', files[0]);
+      }
+      
+      console.log(`[MeasureQ Tier 1] Returning ${files.length} file(s)`);
+      return files;
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error fetching files:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Soft-delete a file by setting its Status to "Deleted"
+   * @param {string} fileRid - Record ID of the file to soft-delete
+   * @returns {Promise<boolean>} Success status
+   */
+  async function deleteFile(fileRid) {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.documentsTableKey === 'YOUR_DOCUMENTS_TABLE_KEY_HERE') {
+        console.log('[MeasureQ Tier 1] Documents table not configured. Skipping file deletion.');
+        return false;
+      }
+      
+      console.log(`[MeasureQ Tier 1] Soft-deleting file: ${fileRid}`);
+      
+      const rid = Number(fileRid);
+      if (Number.isNaN(rid)) {
+        throw new Error('Invalid file record ID');
+      }
+      
+      const payload = {
+        ApplicationTableKey: API_CONFIG.documentsTableKey,
+        Where: {
+          Rid: rid
+        },
+        FieldsList: [
+          {
+            Key: API_CONFIG.documentStatusFieldKey,
+            Name: 'status',
+            Value: 'Deleted'
+          }
+        ]
+      };
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/FormAction/putdata`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`File soft-delete failed: ${response.status} - ${errorText}`);
+      }
+      
+      console.log(`[MeasureQ Tier 1] File soft-deleted successfully`);
+      return true;
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error soft-deleting file:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Download/retrieve file URL from OpenGov
+   * @param {string} fileRid - Record ID of the file
+   * @returns {string} View URL for the file in OpenGov
+   */
+  function getFileDownloadUrl(fileRid) {
+    // Use OpenGov's file-view URL format
+    return `https://apps.opengov.com/apps/4rtlvxxg7/tables/${API_CONFIG.documentsTableKey}/file-view/1/${fileRid}`;
+  }
+  
+  /**
+   * Format file size in human-readable format
+   * @param {number} bytes - File size in bytes
+   * @returns {string} Formatted file size
+   */
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+  
+  /**
+   * Get dropdown values for a specific field
+   * @param {string} fieldId - Field ID to get dropdown values for
+   * @returns {Promise<Array>} Array of dropdown options
+   */
+  async function getDropdownValues(fieldId) {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.baseURL === 'YOUR_API_BASE_URL_HERE') {
+        console.log('API not configured or token unavailable. Skipping dropdown values fetch.');
+        return null;
+      }
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/Field/getdropdownvalues?id=${fieldId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get dropdown values: ${response.status} - ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting dropdown values:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Query report for dashboard or data fetching
+   * @param {string} reportId - Report ID to query
+   * @param {Array} filters - Optional array of filter objects { Key: 'field_key', Value: 'value' }
+   * @returns {Promise<Array>} Array of report records
+   */
+  async function queryReport(reportId, filters = []) {
+    try {
+      const token = await getAuthToken();
+      
+      if (!token || API_CONFIG.baseURL === 'YOUR_API_BASE_URL_HERE') {
+        console.log('API not configured or token unavailable. Skipping report query.');
+        return null;
+      }
+      
+      const payload = {
+        ReportId: reportId,
+        Filters: filters
+      };
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/Report/queryreport`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to query report: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      // Response format: { data: [...] } or [...]
+      return Array.isArray(result) ? result : (result.data || []);
+    } catch (error) {
+      console.error('Error querying report:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Check if the current application deadline has passed. Fetches application deadlines report,
+   * finds the record marked as current deadline, and compares its date to today.
+   * @returns {Promise<boolean>} True if current deadline exists and today is after it (submit should be blocked)
+   */
+  async function isApplicationDeadlineExpired() {
+    try {
+      if (!API_CONFIG.applicationDeadlinesReportId || !API_CONFIG.applicationDeadlineDateFieldKey || !API_CONFIG.applicationDeadlineCurrentFieldKey) {
+        return false;
+      }
+      const records = await queryReport(API_CONFIG.applicationDeadlinesReportId, []);
+      if (!records || records.length === 0) return false;
+      function getVal(rec, key) {
+        if (rec[key] !== undefined && rec[key] !== null && rec[key] !== '') return rec[key];
+        for (const k in rec) {
+          if (k === key || String(k).endsWith('_' + key)) return rec[k];
+        }
+        return null;
+      }
+      const currentRecord = records.find(function(rec) {
+        const v = getVal(rec, API_CONFIG.applicationDeadlineCurrentFieldKey);
+        return v === true || v === 'true' || v === 1 || v === '1' || String(v).toLowerCase() === 'yes';
+      });
+      if (!currentRecord) return false;
+      const deadlineVal = getVal(currentRecord, API_CONFIG.applicationDeadlineDateFieldKey);
+      if (deadlineVal === null || deadlineVal === undefined || deadlineVal === '') return false;
+      const deadlineDate = new Date(deadlineVal);
+      if (isNaN(deadlineDate.getTime())) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      deadlineDate.setHours(0, 0, 0, 0);
+      return today > deadlineDate;
+    } catch (e) {
+      console.warn('[MeasureQ Tier 1] Deadline check failed:', e);
+      return false;
+    }
+  }
+  
+  /**
+   * Convert form data object to API FieldsList format
+   * @param {Object} formData - Form data object with field IDs as keys
+   * @returns {Array} Array of { Name: 'field_name', Value: 'value' } objects
+   */
+  function convertFormDataToFieldsList(formData) {
+    const fieldsList = [];
+    
+    // Iterate through form data and map to API field names
+    Object.keys(formData).forEach(function(formFieldId) {
+      const value = formData[formFieldId];
+      const mapping = FIELD_MAPPING[formFieldId];
+      
+      // Skip if no mapping exists or value is empty/null/undefined
+      if (!mapping || value === null || value === undefined || value === '') {
+        return;
+      }
+      
+      // Skip file inputs (they need special handling)
+      if (mapping.type === 'FILE') {
+        // TODO: Handle file uploads separately if needed
+        return;
+      }
+      
+      // Handle arrays (e.g., checkbox groups) - always send, even if empty, to clear unchecked values
+      if (mapping.type === 'ARRAY' && Array.isArray(value)) {
+        fieldsList.push({
+          Name: mapping.name,
+          Value: value.length > 0 ? value.join(', ') : ''
+        });
+        return;
+      }
+      
+      // Handle regular values
+      fieldsList.push({
+        Name: mapping.name,
+        Value: String(value)
+      });
+    });
+    
+    return fieldsList;
+  }
+  
+  /**
+   * Submit application data to API (PUT for updates only - record should already exist from Project Overview)
+   * @param {Array} fieldsData - Array of { Name: 'field_name', Value: 'value' }
+   * @returns {Promise} API response
+   */
+  async function submitApplication(fieldsData) {
+    try {
+      const token = await getAuthToken();
+      
+      // If no token and API is not configured, skip API call
+      if (!token || API_CONFIG.baseURL === 'YOUR_API_BASE_URL_HERE') {
+        console.log('API not configured or token unavailable. Skipping API submission.');
+        return null;
+      }
+      
+      // Tier 1 section should always be an update (record created in Project Overview)
+      const applicationRecordId = localStorage.getItem('mq_current_application_id');
+      
+      if (!applicationRecordId) {
+        throw new Error('Missing application reference. Please start from Project Overview first.');
+      }
+      
+      const rid = Number(applicationRecordId);
+      if (Number.isNaN(rid)) {
+        throw new Error('Invalid application reference.');
+      }
+      
+      const payload = {
+        ApplicationTableKey: API_CONFIG.applicationTableKey,
+        Where: {
+          Rid: rid
+        },
+        FieldsList: fieldsData
+      };
+      
+      console.log('Submitting Tier 1 data (PUT):', payload);
+      
+      const response = await fetch(`${API_CONFIG.baseURL}/api/FormAction/putdata`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit application: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error submitting application data:', error);
+      throw error;
+    }
+  }
+  
+  // Get all form fields with mq- prefix
+  const getAllFields = function() {
+    const fields = {};
+    
+    // Get all regular inputs
+    const inputs = document.querySelectorAll('[id^="mq_"]');
+    inputs.forEach(function(input) {
+      if (input.id && input.id.startsWith('mq_')) {
+        if (input.type === 'checkbox') {
+          // Handle standalone checkboxes (not part of a group)
+          if (!input.name || !input.name.endsWith('[]')) {
+            fields[input.id] = input.checked;
+          }
+          // Checkbox groups are handled separately below
+          return;
+        } else if (input.type === 'file') {
+          // File inputs - store file names if available
+          if (input.files && input.files.length > 0) {
+            const fileNames = [];
+            for (let i = 0; i < input.files.length; i++) {
+              fileNames.push(input.files[i].name);
+            }
+            fields[input.id] = fileNames;
+          }
+        } else {
+          fields[input.id] = input.value || '';
+        }
+      }
+    });
+    
+    // Handle checkbox groups (arrays)
+    const checkboxGroups = {
+      'mq_t1_thematic_areas': ['mq_t1_thematic_areas_water', 'mq_t1_thematic_areas_wildfire', 'mq_t1_thematic_areas_parks', 'mq_t1_thematic_areas_wildlife', 'mq_t1_thematic_areas_coastal', 'mq_t1_thematic_areas_agricultural'],
+      'mq_t1_prioritization_principles': ['mq_t1_prioritization_multi', 'mq_t1_prioritization_match', 'mq_t1_prioritization_equity', 'mq_t1_prioritization_climate'],
+      'mq_t1_secondary_prioritization_principles': ['mq_t1_secondary_prioritization_public', 'mq_t1_secondary_prioritization_strategic', 'mq_t1_secondary_prioritization_readiness'],
+      'mq_t1_community_value_areas': ['mq_t1_community_value_safety', 'mq_t1_community_value_health', 'mq_t1_community_value_nature', 'mq_t1_community_value_recreation', 'mq_t1_community_value_identity'],
+      'mq_t1_site_control[]': ['mq_t1_site_control_owns_property', 'mq_t1_site_control_written_agreement', 'mq_t1_site_control_no_written_agreement', 'mq_t1_site_control_other'],
+      'mq_t1_bonus_categories': ['mq_t1_bonus_partnership', 'mq_t1_bonus_volunteer', 'mq_t1_bonus_funds', 'mq_t1_bonus_efficient_funds', 'mq_t1_bonus_other']
+    };
+    
+    Object.keys(checkboxGroups).forEach(function(groupKey) {
+      const checkedValues = [];
+      checkboxGroups[groupKey].forEach(function(checkboxId) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox && checkbox.checked) {
+          checkedValues.push(checkbox.value);
+        }
+      });
+      fields[groupKey] = checkedValues;
+      if (checkedValues.length > 0) {
+        console.log(`[MeasureQ Tier 1] Collected ${groupKey}:`, checkedValues);
+      }
+    });
+    
+    return fields;
+  };
+  
+  // Save to localStorage
+  const saveDraft = function() {
+    try {
+      const fields = getAllFields();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fields));
+    } catch (e) {
+      console.error('Error saving draft:', e);
+    }
+  };
+  
+  // Load from localStorage
+  const loadDraft = function() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const fields = JSON.parse(saved);
+        
+        Object.keys(fields).forEach(function(id) {
+          const input = document.getElementById(id);
+          if (input) {
+            if (input.type === 'checkbox') {
+              input.checked = fields[id] === true || (Array.isArray(fields[id]) && fields[id].includes(input.value));
+            } else if (input.type === 'file') {
+              // File inputs can't be restored from localStorage
+              // Just skip them
+            } else {
+              input.value = fields[id] || '';
+            }
+          }
+        });
+        
+        // Handle checkbox groups
+        const checkboxGroups = {
+          'mq_t1_thematic_areas': ['mq_t1_thematic_areas_water', 'mq_t1_thematic_areas_wildfire', 'mq_t1_thematic_areas_parks', 'mq_t1_thematic_areas_wildlife', 'mq_t1_thematic_areas_coastal', 'mq_t1_thematic_areas_agricultural'],
+          'mq_t1_prioritization_principles': ['mq_t1_prioritization_multi', 'mq_t1_prioritization_match', 'mq_t1_prioritization_equity', 'mq_t1_prioritization_climate'],
+          'mq_t1_secondary_prioritization_principles': ['mq_t1_secondary_prioritization_public', 'mq_t1_secondary_prioritization_strategic', 'mq_t1_secondary_prioritization_readiness'],
+          'mq_t1_community_value_areas': ['mq_t1_community_value_safety', 'mq_t1_community_value_health', 'mq_t1_community_value_nature', 'mq_t1_community_value_recreation', 'mq_t1_community_value_identity'],
+          'mq_t1_site_control[]': ['mq_t1_site_control_owns_property', 'mq_t1_site_control_written_agreement', 'mq_t1_site_control_no_written_agreement', 'mq_t1_site_control_other'],
+          'mq_t1_bonus_categories': ['mq_t1_bonus_partnership', 'mq_t1_bonus_volunteer', 'mq_t1_bonus_funds', 'mq_t1_bonus_efficient_funds', 'mq_t1_bonus_other']
+        };
+        
+        Object.keys(checkboxGroups).forEach(function(groupKey) {
+          const savedValues = fields[groupKey];
+          if (Array.isArray(savedValues)) {
+            checkboxGroups[groupKey].forEach(function(checkboxId) {
+              const checkbox = document.getElementById(checkboxId);
+              if (checkbox) {
+                checkbox.checked = savedValues.includes(checkbox.value);
+              }
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error loading draft:', e);
+    }
+  };
+  
+  /**
+   * Load Tier 1 data from API based on stored record ID
+   */
+  const loadFromAPI = async function() {
+    try {
+      const recordId = localStorage.getItem('mq_current_application_id');
+      
+      if (!recordId) {
+        console.log('[MeasureQ Tier 1] No record ID found. Skipping API load.');
+        return;
+      }
+      
+      console.log('[MeasureQ Tier 1] Loading application from API, record ID:', recordId);
+      
+      const token = await getAuthToken();
+      if (!token) {
+        console.log('[MeasureQ Tier 1] No auth token. Falling back to localStorage.');
+        return;
+      }
+      
+      // Query the application record using ConditionGroups (correct format)
+      const url = `${API_CONFIG.baseURL}/api/Report/queryreport`;
+      const payload = {
+        ReportId: API_CONFIG.applicationsReportId,
+        ConditionGroups: [
+          {
+            Type: 'all',
+            Conditions: [
+              {
+                ConditionField: { Key: 'id' },
+                OperationType: 'is equal',
+                Value: String(recordId)
+              }
+            ]
+          }
+        ]
+      };
+      
+      console.log('[MeasureQ Tier 1] 🔍 API Query Payload:', JSON.stringify(payload, null, 2));
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('[MeasureQ Tier 1] 📡 API Response Status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[MeasureQ Tier 1] ❌ API Error Response:', errorText);
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('[MeasureQ Tier 1] 📦 API Result:', result);
+      console.log('[MeasureQ Tier 1] 🔑 Result keys:', Object.keys(result));
+      console.log('[MeasureQ Tier 1] 🔑 result.Data?', result.Data);
+      console.log('[MeasureQ Tier 1] 🔑 Is result an array?', Array.isArray(result));
+      console.log('[MeasureQ Tier 1] 📊 Data Records Found:', result.Data ? result.Data.length : (Array.isArray(result) ? result.length : 0));
+      
+      // Handle both response formats: { Data: [...] } or just [...]
+      const records = result.Data || (Array.isArray(result) ? result : null);
+      
+      if (!records || records.length === 0) {
+        console.log('[MeasureQ Tier 1] ⚠️ No application found with ID:', recordId);
+        console.log('[MeasureQ Tier 1] Report ID used:', API_CONFIG.applicationsReportId);
+        return;
+      }
+      
+      // Find the specific record matching our ID (client-side filter as fallback)
+      console.log('[MeasureQ Tier 1] 🔎 Looking for record ID:', recordId, 'type:', typeof recordId);
+      console.log('[MeasureQ Tier 1] 🔎 All records:', records.map(function(r) {
+        return {
+          tbl12432_id: r.tbl12432_id,
+          id: r.id,
+          Rid: r.Rid,
+          'typeof tbl12432_id': typeof r.tbl12432_id,
+          'typeof id': typeof r.id
+        };
+      }));
+      
+      const appData = records.find(function(record) {
+        const recId = record.tbl12432_id || record.id || record.Rid;
+        console.log('[MeasureQ Tier 1] Comparing:', String(recId), '===', String(recordId), '?', String(recId) === String(recordId));
+        return String(recId) === String(recordId);
+      });
+      
+      if (!appData) {
+        console.log('[MeasureQ Tier 1] ⚠️ No record found with ID:', recordId);
+        console.log('[MeasureQ Tier 1] Available IDs:', records.map(r => r.tbl12432_id || r.id));
+        return;
+      }
+      
+      console.log('[MeasureQ Tier 1] ✅ Found matching record, ID:', appData.tbl12432_id || appData.id);
+      
+      // Debug: Log all API fields to see what's available
+      console.log('[MeasureQ Tier 1] 🔍 All API fields:', Object.keys(appData));
+      console.log('[MeasureQ Tier 1] 🔍 Looking for site control field (t1_site_ctrl)...');
+      const siteControlFields = Object.keys(appData).filter(key => key.includes('site') || key.includes('ctrl'));
+      console.log('[MeasureQ Tier 1] 🔍 Fields containing "site" or "ctrl":', siteControlFields);
+      if (siteControlFields.length > 0) {
+        siteControlFields.forEach(key => {
+          console.log(`[MeasureQ Tier 1] 🔍 ${key}:`, appData[key], '(type:', typeof appData[key], ')');
+        });
+      }
+      
+      // Map API fields to form fields
+      const normalizeKey = function(key) {
+        return key.toLowerCase().replace(/[\s_]/g, '');
+      };
+      
+      Object.keys(appData).forEach(function(apiKey) {
+        Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
+          const mapping = FIELD_MAPPING[formFieldId];
+          const apiNorm = normalizeKey(apiKey);
+          const mapNorm = normalizeKey(mapping.name);
+          
+          if (apiNorm === mapNorm || apiNorm.endsWith(mapNorm)) {
+            const value = appData[apiKey];
+            
+            console.log(`[MeasureQ Tier 1] 🔄 Matched API field "${apiKey}" to form field "${formFieldId}" (mapping: ${mapping.name}, type: ${mapping.type || 'regular'}, value:`, value, ')');
+            
+            // Check if value is not empty (including trimming whitespace)
+            const trimmedValue = typeof value === 'string' ? value.trim() : value;
+            if (trimmedValue !== null && trimmedValue !== undefined && trimmedValue !== '') {
+              // Handle checkbox arrays (multiple checkboxes with same name)
+              if (mapping.type === 'ARRAY') {
+                const storedValue = typeof trimmedValue === 'string' ? trimmedValue : (Array.isArray(trimmedValue) ? trimmedValue.join(', ') : String(trimmedValue));
+                console.log('[MeasureQ Tier 1] Loading checkbox array:', formFieldId, 'stored:', storedValue);
+                
+                const checkboxName = formFieldId.endsWith('[]') ? formFieldId : formFieldId + '[]';
+                const checkboxes = document.querySelectorAll(`input[type="checkbox"][name="${checkboxName}"]`);
+                
+                console.log('[MeasureQ Tier 1] Looking for checkboxes with name:', checkboxName, 'found:', checkboxes.length);
+                
+                checkboxes.forEach(function(checkbox) {
+                  if (storedValue.indexOf(checkbox.value) !== -1) {
+                    checkbox.checked = true;
+                    console.log('[MeasureQ Tier 1] ✓ Checked:', checkbox.value);
+                  }
+                });
+              } else {
+                // Handle regular fields
+                const field = document.getElementById(formFieldId);
+                if (field) {
+                  if (field.type === 'checkbox') {
+                    field.checked = (trimmedValue === 'true' || trimmedValue === true || trimmedValue === '1' || trimmedValue === 1);
+                  } else if (field.type !== 'file') {
+                    field.value = trimmedValue;
+                  }
+                }
+              }
+            } else {
+              console.log(`[MeasureQ Tier 1] ⚠️ Field "${apiKey}" matched "${formFieldId}" but value is empty/null:`, value);
+            }
+          }
+        });
+      });
+      
+      // After processing all fields, check if site control checkboxes were found and their state
+      const siteControlCheckboxes = document.querySelectorAll('input[type="checkbox"][name="mq_t1_site_control[]"]');
+      console.log('[MeasureQ Tier 1] 🔍 Site control checkboxes found in DOM:', siteControlCheckboxes.length);
+      siteControlCheckboxes.forEach(function(cb) {
+        console.log(`[MeasureQ Tier 1] 🔍 Site control checkbox: ${cb.id}, value: "${cb.value}", checked: ${cb.checked}`);
+      });
+      
+      // Trigger updates for conditional fields
+      updateConditionalFields();
+      updateSiteControlOther();
+      
+      console.log('[MeasureQ Tier 1] Successfully loaded from API');
+      
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error loading from API:', error);
+      console.log('[MeasureQ Tier 1] Falling back to localStorage');
+    }
+  };
+  
+  // Update conditional visibility for ground disturbance
+  const updateConditionalFields = function() {
+    const groundDisturbance = document.getElementById('mq_t1_ground_disturbance');
+    const noWrap = document.getElementById('mq_t1_ground_disturbance_no_wrap');
+    
+    console.log('[MeasureQ Tier 1] updateConditionalFields - dropdown found:', !!groundDisturbance, 'value:', groundDisturbance?.value, 'wrap found:', !!noWrap);
+    
+    if (!groundDisturbance || !noWrap) {
+      console.warn('[MeasureQ Tier 1] ⚠️ Ground disturbance elements not found');
+      return;
+    }
+    
+    const value = groundDisturbance.value;
+    
+    if (value === 'No') {
+      noWrap.classList.remove('mq-hidden');
+      console.log('[MeasureQ Tier 1] ✓ Showing "No ground disturbance" section');
+    } else {
+      noWrap.classList.add('mq-hidden');
+      console.log('[MeasureQ Tier 1] Hiding "No ground disturbance" section');
+    }
+  };
+  
+  // Update Site Control "Other" field visibility
+  const updateSiteControlOther = function() {
+    const otherCheckbox = document.getElementById('mq_t1_site_control_other');
+    const otherWrap = document.getElementById('mq_t1_site_control_other_wrap');
+    
+    console.log('[MeasureQ Tier 1] updateSiteControlOther - checkbox found:', !!otherCheckbox, 'checked:', otherCheckbox?.checked, 'wrap found:', !!otherWrap);
+    
+    if (otherCheckbox && otherWrap) {
+      if (otherCheckbox.checked) {
+        otherWrap.classList.remove('mq-hidden');
+        console.log('[MeasureQ Tier 1] ✓ Showing site control "Other" section');
+      } else {
+        otherWrap.classList.add('mq-hidden');
+        console.log('[MeasureQ Tier 1] Hiding site control "Other" section');
+      }
+    } else {
+      console.warn('[MeasureQ Tier 1] ⚠️ Site control elements not found:', { otherCheckbox: !!otherCheckbox, otherWrap: !!otherWrap });
+    }
+  };
+  
+  // Enforce word limit on textarea
+  const enforceWordLimit = function(textarea, wordLimit) {
+    const text = textarea.value.trim();
+    if (!text) return;
+    
+    const words = text.split(/\s+/).filter(function(word) { return word.length > 0; });
+    
+    if (words.length > wordLimit) {
+      // Truncate to word limit
+      textarea.value = words.slice(0, wordLimit).join(' ');
+    }
+  };
+  
+  // Update Thematic Areas Narrative word count
+  const updateThematicAreasNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_thematic_areas_narrative');
+    const countDisplay = document.getElementById('mq_t1_thematic_areas_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Prioritization Narrative word count
+  const updatePrioritizationNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_prioritization_narrative');
+    const countDisplay = document.getElementById('mq_t1_prioritization_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Secondary Prioritization Narrative word count
+  const updateSecondaryPrioritizationNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_secondary_prioritization_narrative');
+    const countDisplay = document.getElementById('mq_t1_secondary_prioritization_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Target Community word count
+  const updateTargetCommunityWordCount = function() {
+    const textarea = document.getElementById('mq_t1_target_community');
+    const countDisplay = document.getElementById('mq_t1_target_community_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Community Value Narrative word count
+  const updateCommunityValueNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_community_value_narrative');
+    const countDisplay = document.getElementById('mq_t1_community_value_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update No Ground Disturbance Explain word count
+  const updateNoGroundDisturbanceExplainWordCount = function() {
+    const textarea = document.getElementById('mq_t1_no_ground_disturbance_explain');
+    const countDisplay = document.getElementById('mq_t1_no_ground_disturbance_explain_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 300;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Site Control Other Text word count
+  const updateSiteControlOtherTextWordCount = function() {
+    const textarea = document.getElementById('mq_t1_site_control_other_text');
+    const countDisplay = document.getElementById('mq_t1_site_control_other_text_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 300;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Project Scope Narrative word count
+  const updateProjectScopeNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_project_scope_narrative');
+    const countDisplay = document.getElementById('mq_t1_project_scope_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Budget Narrative word count
+  const updateBudgetNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_budget_narrative');
+    const countDisplay = document.getElementById('mq_t1_budget_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Timeline Narrative word count
+  const updateTimelineNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_timeline_narrative');
+    const countDisplay = document.getElementById('mq_t1_timeline_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Innovation Capacity word count
+  const updateInnovationCapacityWordCount = function() {
+    const textarea = document.getElementById('mq_t1_innovation_capacity');
+    const countDisplay = document.getElementById('mq_t1_innovation_capacity_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Update Bonus Narrative word count
+  const updateBonusNarrativeWordCount = function() {
+    const textarea = document.getElementById('mq_t1_bonus_narrative');
+    const countDisplay = document.getElementById('mq_t1_bonus_narrative_word_count');
+    if (!textarea || !countDisplay) return;
+    
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+    const wordLimit = 500;
+    
+    countDisplay.textContent = wordCount + ' / ' + wordLimit + ' words';
+    
+    if (wordCount >= wordLimit) {
+      countDisplay.classList.add('mq-word-limit-reached');
+    } else {
+      countDisplay.classList.remove('mq-word-limit-reached');
+    }
+  };
+  
+  // Attach event listeners to all mq- fields
+  const attachListeners = function() {
+    const inputs = document.querySelectorAll('[id^="mq_"]');
+    inputs.forEach(function(input) {
+      // Save on change
+      input.addEventListener('change', function() {
+        saveDraft();
+        // Update conditional fields if this is the ground disturbance dropdown
+        if (input.id === 'mq_t1_ground_disturbance') {
+          updateConditionalFields();
+        }
+        // Update site control "Other" field visibility
+        if (input.id === 'mq_t1_site_control_other') {
+          updateSiteControlOther();
+        }
+      });
+      input.addEventListener('input', saveDraft);
+    });
+    
+    // Add word count listeners for Thematic Areas Narrative
+    const thematicAreasNarrative = document.getElementById('mq_t1_thematic_areas_narrative');
+    if (thematicAreasNarrative) {
+      thematicAreasNarrative.addEventListener('input', function() {
+        updateThematicAreasNarrativeWordCount();
+        saveDraft();
+      });
+      thematicAreasNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        // Allow navigation keys and deletion even when at limit
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          // Check if adding this character would create a new word
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      thematicAreasNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateThematicAreasNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Prioritization Narrative
+    const prioritizationNarrative = document.getElementById('mq_t1_prioritization_narrative');
+    if (prioritizationNarrative) {
+      prioritizationNarrative.addEventListener('input', function() {
+        updatePrioritizationNarrativeWordCount();
+        saveDraft();
+      });
+      prioritizationNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        // Allow navigation keys and deletion even when at limit
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          // Check if adding this character would create a new word
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      prioritizationNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updatePrioritizationNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Secondary Prioritization Narrative
+    const secondaryPrioritizationNarrative = document.getElementById('mq_t1_secondary_prioritization_narrative');
+    if (secondaryPrioritizationNarrative) {
+      secondaryPrioritizationNarrative.addEventListener('input', function() {
+        updateSecondaryPrioritizationNarrativeWordCount();
+        saveDraft();
+      });
+      secondaryPrioritizationNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        // Allow navigation keys and deletion even when at limit
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          // Check if adding this character would create a new word
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      secondaryPrioritizationNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateSecondaryPrioritizationNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Target Community
+    const targetCommunity = document.getElementById('mq_t1_target_community');
+    if (targetCommunity) {
+      targetCommunity.addEventListener('input', function() {
+        updateTargetCommunityWordCount();
+        saveDraft();
+      });
+      targetCommunity.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        // Allow navigation keys and deletion even when at limit
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          // Check if adding this character would create a new word
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      targetCommunity.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateTargetCommunityWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Community Value Narrative
+    const communityValueNarrative = document.getElementById('mq_t1_community_value_narrative');
+    if (communityValueNarrative) {
+      communityValueNarrative.addEventListener('input', function() {
+        updateCommunityValueNarrativeWordCount();
+        saveDraft();
+      });
+      communityValueNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        // Allow navigation keys and deletion even when at limit
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          // Check if adding this character would create a new word
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      communityValueNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateCommunityValueNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for No Ground Disturbance Explain
+    const noGroundDisturbanceExplain = document.getElementById('mq_t1_no_ground_disturbance_explain');
+    if (noGroundDisturbanceExplain) {
+      noGroundDisturbanceExplain.addEventListener('input', function() {
+        updateNoGroundDisturbanceExplainWordCount();
+        saveDraft();
+      });
+      noGroundDisturbanceExplain.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 300 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      noGroundDisturbanceExplain.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 300);
+        updateNoGroundDisturbanceExplainWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Site Control Other Text
+    const siteControlOtherText = document.getElementById('mq_t1_site_control_other_text');
+    if (siteControlOtherText) {
+      siteControlOtherText.addEventListener('input', function() {
+        updateSiteControlOtherTextWordCount();
+        saveDraft();
+      });
+      siteControlOtherText.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 300 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      siteControlOtherText.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 300);
+        updateSiteControlOtherTextWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Project Scope Narrative
+    const projectScopeNarrative = document.getElementById('mq_t1_project_scope_narrative');
+    if (projectScopeNarrative) {
+      projectScopeNarrative.addEventListener('input', function() {
+        updateProjectScopeNarrativeWordCount();
+        saveDraft();
+      });
+      projectScopeNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      projectScopeNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateProjectScopeNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Budget Narrative
+    const budgetNarrative = document.getElementById('mq_t1_budget_narrative');
+    if (budgetNarrative) {
+      budgetNarrative.addEventListener('input', function() {
+        updateBudgetNarrativeWordCount();
+        saveDraft();
+      });
+      budgetNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      budgetNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateBudgetNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Timeline Narrative
+    const timelineNarrative = document.getElementById('mq_t1_timeline_narrative');
+    if (timelineNarrative) {
+      timelineNarrative.addEventListener('input', function() {
+        updateTimelineNarrativeWordCount();
+        saveDraft();
+      });
+      timelineNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      timelineNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateTimelineNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Innovation Capacity
+    const innovationCapacity = document.getElementById('mq_t1_innovation_capacity');
+    if (innovationCapacity) {
+      innovationCapacity.addEventListener('input', function() {
+        updateInnovationCapacityWordCount();
+        saveDraft();
+      });
+      innovationCapacity.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      innovationCapacity.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateInnovationCapacityWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add word count listeners for Bonus Narrative
+    const bonusNarrative = document.getElementById('mq_t1_bonus_narrative');
+    if (bonusNarrative) {
+      bonusNarrative.addEventListener('input', function() {
+        updateBonusNarrativeWordCount();
+        saveDraft();
+      });
+      bonusNarrative.addEventListener('keydown', function(e) {
+        const text = this.value.trim();
+        const wordCount = text ? text.split(/\s+/).filter(function(word) { return word.length > 0; }).length : 0;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'];
+        if (wordCount >= 500 && !allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && e.key !== ' ') {
+          const selectionStart = this.selectionStart;
+          const charBefore = selectionStart > 0 ? this.value[selectionStart - 1] : ' ';
+          if (/\s/.test(charBefore) || selectionStart === 0) {
+            e.preventDefault();
+          }
+        }
+      });
+      bonusNarrative.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const currentText = this.value;
+        const cursorPos = this.selectionStart;
+        const textBefore = currentText.substring(0, cursorPos);
+        const textAfter = currentText.substring(this.selectionEnd);
+        const newText = textBefore + pastedText + textAfter;
+        this.value = newText;
+        enforceWordLimit(this, 500);
+        updateBonusNarrativeWordCount();
+        saveDraft();
+      });
+    }
+    
+    // Add date format validation for signature date field
+    const signatureDateField = document.getElementById('mq_t1_signature_date');
+    if (signatureDateField) {
+      // Format as user types (only allow digits, auto-format as YYYY-MM-DD)
+      signatureDateField.addEventListener('input', function(e) {
+        formatDateInput(e.target);
+        saveDraft();
+      });
+      
+      // Validate on blur
+      signatureDateField.addEventListener('blur', function(e) {
+        const value = e.target.value.trim();
+        if (value && !validateDateFormat(value)) {
+          e.target.classList.add('mq-input-error');
+          alert('Please enter a valid date in YYYY-MM-DD format (e.g., 2026-01-21).');
+          // Use setTimeout to ensure focus happens after alert dialog closes
+          setTimeout(function() {
+            e.target.focus();
+            e.target.select(); // Select the text so user can easily replace it
+          }, 0);
+        } else {
+          e.target.classList.remove('mq-input-error');
+        }
+      });
+      
+      // Allow paste and handle it properly
+      signatureDateField.addEventListener('paste', function(e) {
+        // Let the paste happen first, then format it
+        setTimeout(function() {
+          formatDateInput(e.target);
+        }, 0);
+      });
+    }
+  };
+  
+  // Validate that at least one thematic area checkbox is selected
+  const validateThematicAreas = function() {
+    const checkboxes = [
+      'mq_t1_thematic_areas_water',
+      'mq_t1_thematic_areas_wildfire',
+      'mq_t1_thematic_areas_parks',
+      'mq_t1_thematic_areas_wildlife',
+      'mq_t1_thematic_areas_coastal',
+      'mq_t1_thematic_areas_agricultural'
+    ];
+    
+    const isAnyChecked = checkboxes.some(function(id) {
+      const checkbox = document.getElementById(id);
+      return checkbox && checkbox.checked;
+    });
+    
+    return isAnyChecked;
+  };
+  
+  // Validate that at least one prioritization principle checkbox is selected
+  const validatePrioritizationPrinciples = function() {
+    const checkboxes = [
+      'mq_t1_prioritization_multi',
+      'mq_t1_prioritization_match',
+      'mq_t1_prioritization_equity',
+      'mq_t1_prioritization_climate'
+    ];
+    
+    const isAnyChecked = checkboxes.some(function(id) {
+      const checkbox = document.getElementById(id);
+      return checkbox && checkbox.checked;
+    });
+    
+    return isAnyChecked;
+  };
+  
+  // Validate that at least one secondary prioritization principle checkbox is selected
+  const validateSecondaryPrioritizationPrinciples = function() {
+    const checkboxes = [
+      'mq_t1_secondary_prioritization_public',
+      'mq_t1_secondary_prioritization_strategic',
+      'mq_t1_secondary_prioritization_readiness'
+    ];
+    
+    const isAnyChecked = checkboxes.some(function(id) {
+      const checkbox = document.getElementById(id);
+      return checkbox && checkbox.checked;
+    });
+    
+    return isAnyChecked;
+  };
+  
+  // Validate that at least one community value area checkbox is selected
+  const validateCommunityValueAreas = function() {
+    const checkboxes = [
+      'mq_t1_community_value_safety',
+      'mq_t1_community_value_health',
+      'mq_t1_community_value_nature',
+      'mq_t1_community_value_recreation',
+      'mq_t1_community_value_identity'
+    ];
+    
+    const isAnyChecked = checkboxes.some(function(id) {
+      const checkbox = document.getElementById(id);
+      return checkbox && checkbox.checked;
+    });
+    
+    return isAnyChecked;
+  };
+  
+  // Validate that at least one site control checkbox is selected
+  const validateSiteControl = function() {
+    const checkboxes = [
+      'mq_t1_site_control_owns_property',
+      'mq_t1_site_control_written_agreement',
+      'mq_t1_site_control_no_written_agreement',
+      'mq_t1_site_control_other'
+    ];
+    
+    const isAnyChecked = checkboxes.some(function(id) {
+      const checkbox = document.getElementById(id);
+      return checkbox && checkbox.checked;
+    });
+    
+    return isAnyChecked;
+  };
+  
+  // Validate that Target Community narrative has content
+  const validateTargetCommunity = function() {
+    const textarea = document.getElementById('mq_t1_target_community');
+    if (!textarea) return true;
+    
+    const text = textarea.value.trim();
+    return text.length > 0;
+  };
+  
+  // Validate that Community Value Narrative has content
+  const validateCommunityValueNarrative = function() {
+    const textarea = document.getElementById('mq_t1_community_value_narrative');
+    if (!textarea) return true;
+    
+    const text = textarea.value.trim();
+    return text.length > 0;
+  };
+  
+  // Validate that Certification is selected and is "I certify"
+  const validateCertification = function() {
+    const select = document.getElementById('mq_t1_certification');
+    if (!select) return true;
+    
+    const value = select.value;
+    if (value === '') {
+      return false; // No selection
+    }
+    if (value === 'I do not certify') {
+      return false; // Cannot submit if "I do not certify" is selected
+    }
+    
+    return value === 'I certify';
+  };
+  
+  // Validate that Signature has content
+  const validateSignature = function() {
+    const input = document.getElementById('mq_t1_signature');
+    if (!input) return true;
+    
+    return input.value.trim().length > 0;
+  };
+  
+  // Validate that Name & Title has content
+  const validateSignerNameTitle = function() {
+    const input = document.getElementById('mq_t1_signer_name_title');
+    if (!input) return true;
+    
+    return input.value.trim().length > 0;
+  };
+  
+  // Format and validate date input (YYYY-MM-DD format)
+  const formatDateInput = function(input) {
+    // Remove all non-digit characters
+    let value = input.value.replace(/\D/g, '');
+    
+    // Limit to 8 digits (YYYYMMDD)
+    if (value.length > 8) {
+      value = value.substring(0, 8);
+    }
+    
+    // Format as YYYY-MM-DD
+    let formatted = '';
+    if (value.length > 0) {
+      formatted = value.substring(0, 4); // YYYY
+      if (value.length > 4) {
+        formatted += '-' + value.substring(4, 6); // MM
+        if (value.length > 6) {
+          formatted += '-' + value.substring(6, 8); // DD
+        }
+      }
+    }
+    
+    input.value = formatted;
+  };
+  
+  // Validate date format (YYYY-MM-DD)
+  const validateDateFormat = function(dateString) {
+    if (!dateString) return true; // Empty is valid (will be validated separately for required fields)
+    
+    // Check format: YYYY-MM-DD
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (!datePattern.test(dateString)) {
+      return false;
+    }
+    
+    // Validate actual date values
+    const parts = dateString.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    
+    // Basic range validation
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    if (year < 1900 || year > 2100) return false;
+    
+    // Check if date is valid (e.g., not Feb 30)
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Validate that Date has content
+  const validateSignatureDate = function() {
+    const input = document.getElementById('mq_t1_signature_date');
+    if (!input) return true;
+    
+    return input.value.trim().length > 0;
+  };
+  
+  // Save Draft button handler - saves to both localStorage and API
+  const handleSaveDraft = async function() {
+    // No validation required for Save Draft - allow saving incomplete forms
+    // Save to localStorage first
+    saveDraft();
+    
+    // Show loading state
+    const saveDraftBtn = document.getElementById('mq_t1_save_draft_btn');
+    const originalText = saveDraftBtn ? saveDraftBtn.textContent : '';
+    if (saveDraftBtn) {
+      saveDraftBtn.disabled = true;
+      saveDraftBtn.textContent = 'Saving...';
+    }
+    
+    try {
+      // Get all form fields
+      const formData = getAllFields();
+      
+      // Convert form data to API FieldsList format
+      const fieldsList = convertFormDataToFieldsList(formData);
+      
+      // Set application_status to "Draft" when saving draft
+      fieldsList.push({
+        Name: 'application_status',
+        Value: 'Draft'
+      });
+      
+      console.log('[MeasureQ Tier 1] Setting application_status to "Draft"');
+      
+      // Submit to API (PUT - update existing record)
+      const result = await submitApplication(fieldsList);
+      
+      if (result) {
+        console.log('Tier 1 draft saved to API successfully');
+        alert('Draft saved successfully!');
+      } else {
+        // API not configured or token unavailable - still show success (saved to localStorage)
+        console.log('Draft saved to localStorage (API not configured)');
+        alert('Draft saved successfully! (saved locally)');
+      }
+    } catch (error) {
+      // Restore button state
+      if (saveDraftBtn) {
+        saveDraftBtn.disabled = false;
+        saveDraftBtn.textContent = originalText;
+      }
+      
+      console.error('Error saving draft to API:', error);
+      // Still show success since localStorage was saved
+      alert('Draft saved locally. There was an error saving to the API, but your data is safe.');
+    }
+  };
+  
+  // Handle submission with acknowledgment check
+  const handleSubmit = async function() {
+    // Block submit if application deadline has passed
+    if (await isApplicationDeadlineExpired()) {
+      alert('The application deadline has passed. Submissions are no longer accepted for this cycle.');
+      return;
+    }
+    // Validate all checkbox groups
+    if (!validateThematicAreas()) {
+      alert('Please select at least one Thematic Area before submitting.');
+      return;
+    }
+    
+    if (!validatePrioritizationPrinciples()) {
+      alert('Please select at least one Project Prioritization Principle before submitting.');
+      return;
+    }
+    
+    if (!validateSecondaryPrioritizationPrinciples()) {
+      alert('Please select at least one Secondary Prioritization Principle before submitting.');
+      return;
+    }
+    
+    if (!validateCommunityValueAreas()) {
+      alert('Please select at least one Community Value area before submitting.');
+      return;
+    }
+    
+    if (!validateSiteControl()) {
+      alert('Please select at least one Site Control option before submitting.');
+      return;
+    }
+    
+    // Validate Thematic Areas Narrative
+    const thematicAreasNarrativeField = document.getElementById('mq_t1_thematic_areas_narrative');
+    if (!thematicAreasNarrativeField || !thematicAreasNarrativeField.value.trim()) {
+      alert('Please enter Thematic Areas Narrative before submitting.');
+      return;
+    }
+    
+    // Validate Prioritization Narrative
+    const prioritizationNarrativeField = document.getElementById('mq_t1_prioritization_narrative');
+    if (!prioritizationNarrativeField || !prioritizationNarrativeField.value.trim()) {
+      alert('Please enter Prioritization Narrative before submitting.');
+      return;
+    }
+    
+    // Validate Secondary Prioritization Principle Narrative
+    const secondaryPrioritizationNarrativeField = document.getElementById('mq_t1_secondary_prioritization_narrative');
+    if (!secondaryPrioritizationNarrativeField || !secondaryPrioritizationNarrativeField.value.trim()) {
+      alert('Please enter Secondary Prioritization Principle Narrative before submitting.');
+      return;
+    }
+    
+    if (!validateTargetCommunity()) {
+      alert('Please enter Target Community / User Groups narrative before submitting.');
+      return;
+    }
+    
+    if (!validateCommunityValueNarrative()) {
+      alert('Please enter Community Value Narrative + outreach/engagement before submitting.');
+      return;
+    }
+    
+    // Validate Ground disturbance / capital project / site improvements
+    const groundDisturbanceField = document.getElementById('mq_t1_ground_disturbance');
+    if (!groundDisturbanceField || !groundDisturbanceField.value) {
+      alert('Please select Ground disturbance / capital project / site improvements before submitting.');
+      return;
+    }
+    
+    // Validate Project Scope Narrative
+    const projectScopeNarrativeField = document.getElementById('mq_t1_project_scope_narrative');
+    if (!projectScopeNarrativeField || !projectScopeNarrativeField.value.trim()) {
+      alert('Please enter Project Scope Narrative before submitting.');
+      return;
+    }
+    
+    // Validate Budget Narrative
+    const budgetNarrativeField = document.getElementById('mq_t1_budget_narrative');
+    if (!budgetNarrativeField || !budgetNarrativeField.value.trim()) {
+      alert('Please enter Budget Narrative before submitting.');
+      return;
+    }
+    
+    // Validate Timeline Narrative
+    const timelineNarrativeField = document.getElementById('mq_t1_timeline_narrative');
+    if (!timelineNarrativeField || !timelineNarrativeField.value.trim()) {
+      alert('Please enter Timeline Narrative before submitting.');
+      return;
+    }
+    
+    // Validate Innovation & Capacity Narrative
+    const innovationCapacityField = document.getElementById('mq_t1_innovation_capacity');
+    if (!innovationCapacityField || !innovationCapacityField.value.trim()) {
+      alert('Please enter Innovation & Capacity Narrative before submitting.');
+      return;
+    }
+    
+    if (!validateCertification()) {
+      const certificationField = document.getElementById('mq_t1_certification');
+      if (certificationField && certificationField.value === 'I do not certify') {
+        alert('You cannot submit the application if you select "I do not certify". Please select "I certify" to proceed with submission.');
+      } else {
+        alert('Please select a Certification option before submitting.');
+      }
+      return;
+    }
+    
+    if (!validateSignature()) {
+      alert('Please enter your Signature (type name) before submitting.');
+      return;
+    }
+    
+    if (!validateSignerNameTitle()) {
+      alert('Please enter Name & Title before submitting.');
+      return;
+    }
+    
+    if (!validateSignatureDate()) {
+      alert('Please enter Date before submitting.');
+      return;
+    }
+    
+    // Save draft before submitting
+    saveDraft();
+    
+    // Check if acknowledgment checkbox is checked
+    const acknowledgmentCheckbox = document.getElementById('mq_t1_submit_acknowledgment');
+    if (!acknowledgmentCheckbox || !acknowledgmentCheckbox.checked) {
+      alert('Please acknowledge that all application materials and scoring will be made public as part of grant selection process.');
+      return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.getElementById('mq_t1_submit_btn');
+    const originalText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+    }
+    
+    try {
+      // Get all form fields
+      const formData = getAllFields();
+      
+      // Convert form data to API FieldsList format
+      const fieldsList = convertFormDataToFieldsList(formData);
+      
+      // Set application_status to "Submitted" when submitting
+      fieldsList.push({
+        Name: 'application_status',
+        Value: 'Submitted'
+      });
+      
+      // Set date_submitted to current date (YYYY-MM-DD format)
+      const today = new Date();
+      const dateSubmitted = today.getFullYear() + '-' + 
+        String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(today.getDate()).padStart(2, '0');
+      fieldsList.push({
+        Name: 'date_submitted',
+        Value: dateSubmitted
+      });
+      
+      console.log('[MeasureQ Tier 1] Setting application_status to "Submitted"');
+      console.log('[MeasureQ Tier 1] Setting date_submitted to:', dateSubmitted);
+      
+      // Submit to API (PUT - update existing record)
+      const result = await submitApplication(fieldsList);
+      
+      if (result) {
+        console.log('Tier 1 application submitted successfully:', result);
+        alert('Tier 1 application submitted successfully!');
+        
+        // Redirect to OpenGov app homepage after successful submission
+        console.log('[MeasureQ Tier 1] Redirecting to OpenGov homepage...');
+        window.top.location.href = 'https://apps.opengov.com/apps/4rtlvxxg7';
+      } else {
+        // API not configured or token unavailable - fallback to console log
+        console.log('Form submitted (API not configured):', formData);
+        alert('Form submitted (API not configured - check console for data)');
+        
+        // Redirect even if API not configured
+        console.log('[MeasureQ Tier 1] Redirecting to OpenGov homepage...');
+        window.top.location.href = 'https://apps.opengov.com/apps/4rtlvxxg7';
+      }
+    } catch (error) {
+      // Restore button state
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+      
+      console.error('Error submitting application:', error);
+      alert(`Error submitting application: ${error.message}`);
+    }
+  };
+  
+  // Back button handler
+  const handleBack = async function() {
+    // Save to API before navigating back (without validation)
+    saveDraft(); // Save to localStorage
+    
+    try {
+      // Also save to API to preserve data
+      const formData = getAllFields();
+      const fieldsList = convertFormDataToFieldsList(formData);
+      
+      // Set application_status to "Draft" when saving and continuing
+      fieldsList.push({
+        Name: 'application_status',
+        Value: 'Draft'
+      });
+      
+      console.log('[MeasureQ Tier 1] Saving to API before navigating back (status: Draft)...');
+      await submitApplication(fieldsList);
+      console.log('[MeasureQ Tier 1] Successfully saved before navigation');
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error saving before navigation:', error);
+      // Continue navigation even if save fails - localStorage has the data
+    }
+    
+    // Get the current application record ID
+    const recordId = localStorage.getItem('mq_current_application_id');
+    
+    // Append record ID to URL if available so OpenGov knows which record to load
+    let backUrl = PROJECT_OVERVIEW_URL;
+    if (recordId) {
+      backUrl += (PROJECT_OVERVIEW_URL.includes('?') ? '&' : '?') + 'recordId=' + recordId;
+      console.log('[MeasureQ Tier 1] Navigating back with record ID:', recordId);
+    }
+    
+    // Use window.top to break out of iframe and redirect the entire browser window
+    window.top.location.href = backUrl;
+  };
+  
+  // Attach button handlers
+  // Download as PDF handler - uses browser's native print function
+  const handleDownloadPDF = function() {
+    // Use the browser's native print dialog, which can save as PDF
+    // This provides much better page break handling than html2pdf.js
+    window.print();
+  };
+  
+  const attachButtonHandlers = function() {
+    const backBtn = document.getElementById('mq_t1_back_btn');
+    const saveDraftBtn = document.getElementById('mq_t1_save_draft_btn');
+    const submitBtn = document.getElementById('mq_t1_submit_btn');
+    const downloadPdfBtn = document.getElementById('mq_t1_download_pdf_btn');
+    
+    if (backBtn) {
+      backBtn.addEventListener('click', handleBack);
+    }
+    
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', handleSaveDraft);
+    }
+    
+    if (submitBtn) {
+      submitBtn.addEventListener('click', handleSubmit);
+    }
+    
+    if (downloadPdfBtn) {
+      downloadPdfBtn.addEventListener('click', handleDownloadPDF);
+    }
+    
+    // Initialize file upload handlers
+    initializeFileUploads();
+  };
+  
+  /**
+   * Initialize file upload event handlers for all file inputs
+   */
+  function initializeFileUploads() {
+    const fileInputs = [
+      'mq_t1_attachment_budget',
+      'mq_t1_attachment_timeline',
+      'mq_t1_attachment_site_map',
+      'mq_t1_attachment_letters_support',
+      'mq_t1_attachment_org_info',
+      'mq_t1_attachment_photos'
+    ];
+    
+    fileInputs.forEach(inputId => {
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.addEventListener('change', (event) => handleFileInputChange(event, inputId));
+      }
+    });
+  }
+  
+  /**
+   * Handle file input change event - upload files immediately
+   * @param {Event} event - Change event
+   * @param {string} inputId - ID of the file input
+   */
+  async function handleFileInputChange(event, inputId) {
+    const input = event.target;
+    const files = input.files;
+    
+    if (!files || files.length === 0) return;
+    
+    const applicationRid = localStorage.getItem('mq_current_application_id');
+    if (!applicationRid) {
+      alert('Please save the application first before uploading files.');
+      input.value = ''; // Clear the input
+      return;
+    }
+    
+    const statusDiv = document.getElementById(`${inputId}_status`);
+    const listDiv = document.getElementById(`${inputId}_list`);
+    
+    // Show uploading status
+    if (statusDiv) {
+      statusDiv.className = 'mq-file-status uploading';
+      statusDiv.textContent = `Uploading ${files.length} file(s)...`;
+    }
+    
+    const fieldName = inputId.replace('mq_', '');
+    const documentType = 'Tier 1 Attachment';
+    
+    try {
+      // Upload each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await uploadFile(file, applicationRid, fieldName, documentType);
+      }
+      
+      // Show success status with uploaded filenames
+      if (statusDiv) {
+        statusDiv.className = 'mq-file-status success';
+        const fileNames = Array.from(files).map(f => f.name).join(', ');
+        statusDiv.textContent = `✓ Uploaded: ${fileNames}`;
+        statusDiv.style.display = 'block';
+      }
+      
+      // Refresh file list
+      await displayUploadedFiles(applicationRid, inputId, fieldName);
+      
+      // Clear the input so the same file can be uploaded again if needed
+      input.value = '';
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] File upload error:', error);
+      if (statusDiv) {
+        statusDiv.className = 'mq-file-status error';
+        statusDiv.textContent = `Upload failed: ${error.message}`;
+      }
+    }
+  }
+  
+  /**
+   * Display uploaded files for a specific field
+   * @param {string} applicationRid - Application record ID
+   * @param {string} inputId - File input ID
+   * @param {string} fieldName - Field name for filtering
+   */
+  async function displayUploadedFiles(applicationRid, inputId, fieldName) {
+    const listDiv = document.getElementById(`${inputId}_list`);
+    if (!listDiv) {
+      console.log(`[MeasureQ Tier 1] List div not found: ${inputId}_list`);
+      return;
+    }
+    
+    try {
+      const files = await getUploadedFiles(applicationRid, fieldName);
+      
+      console.log(`[MeasureQ Tier 1] Displaying ${files.length} files for ${inputId}`);
+      
+      if (files.length === 0) {
+        listDiv.innerHTML = '';
+        return;
+      }
+      
+      // Build HTML for file list
+      let html = '';
+      files.forEach(file => {
+        console.log('[MeasureQ Tier 1] File data:', file);
+        const fileRid = file.Rid || file.id || file[`tbl${API_CONFIG.documentsTableKey}_id`];
+        const fileName = file.document_name || file[`tbl${API_CONFIG.documentsTableKey}_document_name`] || 'Unknown file';
+        const fileSize = file.file_size || file[`tbl${API_CONFIG.documentsTableKey}_file_size`] || 0;
+        const downloadUrl = getFileDownloadUrl(fileRid);
+        
+        html += `
+          <div class="mq-file-item" data-file-rid="${fileRid}">
+            <div class="mq-file-item-info">
+              <span class="mq-file-item-name">${fileName}</span>
+              <span class="mq-file-item-size">${formatFileSize(parseInt(fileSize))}</span>
+            </div>
+            <div class="mq-file-item-actions">
+              <button type="button" class="mq-file-btn delete" onclick="handleFileDelete('${fileRid}', '${inputId}', '${fieldName}')">Delete</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      listDiv.innerHTML = html;
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error displaying files:', error);
+    }
+  }
+  
+  /**
+   * Handle file deletion
+   * @param {string} fileRid - File record ID
+   * @param {string} inputId - File input ID
+   * @param {string} fieldName - Field name
+   */
+  async function handleFileDelete(fileRid, inputId, fieldName) {
+    if (!confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+    
+    const statusDiv = document.getElementById(`${inputId}_status`);
+    
+    try {
+      if (statusDiv) {
+        statusDiv.className = 'mq-file-status uploading';
+        statusDiv.textContent = 'Deleting file...';
+      }
+      
+      const success = await deleteFile(fileRid);
+      
+      if (success) {
+        if (statusDiv) {
+          statusDiv.className = 'mq-file-status success';
+          statusDiv.textContent = 'File deleted successfully';
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 2000);
+        }
+        
+        const applicationRid = localStorage.getItem('mq_current_application_id');
+        if (applicationRid) {
+          await displayUploadedFiles(applicationRid, inputId, fieldName);
+          await loadAllUploadedFiles();
+        }
+      } else {
+        throw new Error('Delete operation returned false');
+      }
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] File deletion error:', error);
+      if (statusDiv) {
+        statusDiv.className = 'mq-file-status error';
+        statusDiv.textContent = `Delete failed: ${error.message}`;
+      }
+    }
+  }
+  window.handleFileDelete = handleFileDelete;
+  
+  /**
+   * Load and display all uploaded files for the current application
+   */
+  async function loadAllUploadedFiles() {
+    const applicationRid = localStorage.getItem('mq_current_application_id');
+    if (!applicationRid) return;
+    
+    try {
+      const files = await getUploadedFiles(applicationRid);
+      if (!files || files.length === 0) return;
+      
+      console.log('[MeasureQ Tier 1] Found', files.length, 'uploaded document(s)');
+      
+      const listDiv = document.getElementById('mq_t1_attachment_budget_list');
+      if (!listDiv) return;
+      
+      function extractFileField(file, fieldName) {
+        if (file[fieldName] !== undefined) return file[fieldName];
+        var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+        for (var key in file) {
+          var keyNorm = key.toLowerCase().replace(/[\s_]/g, '');
+          if (keyNorm === norm || keyNorm.endsWith(norm)) return file[key];
+        }
+        return null;
+      }
+      
+      console.log('[MeasureQ Tier 1] Sample file keys:', Object.keys(files[0]));
+      
+      let html = '<strong>Uploaded Documents:</strong>';
+      files.forEach(function(file) {
+        const fileRid = file.Rid || extractFileField(file, 'id');
+        const fileName = extractFileField(file, 'document_name') || 'Unknown file';
+        const downloadUrl = getFileDownloadUrl(fileRid);
+        
+        html += `
+          <div class="mq-file-item" data-file-rid="${fileRid}">
+            <div class="mq-file-item-info">
+              <span class="mq-file-item-name">${fileName}</span>
+            </div>
+            <div class="mq-file-item-actions">
+              <button type="button" class="mq-file-btn delete" onclick="handleFileDelete('${fileRid}', 'mq_t1_attachment_budget', '')">Delete</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      listDiv.innerHTML = html;
+    } catch (error) {
+      console.error('[MeasureQ Tier 1] Error loading uploaded files:', error);
+    }
+  }
+  
+  // Initialize on DOM ready
+  const init = function() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', async function() {
+        // Populate Record ID field from localStorage
+        const recordId = localStorage.getItem('mq_current_application_id');
+        if (recordId) {
+          const recordIdField = document.getElementById('mq_t1_record_id');
+          if (recordIdField) {
+            recordIdField.value = recordId;
+          }
+        }
+        
+        // Load from API first (most recent saved data), then localStorage as fallback
+        await loadFromAPI();
+        loadDraft();
+        
+        // Load uploaded files
+        await loadAllUploadedFiles();
+        
+        updateConditionalFields();
+        updateSiteControlOther();
+        updateThematicAreasNarrativeWordCount();
+        updatePrioritizationNarrativeWordCount();
+        updateSecondaryPrioritizationNarrativeWordCount();
+        updateTargetCommunityWordCount();
+        updateCommunityValueNarrativeWordCount();
+        updateNoGroundDisturbanceExplainWordCount();
+        updateSiteControlOtherTextWordCount();
+        updateProjectScopeNarrativeWordCount();
+        updateBudgetNarrativeWordCount();
+        updateTimelineNarrativeWordCount();
+        updateInnovationCapacityWordCount();
+        updateBonusNarrativeWordCount();
+        attachListeners();
+        attachButtonHandlers();
+        // Disable submit if application deadline has passed
+        isApplicationDeadlineExpired().then(function(expired) {
+          if (expired) {
+            const btn = document.getElementById('mq_t1_submit_btn');
+            if (btn) {
+              btn.disabled = true;
+              btn.title = 'The application deadline has passed. Submissions are no longer accepted for this cycle.';
+            }
+          }
+        });
+      });
+    } else {
+      (async function() {
+        const recordId = localStorage.getItem('mq_current_application_id');
+        if (recordId) {
+          const recordIdField = document.getElementById('mq_t1_record_id');
+          if (recordIdField) {
+            recordIdField.value = recordId;
+          }
+        }
+        
+        await loadFromAPI();
+        loadDraft();
+        await loadAllUploadedFiles();
+      })();
+      updateConditionalFields();
+      updateSiteControlOther();
+      updateThematicAreasNarrativeWordCount();
+      updatePrioritizationNarrativeWordCount();
+      updateSecondaryPrioritizationNarrativeWordCount();
+      updateTargetCommunityWordCount();
+      updateCommunityValueNarrativeWordCount();
+      updateNoGroundDisturbanceExplainWordCount();
+      updateSiteControlOtherTextWordCount();
+      updateProjectScopeNarrativeWordCount();
+      updateBudgetNarrativeWordCount();
+      updateTimelineNarrativeWordCount();
+      updateInnovationCapacityWordCount();
+      updateBonusNarrativeWordCount();
+      attachListeners();
+      attachButtonHandlers();
+      isApplicationDeadlineExpired().then(function(expired) {
+        if (expired) {
+          const btn = document.getElementById('mq_t1_submit_btn');
+          if (btn) {
+            btn.disabled = true;
+            btn.title = 'The application deadline has passed. Submissions are no longer accepted for this cycle.';
+          }
+        }
+      });
+    }
+  };
+  
+  init();
+})();
+</script>
+
