@@ -861,7 +861,7 @@
     'field-applicant-jurisdiction-project-contact-phone': { name: 'project_contact_phone' },
     'field-applicant-jurisdiction-project-contact-email': { name: 'project_contact_email' },
     'field-applicant-jurisdiction-primary-applicant-email-for-notices': { name: 'primary_applicant_email' },
-    'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta': { name: 'applicant_role' },
+    'field-applicant-jurisdiction-applicant-role-city-jurisdiction-county-township-hctid-crc-sorta': { name: 'applicant_role' },
     'field-project-header-project-name': { name: 'project_name' },
     'field-project-header-project-description-short-narrative': { name: 'project_description' },
     'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
@@ -881,6 +881,7 @@
     'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no': { name: 'within_three_quarter_mile_transit' },
     'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count': { name: 'weekday_transit_trip_count' },
     'field-location-transit-on-brt-corridor-yes-no': { name: 'on_brt_corridor' },
+    'field-location-transit-project-location-photos-upload': { name: 'project_location_photos' },
     'field-budget-funding-local-funds-budgeted-dollars': { name: 'local_funds_budgeted' },
     'field-budget-funding-sorta-mtif-funds-awarded-dollars': { name: 'mtif_funds_awarded' },
     'field-budget-funding-other-funds-budgeted-dollars': { name: 'other_funds_budgeted' },
@@ -1117,7 +1118,7 @@
         },
         {
           "Category": "Applicant / Jurisdiction",
-          "FieldName": "Applicant role (jurisdiction/county/township/HCTID/CRC/SORTA)"
+          "FieldName": "Applicant role (City/Jurisdiction/County/Township/HCTID/CRC/SORTA)"
         },
         {
           "Category": "Project Header",
@@ -1194,6 +1195,10 @@
         {
           "Category": "Location / Transit",
           "FieldName": "On BRT corridor (Yes/No)"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "Project location photos upload"
         },
         {
           "Category": "Budget / Funding",
@@ -2107,7 +2112,7 @@
               'project_contact_phone':        'field-applicant-jurisdiction-project-contact-phone',
               'project_contact_email':        'field-applicant-jurisdiction-project-contact-email',
               'primary_applicant_email':      'field-applicant-jurisdiction-primary-applicant-email-for-notices',
-              'applicant_role':               'field-applicant-jurisdiction-applicant-role-jurisdiction-county-township-hctid-crc-sorta'
+              'applicant_role':               'field-applicant-jurisdiction-applicant-role-city-jurisdiction-county-township-hctid-crc-sorta'
             };
 
             Object.keys(jurData).forEach(function(jKey) {
