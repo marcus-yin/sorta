@@ -974,6 +974,8 @@
   // ============================================================
   // Appendix E Scoring Guidance (per narrative criterion)
   // ============================================================
+  var READONLY_FIELDS = ['Project ID (SORTA MTIF project ID)', 'Date of project award'];
+
   var FIELD_NOTICES = {
     'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
   };
@@ -1679,6 +1681,14 @@
         if (config.step !== undefined) input.step = config.step;
         if (config.pattern) input.pattern = config.pattern;
         if (config.title) input.title = config.title;
+
+        if (READONLY_FIELDS.indexOf(fieldName) !== -1) {
+          input.readOnly = true;
+          input.tabIndex = -1;
+          input.style.background = '#f1f5f9';
+          input.style.color = '#64748b';
+          input.style.cursor = 'default';
+        }
 
         fieldWrap.appendChild(label);
 
