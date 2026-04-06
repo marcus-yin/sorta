@@ -611,6 +611,10 @@
     documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
   };
 
+  var FIELD_NOTICES = {
+    'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
+  };
+
   var SCORING_CATEGORY = 'Scoring / Criteria';
 
   var SCORING_GUIDANCE = {
@@ -1127,6 +1131,7 @@
     'field-budget-funding-multi-year-project-funding-years-1-5': { name: 'multi_year_funding_years' },
     'field-budget-funding-construction-contingency': { name: 'construction_contingency_pct' },
     'field-budget-funding-useful-life-estimate-years': { name: 'useful_life_years' },
+    'field-budget-funding-cfo-certification-of-local-funds-upload': { name: 'cfo_certification_file' },
     'field-schedule-row-construction-award-date': { name: 'construction_award_date' },
     'field-schedule-row-anticipated-construction-start-date': { name: 'anticipated_start_date' },
     'field-schedule-row-anticipated-construction-completion-date': { name: 'anticipated_completion_date' },
@@ -1182,6 +1187,7 @@
     { "Category": "Budget / Funding", "FieldName": "Multi-year project funding years (1-5)" },
     { "Category": "Budget / Funding", "FieldName": "Construction contingency %" },
     { "Category": "Budget / Funding", "FieldName": "Useful life estimate (years)" },
+    { "Category": "Budget / Funding", "FieldName": "CFO certification of local funds upload" },
     { "Category": "Schedule & ROW", "FieldName": "Construction award date" },
     { "Category": "Schedule & ROW", "FieldName": "Anticipated construction start date" },
     { "Category": "Schedule & ROW", "FieldName": "Anticipated construction completion date" },
@@ -1323,6 +1329,14 @@
         input.classList.add('metro-readonly-field');
 
         fieldWrap.appendChild(label);
+
+        var notice = FIELD_NOTICES[fieldName];
+        if (notice) {
+          var noticeEl = document.createElement('div');
+          noticeEl.style.cssText = 'background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:10px; font-size:12.5px; line-height:1.6; color:#1e40af;';
+          noticeEl.textContent = notice;
+          fieldWrap.appendChild(noticeEl);
+        }
 
         var guidance = SCORING_GUIDANCE[fieldName];
         if (guidance && category === SCORING_CATEGORY) {

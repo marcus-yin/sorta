@@ -898,6 +898,7 @@
     'field-budget-funding-engineer-s-stamp-pe-license-file': { name: 'pe_license_file', fieldKey: 'foa75uhw1' },
     'field-budget-funding-certification-of-funds-letter-upload': { name: 'certification_funds_file', fieldKey: '6qt3coma3' },
     'field-budget-funding-authorizing-legislation-upload': { name: 'authorizing_legislation_file', fieldKey: 'aw5i0xuq4' },
+    'field-budget-funding-cfo-certification-of-local-funds-upload': { name: 'cfo_certification_file' },
     'field-schedule-row-construction-award-date': { name: 'construction_award_date' },
     'field-schedule-row-anticipated-construction-start-date': { name: 'anticipated_start_date' },
     'field-schedule-row-anticipated-construction-completion-date': { name: 'anticipated_completion_date' },
@@ -973,6 +974,10 @@
   // ============================================================
   // Appendix E Scoring Guidance (per narrative criterion)
   // ============================================================
+  var FIELD_NOTICES = {
+    'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
+  };
+
   var SCORING_GUIDANCE = {
     'Physical condition narrative': {
       question: 'Describe the physical condition of the infrastructure that is to be replaced or repaired. What is required to improve the infrastructure so that it will realize its stated useful life?',
@@ -1263,6 +1268,10 @@
         {
           "Category": "Budget / Funding",
           "FieldName": "Authorizing legislation upload"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "CFO certification of local funds upload"
         },
         {
           "Category": "Schedule & ROW",
@@ -1672,6 +1681,14 @@
         if (config.title) input.title = config.title;
 
         fieldWrap.appendChild(label);
+
+        var notice = FIELD_NOTICES[fieldName];
+        if (notice) {
+          var noticeEl = document.createElement('div');
+          noticeEl.style.cssText = 'background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:10px; font-size:12.5px; line-height:1.6; color:#1e40af;';
+          noticeEl.textContent = notice;
+          fieldWrap.appendChild(noticeEl);
+        }
 
         var guidance = SCORING_GUIDANCE[fieldName];
         if (guidance && category === 'Scoring / Criteria') {
