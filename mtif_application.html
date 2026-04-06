@@ -870,7 +870,7 @@
     'field-project-header-round': { name: 'program_year_round' },
     'field-project-header-program-year': { name: 'program_year_display' },
     'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
-    'field-project-header-large-vs-small-project-category-1m-vs-1m': { name: 'project_size_category' },
+    'field-project-header-large-vs-small-grant-award-category-1m-vs-1m': { name: 'project_size_category' },
     'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
     'field-location-transit-project-street-name-s': { name: 'project_street_names' },
     'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
@@ -878,6 +878,8 @@
     'field-location-transit-project-vicinity-map-file': { name: 'vicinity_map_file', fieldKey: 'v8yhpiia7' },
     'field-location-transit-project-latitude-longitude': { name: 'project_lat_long' },
     'field-location-transit-gis-shapefile-upload': { name: 'gis_shapefile', fieldKey: '4wia8wlq4' },
+    'field-location-transit-identify-nearest-fixed-route': { name: 'nearest_fixed_route' },
+    'field-location-transit-bus-trip-form-upload': { name: 'bus_trip_form' },
     'field-location-transit-distance-to-nearest-fixed-route-transit-miles': { name: 'distance_to_transit_miles' },
     'field-location-transit-within-3-4-mile-of-fixed-route-transit-yes-no': { name: 'within_three_quarter_mile_transit' },
     'field-location-transit-weekday-fixed-route-trips-using-project-corridor-count': { name: 'weekday_transit_trip_count' },
@@ -1162,7 +1164,7 @@
         },
         {
           "Category": "Project Header",
-          "FieldName": "Large vs small project category (>= $1M vs < $1M)"
+          "FieldName": "Large vs small grant award category (>= $1M vs < $1M)"
         },
         {
           "Category": "Project Header",
@@ -1194,6 +1196,10 @@
         },
         {
           "Category": "Location / Transit",
+          "FieldName": "Identify nearest fixed route"
+        },
+        {
+          "Category": "Location / Transit",
           "FieldName": "Distance to nearest fixed-route transit (miles)"
         },
         {
@@ -1211,6 +1217,10 @@
         {
           "Category": "Location / Transit",
           "FieldName": "Project location photos upload"
+        },
+        {
+          "Category": "Location / Transit",
+          "FieldName": "BUS trip form upload"
         },
         {
           "Category": "Budget / Funding",
@@ -2211,7 +2221,7 @@
               'date_of_project_award':  'field-project-header-date-of-project-award',
               'program_year_round':     'field-project-header-round',
               'project_type_category':  'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
-              'project_size_category':  'field-project-header-large-vs-small-project-category-1m-vs-1m',
+              'project_size_category':  'field-project-header-large-vs-small-grant-award-category-1m-vs-1m',
               'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
             };
 
@@ -2775,6 +2785,9 @@
     // Initialize Google Places Autocomplete on Jurisdiction mailing address
     initAddressAutocomplete();
 
+    // Initialize Google Places Autocomplete on nearest fixed route field
+    initNearestRouteAutocomplete();
+
     // Initialize interactive map in Location / Transit section
     initProjectMap();
 
@@ -3052,6 +3065,42 @@
       addressInput.value = place.formatted_address;
 
       // Save draft after selection
+      saveDraftLocal();
+    });
+  }
+
+  function initNearestRouteAutocomplete() {
+    var routeInput = document.getElementById('field-location-transit-identify-nearest-fixed-route');
+    if (!routeInput) {
+      console.warn('[MTIF] Nearest fixed route input not found for autocomplete.');
+      return;
+    }
+
+    if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+      setTimeout(initNearestRouteAutocomplete, 200);
+      return;
+    }
+
+    if (routeInput.dataset.autocompleteInitialized === 'true') return;
+
+    var autocomplete = new google.maps.places.Autocomplete(routeInput, {
+      types: ['address'],
+      componentRestrictions: { country: 'us' },
+      fields: ['formatted_address', 'geometry'],
+      bounds: new google.maps.LatLngBounds(
+        new google.maps.LatLng(39.07, -84.82),
+        new google.maps.LatLng(39.32, -84.26)
+      ),
+      strictBounds: false
+    });
+
+    routeInput.dataset.autocompleteInitialized = 'true';
+    console.log('[MTIF] Google Places Autocomplete initialized on nearest fixed route field.');
+
+    autocomplete.addListener('place_changed', function() {
+      var place = autocomplete.getPlace();
+      if (!place.geometry) return;
+      routeInput.value = place.formatted_address;
       saveDraftLocal();
     });
   }
