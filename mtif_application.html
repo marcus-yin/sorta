@@ -865,9 +865,10 @@
     'field-project-header-project-name': { name: 'project_name' },
     'field-project-header-project-description-short-narrative': { name: 'project_description' },
     'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
-    'field-project-header-year-project-funded': { name: 'year_project_funded' },
+    'field-project-header-application-year': { name: 'year_project_funded' },
     'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
-    'field-project-header-program-year-round-e-g-round-5-2025': { name: 'program_year_round' },
+    'field-project-header-round': { name: 'program_year_round' },
+    'field-project-header-program-year': { name: 'program_year_display' },
     'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
     'field-project-header-large-vs-small-project-category-1m-vs-1m': { name: 'project_size_category' },
     'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
@@ -974,7 +975,7 @@
   // ============================================================
   // Appendix E Scoring Guidance (per narrative criterion)
   // ============================================================
-  var READONLY_FIELDS = ['Project ID (SORTA MTIF project ID)', 'Date of project award'];
+  var READONLY_FIELDS = ['Project ID (SORTA MTIF project ID)', 'Date of project award', 'Program year'];
 
   var FIELD_NOTICES = {
     'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
@@ -1141,7 +1142,7 @@
         },
         {
           "Category": "Project Header",
-          "FieldName": "Year project funded"
+          "FieldName": "Application year"
         },
         {
           "Category": "Project Header",
@@ -1149,7 +1150,11 @@
         },
         {
           "Category": "Project Header",
-          "FieldName": "Program year / round (e.g. Round 5 - 2025)"
+          "FieldName": "Round"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Program year"
         },
         {
           "Category": "Project Header",
@@ -1590,6 +1595,8 @@
     if (lower.includes('priority ranking')) return { type: 'select', options: ['1st', '2nd', '3rd', '4th', '5th', 'Other'] };
     if (lower.includes('email')) return { type: 'email', pattern: '[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}', title: 'Enter a valid email address (e.g. name@example.com)' };
     if (lower.includes('phone')) return { type: 'tel', placeholder: '(555) 555-5555', pattern: '\\(\\d{3}\\)\\s?\\d{3}-\\d{4}', title: 'Enter a 10-digit phone number: (555) 555-5555' };
+    if (fieldName === 'Round') return { type: 'number', min: 1, max: 20, step: 1, placeholder: 'e.g. 6' };
+    if (fieldName === 'Program year') return { type: 'text' };
     if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
     if (lower.includes('useful life estimate')) return { type: 'number', min: 1, max: 100, step: 1 };
     if (lower.includes('upload') || /\bfile\b/.test(lower) || lower.includes('photos')) return { type: 'file' };
@@ -2200,9 +2207,9 @@
               'project_name':           'field-project-header-project-name',
               'project_description':    'field-project-header-project-description-short-narrative',
               'project_id':             'field-project-header-project-id-sorta-mtif-project-id',
-              'year_project_funded':    'field-project-header-year-project-funded',
+              'year_project_funded':    'field-project-header-application-year',
               'date_of_project_award':  'field-project-header-date-of-project-award',
-              'program_year_round':     'field-project-header-program-year-round-e-g-round-5-2025',
+              'program_year_round':     'field-project-header-round',
               'project_type_category':  'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
               'project_size_category':  'field-project-header-large-vs-small-project-category-1m-vs-1m',
               'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
@@ -2724,6 +2731,26 @@
     // Build form sections
     buildSections();
 
+    var appYearField = document.getElementById('field-project-header-application-year');
+    if (appYearField && !appYearField.value) {
+      appYearField.value = new Date().getFullYear();
+    }
+
+    function updateProgramYear() {
+      var year = document.getElementById('field-project-header-application-year');
+      var round = document.getElementById('field-project-header-round');
+      var display = document.getElementById('field-project-header-program-year');
+      if (!display) return;
+      var y = year ? year.value : '';
+      var r = round ? round.value : '';
+      display.value = (y && r) ? y + ' - Round ' + r : (y || '');
+    }
+
+    if (appYearField) appYearField.addEventListener('input', updateProgramYear);
+    var roundField = document.getElementById('field-project-header-round');
+    if (roundField) roundField.addEventListener('input', updateProgramYear);
+    updateProgramYear();
+
     // Load from API first, then localStorage as fallback
     var loadedFromAPI = await loadFromAPI();
     if (!loadedFromAPI) {
@@ -2732,6 +2759,7 @@
     } else {
       console.log('[MTIF] Data loaded from API - skipping localStorage');
     }
+    updateProgramYear();
 
     // Show attestation section after dynamic sections are built
     var attestationEl = document.getElementById('attestationSection');

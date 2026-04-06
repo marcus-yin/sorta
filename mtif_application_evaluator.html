@@ -1105,9 +1105,10 @@
     'field-project-header-project-name': { name: 'project_name' },
     'field-project-header-project-description-short-narrative': { name: 'project_description' },
     'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
-    'field-project-header-year-project-funded': { name: 'year_project_funded' },
+    'field-project-header-application-year': { name: 'year_project_funded' },
     'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
-    'field-project-header-program-year-round-e-g-round-5-2025': { name: 'program_year_round' },
+    'field-project-header-round': { name: 'program_year_round' },
+    'field-project-header-program-year': { name: 'program_year_display' },
     'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
     'field-project-header-large-vs-small-project-category-1m-vs-1m': { name: 'project_size_category' },
     'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
@@ -1161,9 +1162,10 @@
     { "Category": "Project Header", "FieldName": "Project name" },
     { "Category": "Project Header", "FieldName": "Project description (short narrative)" },
     { "Category": "Project Header", "FieldName": "Project ID (SORTA MTIF project ID)" },
-    { "Category": "Project Header", "FieldName": "Year project funded" },
+    { "Category": "Project Header", "FieldName": "Application year" },
     { "Category": "Project Header", "FieldName": "Date of project award" },
-    { "Category": "Project Header", "FieldName": "Program year / round (e.g. Round 5 - 2025)" },
+    { "Category": "Project Header", "FieldName": "Round" },
+    { "Category": "Project Header", "FieldName": "Program year" },
     { "Category": "Project Header", "FieldName": "Project type/category (Road/Bridge/Sidewalk/Multimodal/ITS/Transit facility)" },
     { "Category": "Project Header", "FieldName": "Large vs small project category (>= $1M vs < $1M)" },
     { "Category": "Project Header", "FieldName": "Emergency project indicator (Yes/No)" },
@@ -1233,6 +1235,8 @@
     if (lower.includes('priority ranking')) return { type: 'select', options: ['1st', '2nd', '3rd', '4th', '5th', 'Other'] };
     if (lower.includes('email')) return { type: 'email' };
     if (lower.includes('phone')) return { type: 'tel' };
+    if (fieldName === 'Round') return { type: 'number', min: 1, max: 20, step: 1 };
+    if (fieldName === 'Program year') return { type: 'text' };
     if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
     if (lower.includes('useful life estimate')) return { type: 'number', min: 1, max: 100, step: 1 };
     if (lower.includes('date')) return { type: 'date' };
@@ -1407,9 +1411,10 @@
     'project_name': 'field-project-header-project-name',
     'project_description': 'field-project-header-project-description-short-narrative',
     'project_id': 'field-project-header-project-id-sorta-mtif-project-id',
-    'year_project_funded': 'field-project-header-year-project-funded',
+    'year_project_funded': 'field-project-header-application-year',
     'date_of_project_award': 'field-project-header-date-of-project-award',
-    'program_year_round': 'field-project-header-program-year-round-e-g-round-5-2025',
+    'program_year_round': 'field-project-header-round',
+    'program_year_display': 'field-project-header-program-year',
     'project_type_category': 'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
     'project_size_category': 'field-project-header-large-vs-small-project-category-1m-vs-1m',
     'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
