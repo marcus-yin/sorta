@@ -871,7 +871,6 @@
     'field-project-header-program-year': { name: 'program_year_display' },
     'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
     'field-project-header-large-vs-small-grant-award-category-1m-vs-1m': { name: 'project_size_category' },
-    'field-project-header-emergency-project-indicator-yes-no': { name: 'emergency_project_flag' },
     'field-location-transit-project-street-name-s': { name: 'project_street_names' },
     'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
     'field-location-transit-project-limits-description': { name: 'project_limits_description' },
@@ -1178,10 +1177,6 @@
           "FieldName": "Large vs small grant award category (>= $1M vs < $1M)"
         },
         {
-          "Category": "Project Header",
-          "FieldName": "Emergency project indicator (Yes/No)"
-        },
-        {
           "Category": "Location / Transit",
           "FieldName": "Project street name(s)"
         },
@@ -1239,19 +1234,11 @@
         },
         {
           "Category": "Budget / Funding",
-          "FieldName": "SORTA MTIF funds awarded (dollars)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Other funds budgeted (dollars)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Total project budget (dollars)"
-        },
-        {
-          "Category": "Budget / Funding",
           "FieldName": "Local funds share (%)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "SORTA MTIF funds awarded (dollars)"
         },
         {
           "Category": "Budget / Funding",
@@ -1259,7 +1246,15 @@
         },
         {
           "Category": "Budget / Funding",
+          "FieldName": "Other funds budgeted (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
           "FieldName": "Other funds share (%)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Total project budget (dollars)"
         },
         {
           "Category": "Budget / Funding",
@@ -2231,7 +2226,6 @@
               'program_year_round':     'field-project-header-round',
               'project_type_category':  'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
               'project_size_category':  'field-project-header-large-vs-small-grant-award-category-1m-vs-1m',
-              'emergency_project_flag': 'field-project-header-emergency-project-indicator-yes-no'
             };
 
             Object.keys(phData).forEach(function(pKey) {
