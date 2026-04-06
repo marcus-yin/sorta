@@ -427,7 +427,7 @@
       }
 
       .sorta-table-wrap { overflow-x: auto; }
-      .sorta-table { min-width: 650px; }
+      .sorta-table { min-width: 900px; }
     }
 
     @media (max-width: 500px) {
@@ -490,13 +490,15 @@
             <thead>
               <tr>
                 <th>Record Id</th>
-                <th>Project Title</th>
-                <th>Grant Number</th>
-                <th>Jurisdiction</th>
-                <th>Grantee Contact</th>
-                <th>Grant Funds</th>
-                <th>MTIF Assistance</th>
-                <th>Status</th>
+                <th>Project Name</th>
+                <th>Project Description</th>
+                <th>Project ID</th>
+                <th>Year Funded</th>
+                <th>Date of Award</th>
+                <th>Program Year Round</th>
+                <th>Project Type</th>
+                <th>Project Size</th>
+                <th>Emergency</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -533,7 +535,7 @@
       baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
       aesKey: AES_KEY,
       applicationTableKey: 'iw3twwkw2',
-      applicationsReportId: 'tn3omkcq4',
+      applicationsReportId: 's3derd1q7',
       applicationsIdFieldKey: 'dyd4osqa5',
       applicationsCreatedByFieldKey: 'dfz9fb2g2',
       reimbursementTableKey: 'qo5o45ww5',
@@ -657,7 +659,7 @@
         if (!email) return rows;
 
         var filtered = rows.filter(function (app) {
-          var creator = (app.tbl12027_createdby || extractFieldValue(app, 'createdby') || '').toLowerCase();
+          var creator = (extractFieldValue(app, 'Created By') || extractFieldValue(app, 'createdby') || '').toLowerCase();
           return creator === email.toLowerCase();
         });
         console.log('[SORTA] Filtered to', filtered.length, 'rows for', email);
@@ -813,25 +815,29 @@
       tbody.innerHTML = '';
 
       sorted.forEach(function (app) {
-        var rid      = getRecordId(app);
-        var title    = extractFieldValue(app, 'Project Title') || extractFieldValue(app, 'project_title') || '-';
-        var grantNum = extractFieldValue(app, 'Grant Number') || extractFieldValue(app, 'grant_number') || '-';
-        var jur      = extractFieldValue(app, 'Project Local Jurisdiction') || extractFieldValue(app, 'project_local_jurisdiction') || '-';
-        var contact  = extractFieldValue(app, 'Grantee Contact') || extractFieldValue(app, 'grantee_contact') || '-';
-        var grantAmt = extractFieldValue(app, 'Grant Funds') || extractFieldValue(app, 'grant_funds') || 0;
-        var mtifAmt  = extractFieldValue(app, 'Transit Infrastructure Fund Assistnace') || extractFieldValue(app, 'transit_infrastructure_fund_assistnace') || 0;
-        var status   = extractFieldValue(app, 'status') || extractFieldValue(app, 'Status') || extractFieldValue(app, 'application_status') || '-';
+        var rid       = getRecordId(app);
+        var name      = extractFieldValue(app, 'project name') || '-';
+        var desc      = extractFieldValue(app, 'project description') || '-';
+        var projId    = extractFieldValue(app, 'project id') || '-';
+        var yearFund  = extractFieldValue(app, 'year project funded') || '-';
+        var awardDate = extractFieldValue(app, 'date of project award') || '';
+        var progYear  = extractFieldValue(app, 'program year round') || '-';
+        var projType  = extractFieldValue(app, 'project type category') || '-';
+        var projSize  = extractFieldValue(app, 'project size category') || '-';
+        var emergency = extractFieldValue(app, 'emergency project flag') || '-';
 
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>' + (rid || '-') + '</td>' +
-          '<td><strong>' + title + '</strong></td>' +
-          '<td>' + grantNum + '</td>' +
-          '<td>' + jur + '</td>' +
-          '<td>' + contact + '</td>' +
-          '<td>' + formatCurrency(grantAmt) + '</td>' +
-          '<td>' + formatCurrency(mtifAmt) + '</td>' +
-          '<td>' + status + '</td>' +
+          '<td><strong>' + name + '</strong></td>' +
+          '<td>' + desc + '</td>' +
+          '<td>' + projId + '</td>' +
+          '<td>' + yearFund + '</td>' +
+          '<td>' + formatDate(awardDate) + '</td>' +
+          '<td>' + progYear + '</td>' +
+          '<td>' + projType + '</td>' +
+          '<td>' + projSize + '</td>' +
+          '<td>' + emergency + '</td>' +
           '<td class="sorta-actions-cell">' +
             '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">Edit</button>' +
             '<button class="sorta-button-child" data-action="reimbursement" data-rid="' + rid + '">Reimbursement</button>' +
@@ -840,17 +846,10 @@
           '</td>';
 
         var editBtn = tr.querySelector('[data-action="edit"]');
-        if (status === 'Submitted') {
-          editBtn.disabled = true;
-          editBtn.style.opacity = '0.4';
-          editBtn.style.cursor = 'not-allowed';
-          editBtn.textContent = 'Submitted';
-        } else {
-          editBtn.addEventListener('click', function () {
-            localStorage.setItem('mtif_current_application_id', rid);
-            navigateTo('application', rid);
-          });
-        }
+        editBtn.addEventListener('click', function () {
+          localStorage.setItem('mtif_current_application_id', rid);
+          navigateTo('application', rid);
+        });
 
         ['reimbursement', 'quarterly', 'closeout'].forEach(function (childType) {
           var btn = tr.querySelector('[data-action="' + childType + '"]');
@@ -929,8 +928,7 @@
           $('sorta_loading').style.display = 'none';
 
           if (apps && apps.length > 0) {
-            var firstJur = extractFieldValue(apps[0], 'Project Local Jurisdiction') ||
-                           extractFieldValue(apps[0], 'project_local_jurisdiction');
+            var firstJur = extractFieldValue(apps[0], 'project name');
             if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
           }
 
