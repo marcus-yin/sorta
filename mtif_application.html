@@ -468,6 +468,9 @@
           <button class="metro-button ghost" type="button" id="clearButton">
             Clear Draft
           </button>
+          <button class="metro-button secondary" type="button" id="printButton">
+            Print / Save as PDF
+          </button>
           <button class="metro-button ghost" type="button" id="sendMessageBtn">
             Send message
           </button>
@@ -2706,6 +2709,7 @@
     document.getElementById('saveDraftButton').addEventListener('click', handleSaveDraft);
     document.getElementById('clearButton').addEventListener('click', clearDraft);
     document.getElementById('submitApplicationButton').addEventListener('click', handleSubmitApplication);
+    document.getElementById('printButton').addEventListener('click', function() { window.print(); });
     attachSendMessageModalListeners();
 
     // Initialize Google Places Autocomplete on Jurisdiction mailing address
