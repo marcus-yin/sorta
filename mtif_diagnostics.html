@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - Application Diagnostics</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #f3f5f9;
+      color: #0f172a;
+      line-height: 1.6;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    /* Banner */
+    .banner {
+      background: linear-gradient(135deg, #003da5 0%, #1b4fbf 60%, #0b1f3a 100%);
+      padding: 24px 20px; margin-bottom: 20px;
+      text-align: center; border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,.12);
+      border-bottom: 4px solid #e4002b;
+    }
+    .banner-logo {
+      height: 56px; background: #fff; padding: 6px 14px;
+      border-radius: 8px; margin-bottom: 10px;
+      display: block; margin-left: auto; margin-right: auto;
+    }
+    .banner h3 { color: #fff; font-size: 20px; font-weight: 700; }
+    .banner p  { color: rgba(255,255,255,.8); font-size: 13px; margin-top: 3px; }
+
+    /* Card */
+    .card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,.06);
+      border: 1px solid #e2e8f0; margin-bottom: 20px;
+      padding: 24px;
+    }
+    .card h2 {
+      font-size: 18px; font-weight: 700; color: #0f172a;
+      padding-left: 12px; border-left: 4px solid #e4002b; margin-bottom: 16px;
+    }
+
+    /* Summary stat tiles */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-tile {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 16px; text-align: center;
+    }
+    .stat-tile .stat-num { font-size: 28px; font-weight: 800; line-height: 1; }
+    .stat-tile .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .stat-tile.green  .stat-num { color: #059669; }
+    .stat-tile.red    .stat-num { color: #e4002b; }
+    .stat-tile.blue   .stat-num { color: #003da5; }
+    .stat-tile.amber  .stat-num { color: #d97706; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+    .tab-btn {
+      padding: 10px 22px; border: none; background: none; cursor: pointer;
+      font-size: 14px; font-weight: 600; color: #64748b;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: #003da5; }
+    .tab-btn.active { color: #003da5; border-bottom-color: #003da5; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 18px; border-radius: 10px;
+      border: 1px solid rgba(0,61,165,.25);
+      background: rgba(0,61,165,.08); color: #003da5;
+      font-weight: 700; font-size: 13px; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn:hover { background: rgba(0,61,165,.14); }
+    .btn-primary { background: #003da5; color: #fff; border-color: #003da5; }
+    .btn-primary:hover { background: #002d7a; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: #003da5; color: #fff; }
+    thead th { padding: 12px 14px; text-align: left; font-weight: 700; white-space: nowrap; }
+    tbody td { padding: 11px 14px; border-top: 1px solid #eef2f7; vertical-align: middle; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr.section-header td {
+      background: #f1f5f9; font-weight: 700; font-size: 12px;
+      text-transform: uppercase; letter-spacing: .5px; color: #475569;
+      padding: 8px 14px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 10px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-ok      { background: #d1fae5; color: #065f46; }
+    .badge-missing { background: #fee2e2; color: #991b1b; }
+    .badge-warn    { background: #fef3c7; color: #92400e; }
+    .badge-info    { background: #dbeafe; color: #1e40af; }
+
+    /* Progress bar */
+    .progress-wrap { background: #e2e8f0; border-radius: 8px; height: 10px; min-width: 80px; }
+    .progress-bar  { height: 10px; border-radius: 8px; transition: width .3s; }
+    .progress-bar.high   { background: #059669; }
+    .progress-bar.medium { background: #d97706; }
+    .progress-bar.low    { background: #e4002b; }
+
+    /* Detail panel */
+    .detail-panel {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+      margin-top: 8px; overflow: hidden;
+    }
+    .detail-section-header {
+      background: #e2e8f0; padding: 8px 14px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: #475569;
+    }
+    .detail-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .detail-field {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 14px; border-bottom: 1px solid #e2e8f0; font-size: 12.5px;
+    }
+    .detail-field:nth-child(even) { border-left: 1px solid #e2e8f0; }
+    .detail-field .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .detail-field .field-label { color: #64748b; font-weight: 600; }
+    .detail-field .field-value { color: #0f172a; word-break: break-all; }
+    .detail-field .field-value.empty { color: #94a3b8; font-style: italic; }
+
+    /* Filter bar */
+    .filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-bar input, .filter-bar select {
+      padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;
+      font-size: 13px; background: #fff;
+    }
+    .filter-bar input { flex: 1; min-width: 200px; }
+
+    /* Spinner */
+    .spinner-wrap { text-align: center; padding: 50px; color: #64748b; }
+    .spinner {
+      display: inline-block; width: 40px; height: 40px;
+      border: 4px solid #e2e8f0; border-top-color: #003da5;
+      border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alert */
+    .alert-error {
+      background: #fee2e2; border: 1px solid #fecaca; color: #991b1b;
+      padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px;
+    }
+
+    /* Expand toggle row */
+    tr.expandable { cursor: pointer; }
+    tr.expandable:hover td { background: #eff6ff !important; }
+    tr.expand-row td { padding: 0 !important; border-top: none; }
+    tr.expand-row .detail-panel { border-radius: 0; border-left: none; border-right: none; margin: 0; }
+
+    @media (max-width: 700px) {
+      .detail-fields { grid-template-columns: 1fr; }
+      .detail-field:nth-child(even) { border-left: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Banner -->
+  <div class="banner">
+    <img class="banner-logo"
+         src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
+         alt="Metro logo" />
+    <h3>Application Diagnostics</h3>
+    <p>Field coverage &amp; record completeness checker — MTIF Applications Table</p>
+  </div>
+
+  <div id="error_banner" class="alert-error" style="display:none;"></div>
+
+  <!-- Loading -->
+  <div id="loading" class="spinner-wrap">
+    <div class="spinner"></div>
+    <p>Loading diagnostic data...</p>
+  </div>
+
+  <!-- Main content (hidden until loaded) -->
+  <div id="main" style="display:none;">
+
+    <!-- Summary tiles -->
+    <div class="stat-grid" id="stat_grid"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('coverage')">Field Coverage</button>
+      <button class="tab-btn" onclick="switchTab('completeness')">Record Completeness</button>
+    </div>
+
+    <!-- Field Coverage Tab -->
+    <div id="tab_coverage" class="tab-panel active">
+      <div class="card">
+        <h2>Field Coverage — Form Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the fields defined in the application form against the columns returned by
+          <code>gettablefields</code>. A mismatch may mean a field name has drifted or
+          a DB column is missing.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="cov_search" placeholder="Search field name..." oninput="filterCoverage()">
+          <select id="cov_filter" onchange="filterCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+            <option value="db_only">In DB, not in form</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+    </div>
+
+    <!-- Record Completeness Tab -->
+    <div id="tab_completeness" class="tab-panel">
+      <div class="card">
+        <h2>Record Completeness — Per Application</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Merges data from both reports and checks which expected fields are populated for
+          each application. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="comp_search" placeholder="Search record ID or project name..." oninput="filterCompleteness()">
+          <select id="comp_filter" onchange="filterCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Project Name</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /container -->
+
+<script>
+(function () {
+  'use strict';
+
+  // ── API Config ────────────────────────────────────────────────
+  var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+  var API = {
+    baseURL:          IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+    tableKey:         'iw3twwkw2',
+    tableFieldsId:    'iw3twwkw2',
+    report1:          's3derd1q7',
+    report2:          'tn3omkcq4'
+  };
+
+  // ── Expected form fields ──────────────────────────────────────
+  var FORM_FIELDS = [
+    // Applicant / Jurisdiction
+    { name: 'jurisdiction_name',          label: 'Jurisdiction name',                     section: 'Applicant / Jurisdiction' },
+    { name: 'jurisdiction_mailing_address', label: 'Jurisdiction mailing address',         section: 'Applicant / Jurisdiction' },
+    { name: 'ceo_name',                   label: 'CEO name',                               section: 'Applicant / Jurisdiction' },
+    { name: 'ceo_title',                  label: 'CEO title',                              section: 'Applicant / Jurisdiction' },
+    { name: 'cfo_name',                   label: 'CFO name',                               section: 'Applicant / Jurisdiction' },
+    { name: 'cfo_title',                  label: 'CFO title',                              section: 'Applicant / Jurisdiction' },
+    { name: 'project_contact_name',       label: 'Project contact name',                   section: 'Applicant / Jurisdiction' },
+    { name: 'project_contact_phone',      label: 'Project contact phone',                  section: 'Applicant / Jurisdiction' },
+    { name: 'project_contact_email',      label: 'Project contact email',                  section: 'Applicant / Jurisdiction' },
+    { name: 'primary_applicant_email',    label: 'Primary applicant email',                section: 'Applicant / Jurisdiction' },
+    { name: 'applicant_role',             label: 'Applicant role',                         section: 'Applicant / Jurisdiction' },
+    // Project Header
+    { name: 'project_name',               label: 'Project name',                           section: 'Project Header' },
+    { name: 'project_description',        label: 'Project description',                    section: 'Project Header' },
+    { name: 'project_id',                 label: 'Project ID',                             section: 'Project Header' },
+    { name: 'year_project_funded',        label: 'Application year',                       section: 'Project Header' },
+    { name: 'date_of_project_award',      label: 'Date of project award',                  section: 'Project Header' },
+    { name: 'program_year_round',         label: 'Round',                                  section: 'Project Header' },
+    { name: 'program_year_display',       label: 'Program year',                           section: 'Project Header' },
+    { name: 'project_type_category',      label: 'Project type category',                  section: 'Project Header' },
+    { name: 'project_size_category',      label: 'Large vs small grant award category',    section: 'Project Header' },
+    // Location / Transit
+    { name: 'project_street_names',       label: 'Project street name(s)',                 section: 'Location / Transit' },
+    { name: 'municipality_township_county', label: 'Municipality / township / county',     section: 'Location / Transit' },
+    { name: 'project_limits_description', label: 'Project limits description',             section: 'Location / Transit' },
+    { name: 'vicinity_map_file',          label: 'Project vicinity map file',              section: 'Location / Transit' },
+    { name: 'project_lat_long',           label: 'Project latitude / longitude',           section: 'Location / Transit' },
+    { name: 'gis_shapefile',              label: 'GIS shapefile upload',                   section: 'Location / Transit' },
+    { name: 'nearest_fixed_route',        label: 'Identify nearest fixed route',           section: 'Location / Transit' },
+    { name: 'bus_trip_form',              label: 'BUS trip form upload',                   section: 'Location / Transit' },
+    { name: 'distance_to_transit_miles',  label: 'Distance to nearest fixed route (miles)', section: 'Location / Transit' },
+    { name: 'within_three_quarter_mile_transit', label: 'Within 3/4 mile of fixed route transit', section: 'Location / Transit' },
+    { name: 'weekday_transit_trip_count', label: 'Weekday fixed route trips count',        section: 'Location / Transit' },
+    { name: 'on_brt_corridor',            label: 'On BRT corridor',                        section: 'Location / Transit' },
+    { name: 'project_location_photos',    label: 'Project location photos upload',         section: 'Location / Transit' },
+    // Budget / Funding
+    { name: 'local_funds_budgeted',       label: 'Local funds budgeted (dollars)',         section: 'Budget / Funding' },
+    { name: 'mtif_funds_awarded',         label: 'SORTA MTIF funds awarded (dollars)',     section: 'Budget / Funding' },
+    { name: 'other_funds_budgeted',       label: 'Other funds budgeted (dollars)',         section: 'Budget / Funding' },
+    { name: 'total_project_budget',       label: 'Total project budget (dollars)',         section: 'Budget / Funding' },
+    { name: 'local_funds_share_pct',      label: 'Local funds share (%)',                  section: 'Budget / Funding' },
+    { name: 'mtif_funds_share_pct',       label: 'MTIF funds share (%)',                   section: 'Budget / Funding' },
+    { name: 'other_funds_share_pct',      label: 'Other funds share (%)',                  section: 'Budget / Funding' },
+    { name: 'max_grant_pct',              label: 'Max grant %',                            section: 'Budget / Funding' },
+    { name: 'multi_year_funding_years',   label: 'Multi-year project funding years (1–5)', section: 'Budget / Funding' },
+    { name: 'cost_estimate_file',         label: 'Detailed cost estimate file upload',     section: 'Budget / Funding' },
+    { name: 'construction_contingency_pct', label: 'Construction contingency %',           section: 'Budget / Funding' },
+    { name: 'useful_life_years',          label: 'Useful life estimate (years)',            section: 'Budget / Funding' },
+    { name: 'pe_license_file',            label: "Engineer's stamp / PE license file",     section: 'Budget / Funding' },
+    { name: 'certification_funds_file',   label: 'Certification of funds letter upload',   section: 'Budget / Funding' },
+    { name: 'authorizing_legislation_file', label: 'Authorizing legislation upload',       section: 'Budget / Funding' },
+    { name: 'cfo_certification_file',     label: 'CFO certification of local funds upload', section: 'Budget / Funding' },
+    // Schedule & ROW
+    { name: 'construction_award_date',    label: 'Construction award date',                section: 'Schedule & ROW' },
+    { name: 'anticipated_start_date',     label: 'Anticipated construction start date',    section: 'Schedule & ROW' },
+    { name: 'anticipated_completion_date', label: 'Anticipated construction completion date', section: 'Schedule & ROW' },
+    { name: 'start_within_one_year_flag', label: 'Construction start within 1 year',       section: 'Schedule & ROW' },
+    { name: 'row_status',                 label: 'Right-of-way status',                    section: 'Schedule & ROW' },
+    { name: 'design_engineering_status',  label: 'Design / engineering status',            section: 'Schedule & ROW' },
+    // Scoring / Criteria
+    { name: 'physical_condition_narrative',  label: 'Physical condition narrative',        section: 'Scoring / Criteria' },
+    { name: 'safety_issues_narrative',       label: 'Safety issues narrative',             section: 'Scoring / Criteria' },
+    { name: 'economic_growth_narrative',     label: 'Economic growth / connectivity narrative', section: 'Scoring / Criteria' },
+    { name: 'regional_impact_narrative',     label: 'Regional impact narrative',           section: 'Scoring / Criteria' },
+    { name: 'transit_impact_narrative',      label: 'Transit impact narrative',            section: 'Scoring / Criteria' },
+    { name: 'multimodal_infrastructure_details', label: 'Multimodal infrastructure details', section: 'Scoring / Criteria' },
+    { name: 'sustainability_measures',       label: 'Sustainability measures checklist',   section: 'Scoring / Criteria' },
+    // Submission
+    { name: 'certification',              label: 'Certification',                          section: 'Submission' },
+    { name: 'signature',                  label: 'Signature',                              section: 'Submission' },
+    { name: 'signer_title',               label: 'Signer title',                           section: 'Submission' },
+    { name: 'signature_date',             label: 'Signature date',                         section: 'Submission' },
+    { name: 'submit_acknowledgment',      label: 'Submit acknowledgment',                  section: 'Submission' }
+  ];
+
+  // ── Token helpers ─────────────────────────────────────────────
+  function bootstrapToken() {
+    var enc = '';
+    try { enc = localStorage.getItem('token') || ''; } catch(_) { return ''; }
+    if (!enc || typeof CryptoJS === 'undefined') return '';
+    try {
+      var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+      if (!dec) return '';
+      try { var j = JSON.parse(dec); if (j && j.access_token) return j.access_token; } catch(_){}
+      return dec.trim();
+    } catch(_) { return ''; }
+  }
+
+  function headers(token) {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  }
+
+  // ── Normalise for fuzzy matching ──────────────────────────────
+  function norm(s) {
+    return (s || '').toLowerCase().replace(/[\s_\-\/()%.,'&]/g, '');
+  }
+
+  // ── API calls ─────────────────────────────────────────────────
+  function getTableFields(token) {
+    return fetch(API.baseURL + '/api/Report/gettablefields?id=' + API.tableFieldsId, {
+      method: 'GET',
+      headers: headers(token)
+    }).then(function(r) {
+      if (!r.ok) throw new Error('gettablefields ' + r.status);
+      return r.json();
+    });
+  }
+
+  function queryReport(token, reportId) {
+    return fetch(API.baseURL + '/api/Report/queryreport', {
+      method: 'POST',
+      headers: headers(token),
+      body: JSON.stringify({ ReportId: reportId, Filters: [] })
+    }).then(function(r) {
+      if (!r.ok) throw new Error('queryreport ' + reportId + ' ' + r.status);
+      return r.json();
+    }).then(function(result) {
+      return Array.isArray(result) ? result : (result.data || result.Data || []);
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function getRecordId(row) {
+    if (row.id !== undefined) return String(row.id);
+    for (var k in row) {
+      var kn = k.toLowerCase().replace(/[\s_]/g,'');
+      if (kn === 'recordid' || kn === 'id' || kn === 'rid') return String(row[k]);
+    }
+    return '';
+  }
+
+  function getFieldValue(row, fieldName) {
+    // Try exact, then normalised match
+    if (row[fieldName] !== undefined) return row[fieldName];
+    var n = norm(fieldName);
+    for (var k in row) {
+      if (norm(k) === n) return row[k];
+    }
+    return null;
+  }
+
+  function isPopulated(v) {
+    if (v === null || v === undefined) return false;
+    if (typeof v === 'string') return v.trim() !== '';
+    if (typeof v === 'number') return !isNaN(v);
+    return true;
+  }
+
+  function mergeRows(rows1, rows2) {
+    var byId = {};
+    rows1.forEach(function(r) {
+      var id = getRecordId(r);
+      if (id) byId[id] = Object.assign({}, r);
+    });
+    rows2.forEach(function(r) {
+      var id = getRecordId(r);
+      if (!id) return;
+      if (byId[id]) { Object.assign(byId[id], r); }
+      else           { byId[id] = Object.assign({}, r); }
+    });
+    return Object.values(byId);
+  }
+
+  function completenessOf(record) {
+    var results = FORM_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section,
+               value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  // ── Render helpers ────────────────────────────────────────────
+  function pctClass(p) {
+    return p >= 80 ? 'high' : p >= 40 ? 'medium' : 'low';
+  }
+
+  function progressBar(pct) {
+    return '<div class="progress-wrap"><div class="progress-bar ' + pctClass(pct) + '" style="width:' + pct + '%"></div></div>';
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Global state ──────────────────────────────────────────────
+  var allCoverageRows = [];
+  var allCompletenessRows = [];
+  var expandedRows = {};
+
+  // ── Render: Field Coverage ────────────────────────────────────
+  function renderCoverage(dbFields) {
+    // Build normalised set of DB field names
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) {
+        if (n) dbNorm[norm(n)] = n;
+      });
+    });
+
+    // Match each form field
+    var rows = FORM_FIELDS.map(function(f) {
+      var n = norm(f.name);
+      var matched = dbNorm[n] || null;
+      // Also try label-based match
+      if (!matched) {
+        var nl = norm(f.label);
+        matched = dbNorm[nl] || null;
+      }
+      return { field: f, matched: matched };
+    });
+    allCoverageRows = rows;
+
+    // DB-only columns (in DB but not matched to any form field)
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    // Stats
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    var unmatched = rows.length - matched;
+    document.getElementById('stat_grid').innerHTML =
+      statTile(dbFields.length, 'DB Columns', 'blue') +
+      statTile(rows.length, 'Form Fields', 'blue') +
+      statTile(matched, 'Matched', 'green') +
+      statTile(unmatched, 'Not in DB', 'red') +
+      statTile(dbOnly.length, 'DB Only (extra)', 'amber');
+
+    // DB-only section
+    var dbOnlyHtml = '';
+    if (dbOnly.length > 0) {
+      dbOnlyHtml = '<div style="margin-top:8px;"><h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#0f172a;">DB Columns Not Mapped to Any Form Field (' + dbOnly.length + ')</h3>';
+      dbOnlyHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      dbOnly.forEach(function(f) {
+        var name = f.fieldName || f.name || f.label || f.FieldName || f.Name || JSON.stringify(f);
+        dbOnlyHtml += '<span style="background:#fef9c3;border:1px solid #fde68a;color:#78350f;border-radius:6px;padding:3px 9px;font-size:12px;font-family:monospace;">' + esc(name) + '</span>';
+      });
+      dbOnlyHtml += '</div></div>';
+    }
+    document.getElementById('coverage_db_only').innerHTML = dbOnlyHtml;
+
+    filterCoverage();
+  }
+
+  function filterCoverage() {
+    var search = (document.getElementById('cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('cov_filter').value;
+
+    var visible = allCoverageRows.filter(function(r) {
+      var matchText = !search ||
+        r.field.name.toLowerCase().includes(search) ||
+        r.field.label.toLowerCase().includes(search) ||
+        r.field.section.toLowerCase().includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'    &&  r.matched) ||
+        (filter === 'form_only'  && !r.matched) ||
+        (filter === 'db_only'    && false); // db_only shown separately
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('coverage_tbody');
+    var html = '';
+    var lastSection = '';
+    visible.forEach(function(r) {
+      if (r.field.section !== lastSection) {
+        lastSection = r.field.section;
+        html += '<tr class="section-header"><td colspan="4">' + esc(r.field.section) + '</td></tr>';
+      }
+      var inDb = r.matched
+        ? '<span class="badge badge-ok">✓ Yes</span>'
+        : '<span class="badge badge-missing">✗ No</span>';
+      var matched = r.matched
+        ? '<code style="font-size:11px;color:#059669;">' + esc(r.matched) + '</code>'
+        : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+      html += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(r.field.section) + '</td>' +
+        '<td><code style="font-size:12px;">' + esc(r.field.name) + '</code><br>' +
+             '<span style="font-size:11px;color:#94a3b8;">' + esc(r.field.label) + '</span></td>' +
+        '<td>' + inDb + '</td>' +
+        '<td>' + matched + '</td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No matching fields</td></tr>';
+  }
+
+  // ── Render: Record Completeness ───────────────────────────────
+  function renderCompleteness(merged) {
+    allCompletenessRows = merged.map(function(record) {
+      var rid = getRecordId(record);
+      var name = getFieldValue(record, 'project name') || getFieldValue(record, 'project_name') || '(unnamed)';
+      var comp = completenessOf(record);
+      return { rid: rid, name: name, record: record, comp: comp };
+    }).filter(function(r){ return r.rid; })
+      .sort(function(a,b){ return Number(b.rid) - Number(a.rid); });
+
+    filterCompleteness();
+  }
+
+  function filterCompleteness() {
+    var search  = (document.getElementById('comp_search').value || '').toLowerCase();
+    var filter  = document.getElementById('comp_filter').value;
+
+    var visible = allCompletenessRows.filter(function(r) {
+      var matchText = !search ||
+        r.rid.includes(search) ||
+        String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      var badgeCls = p >= 80 ? 'badge-ok' : p >= 40 ? 'badge-warn' : 'badge-missing';
+      html += '<tr class="expandable" onclick="toggleExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="chevron_' + esc(r.rid) + '">▶</span></td>' +
+        '</tr>' +
+        '<tr class="expand-row" id="expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildDetailHtml(r) + '</div></td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No records found</td></tr>';
+  }
+
+  function buildDetailHtml(r) {
+    var sections = {};
+    r.comp.fields.forEach(function(f) {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    var html = '';
+    Object.keys(sections).forEach(function(sec) {
+      html += '<div class="detail-section-header">' + esc(sec) + '</div>';
+      html += '<div class="detail-fields">';
+      sections[sec].forEach(function(f) {
+        var icon = f.populated ? '✅' : '❌';
+        var valDisplay = f.populated
+          ? '<span class="field-value">' + esc(String(f.value).substring(0, 120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+          : '<span class="field-value empty">empty</span>';
+        html += '<div class="detail-field">' +
+          '<span class="icon">' + icon + '</span>' +
+          '<div>' +
+            '<div class="field-label">' + esc(f.label) + '</div>' +
+            valDisplay +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function toggleExpand(rid) {
+    var row  = document.getElementById('expand_' + rid);
+    var chev = document.getElementById('chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display   = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  // ── Tab switcher ──────────────────────────────────────────────
+  function switchTab(name) {
+    ['coverage','completeness'].forEach(function(t) {
+      document.getElementById('tab_' + t).classList.toggle('active', t === name);
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b, i) {
+      b.classList.toggle('active', ['coverage','completeness'][i] === name);
+    });
+  }
+
+  // ── Export CSV ────────────────────────────────────────────────
+  function exportCsv() {
+    var rows = [['Record ID', 'Project Name', 'Completeness %', 'Populated', 'Empty'].concat(
+      FORM_FIELDS.map(function(f){ return f.label; })
+    )];
+    allCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'mtif_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Stat tile ─────────────────────────────────────────────────
+  function statTile(n, label, color) {
+    return '<div class="stat-tile ' + color + '"><div class="stat-num">' + n + '</div><div class="stat-label">' + label + '</div></div>';
+  }
+
+  // ── Init ──────────────────────────────────────────────────────
+  function showError(msg) {
+    var el = document.getElementById('error_banner');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function init() {
+    var token = bootstrapToken();
+    if (!token) {
+      document.getElementById('loading').style.display = 'none';
+      showError('Not authenticated — please log in via the SORTA portal first.');
+      return;
+    }
+
+    Promise.all([
+      getTableFields(token),
+      queryReport(token, API.report1),
+      queryReport(token, API.report2)
+    ]).then(function(results) {
+      var dbFields = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || [results[0]]);
+      var rows1    = results[1];
+      var rows2    = results[2];
+
+      console.log('[Diag] DB fields:', dbFields.length, 'R1 rows:', rows1.length, 'R2 rows:', rows2.length);
+      if (dbFields.length > 0) console.log('[Diag] Sample DB field:', JSON.stringify(dbFields[0]));
+      if (rows1.length > 0) console.log('[Diag] Sample R1 keys:', Object.keys(rows1[0]));
+      if (rows2.length > 0) console.log('[Diag] Sample R2 keys:', Object.keys(rows2[0]));
+
+      var merged = mergeRows(rows1, rows2);
+      console.log('[Diag] Merged records:', merged.length);
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('main').style.display    = 'block';
+
+      renderCoverage(dbFields);
+      renderCompleteness(merged);
+    }).catch(function(err) {
+      console.error('[Diag] Error:', err);
+      document.getElementById('loading').style.display = 'none';
+      showError('Error loading diagnostic data: ' + err.message);
+    });
+  }
+
+  // Expose globals for inline event handlers
+  window.switchTab      = switchTab;
+  window.filterCoverage = filterCoverage;
+  window.filterCompleteness = filterCompleteness;
+  window.toggleExpand   = toggleExpand;
+  window.exportCsv      = exportCsv;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>

@@ -464,20 +464,12 @@
         <div class="sorta-filters-grid">
           <div class="sorta-filter-group">
             <label for="filter_search">Search</label>
-            <input type="text" id="filter_search" placeholder="Project name, jurisdiction..." />
+            <input type="text" id="filter_search" placeholder="Project name, created by..." />
           </div>
           <div class="sorta-filter-group">
-            <label for="filter_status">Status</label>
-            <select id="filter_status">
-              <option value="">All Statuses</option>
-              <option value="Draft">Draft</option>
-              <option value="Submitted">Submitted</option>
-            </select>
-          </div>
-          <div class="sorta-filter-group">
-            <label for="filter_jurisdiction">Jurisdiction</label>
-            <select id="filter_jurisdiction">
-              <option value="">All Jurisdictions</option>
+            <label for="filter_project_type">Project Type</label>
+            <select id="filter_project_type">
+              <option value="">All Types</option>
             </select>
           </div>
           <div class="sorta-filter-group">
@@ -503,10 +495,13 @@
               <thead>
                 <tr>
                   <th>Record ID</th>
-                  <th>Jurisdiction</th>
                   <th>Project Name</th>
+                  <th>Project Description</th>
                   <th>Project ID</th>
-                  <th>Status</th>
+                  <th>Year Funded</th>
+                  <th>Program Year</th>
+                  <th>Project Type</th>
+                  <th>Project Size</th>
                   <th>Created By</th>
                   <th>Actions</th>
                 </tr>
@@ -541,7 +536,7 @@
     var API_CONFIG = {
       baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
       applicationTableKey: 'iw3twwkw2',
-      applicationsReportId: 'tn3omkcq4',
+      applicationsReportId: 's3derd1q7',
       evaluatorTableKey: 'xrglb4cg4',
       evaluatorReportId: 'aqjsnp6w4'
     };
@@ -720,23 +715,18 @@
 
     function filterAndRender() {
       var search = ($('filter_search').value || '').toLowerCase();
-      var statusFilter = $('filter_status').value;
-      var jurFilter = $('filter_jurisdiction').value;
+      var typeFilter = $('filter_project_type').value;
 
       var filtered = allApplications.filter(function(app) {
         if (search) {
-          var projName = (extractFieldValue(app, 'project_name') || '').toLowerCase();
-          var jurisd = (extractFieldValue(app, 'jurisdiction_name') || '').toLowerCase();
-          var creator = (extractFieldValue(app, 'createdby') || extractFieldValue(app, 'Created By') || '').toLowerCase();
-          if (!projName.includes(search) && !jurisd.includes(search) && !creator.includes(search)) return false;
+          var projName = (extractFieldValue(app, 'project name') || '').toLowerCase();
+          var projDesc = (extractFieldValue(app, 'project description') || '').toLowerCase();
+          var creator = (extractFieldValue(app, 'Created By') || '').toLowerCase();
+          if (!projName.includes(search) && !projDesc.includes(search) && !creator.includes(search)) return false;
         }
-        if (statusFilter) {
-          var st = extractFieldValue(app, 'status') || 'Draft';
-          if (st !== statusFilter) return false;
-        }
-        if (jurFilter) {
-          var jn = extractFieldValue(app, 'jurisdiction_name') || '';
-          if (jn !== jurFilter) return false;
+        if (typeFilter) {
+          var pt = extractFieldValue(app, 'project type category') || '';
+          if (pt !== typeFilter) return false;
         }
         return true;
       });
@@ -747,29 +737,22 @@
 
     function updateMetrics(rows) {
       var total = rows.length;
-      var submitted = 0;
-      var draft = 0;
-      rows.forEach(function(app) {
-        var st = (extractFieldValue(app, 'status') || '').toLowerCase();
-        if (st.includes('submit')) submitted++;
-        else draft++;
-      });
       $('metric_total').textContent = total;
-      $('metric_submitted').textContent = submitted;
-      $('metric_draft').textContent = draft;
+      $('metric_submitted').textContent = '-';
+      $('metric_draft').textContent = '-';
     }
 
-    function populateJurisdictionFilter(rows) {
-      var jurisdictions = {};
+    function populateProjectTypeFilter(rows) {
+      var types = {};
       rows.forEach(function(app) {
-        var j = extractFieldValue(app, 'jurisdiction_name');
-        if (j) jurisdictions[j] = true;
+        var t = extractFieldValue(app, 'project type category');
+        if (t) types[t] = true;
       });
-      var sel = $('filter_jurisdiction');
-      Object.keys(jurisdictions).sort().forEach(function(j) {
+      var sel = $('filter_project_type');
+      Object.keys(types).sort().forEach(function(t) {
         var opt = document.createElement('option');
-        opt.value = j;
-        opt.textContent = j;
+        opt.value = t;
+        opt.textContent = t;
         sel.appendChild(opt);
       });
     }
@@ -794,20 +777,26 @@
       tbody.innerHTML = '';
 
       sorted.forEach(function(row) {
-        var rid = getRecordId(row);
-        var jurisd = extractFieldValue(row, 'jurisdiction_name') || '-';
-        var projName = extractFieldValue(row, 'project_name') || '-';
-        var projId = extractFieldValue(row, 'project_id') || '-';
-        var status = extractFieldValue(row, 'status') || 'Draft';
-        var creator = extractFieldValue(row, 'createdby') || extractFieldValue(row, 'Created By') || '-';
+        var rid       = getRecordId(row);
+        var projName  = extractFieldValue(row, 'project name') || '-';
+        var projDesc  = extractFieldValue(row, 'project description') || '-';
+        var projId    = extractFieldValue(row, 'project id') || '-';
+        var yearFund  = extractFieldValue(row, 'year project funded') || extractFieldValue(row, 'application year') || '-';
+        var progYear  = extractFieldValue(row, 'program year round') || extractFieldValue(row, 'program year') || '-';
+        var projType  = extractFieldValue(row, 'project type category') || '-';
+        var projSize  = extractFieldValue(row, 'project size category') || '-';
+        var creator   = extractFieldValue(row, 'Created By') || '-';
 
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td>' + (rid || '-') + '</td>' +
-          '<td>' + jurisd + '</td>' +
           '<td><strong>' + projName + '</strong></td>' +
+          '<td>' + projDesc + '</td>' +
           '<td>' + projId + '</td>' +
-          '<td>' + getStatusBadge(status) + '</td>' +
+          '<td>' + yearFund + '</td>' +
+          '<td>' + progYear + '</td>' +
+          '<td>' + projType + '</td>' +
+          '<td>' + projSize + '</td>' +
           '<td>' + creator + '</td>' +
           '<td>' +
             '<button class="sorta-button sorta-button-small sorta-button-evaluate" data-rid="' + rid + '">Evaluate</button>' +
@@ -853,7 +842,7 @@
               console.log('[EVAL-LANDING] Loaded', rows.length, 'applications');
               allApplications = rows;
               $('eval_table_loading').style.display = 'none';
-              populateJurisdictionFilter(rows);
+              populateProjectTypeFilter(rows);
               filterAndRender();
             });
           });
@@ -866,12 +855,10 @@
     }
 
     $('filter_search').addEventListener('input', filterAndRender);
-    $('filter_status').addEventListener('change', filterAndRender);
-    $('filter_jurisdiction').addEventListener('change', filterAndRender);
+    $('filter_project_type').addEventListener('change', filterAndRender);
     $('clear_filters_btn').addEventListener('click', function() {
       $('filter_search').value = '';
-      $('filter_status').value = '';
-      $('filter_jurisdiction').value = '';
+      $('filter_project_type').value = '';
       filterAndRender();
     });
 

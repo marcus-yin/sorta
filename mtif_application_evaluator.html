@@ -593,6 +593,9 @@
     evalAssignmentReportId: 'n7r13epq2',
     scoringWeightsTableKey: 'hhdlqrhq3',
     scoringWeightsReportId: 'qks5wukq5',
+    scoringDataReport1: '1ko0gu0g8',
+    scoringDataReport2: 'hol4pvng1',
+    scoringDataReport3: 'bgjvkccw7',
     notificationsTableKey: 'ia2vnshw7',
     notificationsReportId: '48keiqwa8',
     notificationsSubjectFieldKey: 'YOUR_NOTIFICATIONS_SUBJECT_FIELD_KEY_HERE',
@@ -1971,17 +1974,40 @@
 
           Promise.all(reports.concat([weightsReady])).then(function() {
             console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
+
+            // Load scoring criteria narratives (applicant-entered text)
             queryReport(token, API_CONFIG.applicationsReportId).then(function(rows) {
               populateFromReport(rows, recordId, SC_COL_TO_FORM);
-              for (var i = 0; i < rows.length; i++) {
-                if (String(rows[i].id || rows[i].Rid || '') === String(recordId)) {
-                  populateWeightedScoring(rows[i]);
-                  break;
-                }
+            }).catch(function(err) {
+              console.warn('[EVAL] Could not load scoring criteria narratives:', err);
+            });
+
+            // Load weighted scoring data from three reports, merge by record ID
+            Promise.all([
+              queryReport(token, API_CONFIG.scoringDataReport1),
+              queryReport(token, API_CONFIG.scoringDataReport2),
+              queryReport(token, API_CONFIG.scoringDataReport3)
+            ]).then(function(results) {
+              var merged = {};
+              results.forEach(function(rows) {
+                rows.forEach(function(row) {
+                  var id = String(row.id || row.Rid || '');
+                  if (!id) return;
+                  if (!merged[id]) merged[id] = {};
+                  Object.assign(merged[id], row);
+                });
+              });
+              var mergedRow = merged[String(recordId)];
+              if (mergedRow) {
+                console.log('[EVAL] Populating weighted scoring from merged reports');
+                populateWeightedScoring(mergedRow);
+              } else {
+                console.warn('[EVAL] No scoring data found for record', recordId);
               }
             }).catch(function(err) {
               console.warn('[EVAL] Could not load weighted scoring data:', err);
             });
+
           }).catch(function(err) {
             console.warn('[EVAL] Some reports failed to load:', err);
           });
