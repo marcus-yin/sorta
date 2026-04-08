@@ -887,10 +887,10 @@
         FieldsList: [
           { Name: 'subject',   Value: subject },
           { Name: 'message',   Value: message },
-          { Name: 'sender',    Value: senderVal },
-          { Name: 'to',        Value: toVal || '' },
-          { Name: 'from',      Value: fromVal || '' },
-          { Name: 'direction', Value: direction }
+          { Name: 'sender',       Value: senderVal },
+          { Name: 'to_recipient', Value: toVal || '' },
+          { Name: 'from_sender',  Value: fromVal || '' },
+          { Name: 'direction',    Value: direction }
         ]
       };
 
@@ -1013,8 +1013,8 @@
       sorted.forEach(function (row) {
         var rid = getRecordId(row);
         var subject = extractFieldValue(row, 'subject') || '(no subject)';
-        var fromVal = extractFieldValue(row, 'from') || determineSender(row);
-        var toVal = extractFieldValue(row, 'to') || '-';
+        var fromVal = extractFieldValue(row, 'from_sender') || determineSender(row);
+        var toVal = extractFieldValue(row, 'to_recipient') || '-';
         var direction = determineDirection(row);
         var appRef = extractFieldValue(row, 'related_application') || extractFieldValue(row, 'related application') || '-';
         var createdDate = extractFieldValue(row, 'Created Date') || extractFieldValue(row, 'createddate') || extractFieldValue(row, 'created_date') || '';
@@ -1047,8 +1047,8 @@
     function openDetail(row) {
       var rid = getRecordId(row);
       var subject = extractFieldValue(row, 'subject') || '(no subject)';
-      var fromVal = extractFieldValue(row, 'from') || determineSender(row);
-      var toVal = extractFieldValue(row, 'to') || '-';
+      var fromVal = extractFieldValue(row, 'from_sender') || determineSender(row);
+      var toVal = extractFieldValue(row, 'to_recipient') || '-';
       var direction = determineDirection(row);
       var body = extractFieldValue(row, 'message') || '';
       var appRef = extractFieldValue(row, 'related_application') || extractFieldValue(row, 'related application') || '';
