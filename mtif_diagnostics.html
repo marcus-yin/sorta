@@ -432,17 +432,19 @@
     if (row.id !== undefined) return String(row.id);
     for (var k in row) {
       var kn = k.toLowerCase().replace(/[\s_]/g,'');
-      if (kn === 'recordid' || kn === 'id' || kn === 'rid') return String(row[k]);
+      if (kn === 'recordid' || kn === 'id' || kn === 'rid' || kn.endsWith('recordid')) return String(row[k]);
     }
     return '';
   }
 
   function getFieldValue(row, fieldName) {
-    // Try exact, then normalised match
     if (row[fieldName] !== undefined) return row[fieldName];
-    var n = norm(fieldName);
+    // Normalize: strip spaces and underscores only (mirrors application extractFieldValue)
+    var n = fieldName.toLowerCase().replace(/[\s_]/g, '');
     for (var k in row) {
-      if (norm(k) === n) return row[k];
+      var kn = k.toLowerCase().replace(/[\s_]/g, '');
+      // Use endsWith to handle API-prefixed keys like tbl_iw3twwkw2_field_name
+      if (kn === n || kn.endsWith(n)) return row[k];
     }
     return null;
   }
@@ -756,7 +758,13 @@
 
         var merged = mergeAllRows(allRowArrays);
         console.log('[Diag] Merged records:', merged.length);
-        if (merged.length > 0) console.log('[Diag] Sample merged keys:', Object.keys(merged[0]).slice(0, 10).join(', '));
+        if (merged.length > 0) {
+          var sampleKeys = Object.keys(merged[0]);
+          console.log('[Diag] Sample merged record has', sampleKeys.length, 'keys:', sampleKeys.join(', '));
+          // Log a specific record for debugging if needed
+          var sample110 = merged.find(function(r){ return getRecordId(r) === '110'; });
+          if (sample110) console.log('[Diag] Record 110 keys:', Object.keys(sample110).join(', '));
+        }
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('main').style.display    = 'block';
