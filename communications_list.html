@@ -860,15 +860,22 @@
       var payload = {
         ApplicationTableKey: tableKey,
         FieldsList: [
-          { Key: API_CONFIG.subjectFieldKey, Name: 'subject', Value: subject },
-          { Key: API_CONFIG.messageFieldKey, Name: 'message', Value: message },
-          { Key: API_CONFIG.relatedApplicationFieldKey, Name: 'related_application', Value: String(applicationRid || '') },
-          { Key: API_CONFIG.senderFieldKey, Name: 'sender', Value: senderVal },
-          { Key: API_CONFIG.toFieldKey, Name: 'to', Value: toVal || '' },
-          { Key: API_CONFIG.fromFieldKey, Name: 'from', Value: fromVal || '' },
-          { Key: API_CONFIG.directionFieldKey, Name: 'direction', Value: direction }
+          { Name: 'subject',   Value: subject },
+          { Name: 'message',   Value: message },
+          { Name: 'sender',    Value: senderVal },
+          { Name: 'to',        Value: toVal || '' },
+          { Name: 'from',      Value: fromVal || '' },
+          { Name: 'direction', Value: direction }
         ]
       };
+
+      // Only include the relationship link when we have a real application ID
+      if (applicationRid) {
+        var relKey = API_CONFIG.relatedApplicationFieldKey;
+        var relEntry = { Name: 'related_application', Value: String(applicationRid) };
+        if (relKey && relKey.indexOf('YOUR_') !== 0) relEntry.Key = relKey;
+        payload.FieldsList.push(relEntry);
+      }
 
       return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
         method: 'POST',
