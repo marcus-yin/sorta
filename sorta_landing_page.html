@@ -498,7 +498,6 @@
                 <th>Program Year Round</th>
                 <th>Project Type</th>
                 <th>Project Size</th>
-                <th>Emergency</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -824,7 +823,6 @@
         var progYear  = extractFieldValue(app, 'program year round') || '-';
         var projType  = extractFieldValue(app, 'project type category') || '-';
         var projSize  = extractFieldValue(app, 'project size category') || '-';
-        var emergency = extractFieldValue(app, 'emergency project flag') || '-';
 
         var tr = document.createElement('tr');
         tr.innerHTML =
@@ -837,7 +835,6 @@
           '<td>' + progYear + '</td>' +
           '<td>' + projType + '</td>' +
           '<td>' + projSize + '</td>' +
-          '<td>' + emergency + '</td>' +
           '<td class="sorta-actions-cell">' +
             '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">Edit</button>' +
             '<button class="sorta-button-child" data-action="reimbursement" data-rid="' + rid + '">Reimbursement</button>' +
