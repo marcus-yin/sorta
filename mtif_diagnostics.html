@@ -180,7 +180,7 @@
          src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
          alt="Metro logo" />
     <h3>Application Diagnostics</h3>
-    <p>Field coverage &amp; record completeness checker — MTIF Applications Table</p>
+    <p>Field coverage &amp; record completeness checker — MTIF Applications &amp; Reimbursement Tables</p>
   </div>
 
   <div id="error_banner" class="alert-error" style="display:none;"></div>
@@ -201,6 +201,7 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('coverage')">Field Coverage</button>
       <button class="tab-btn" onclick="switchTab('completeness')">Record Completeness</button>
+      <button class="tab-btn" onclick="switchTab('reimbursement')">Reimbursement Form</button>
     </div>
 
     <!-- Field Coverage Tab -->
@@ -273,6 +274,158 @@
         </div>
       </div>
     </div>
+
+    <!-- Reimbursement Form Tab -->
+    <div id="tab_reimbursement" class="tab-panel">
+
+      <!-- Loading spinner (shown while fetching reimb data) -->
+      <div id="reimb_loading" class="spinner-wrap" style="display:none;">
+        <div class="spinner"></div>
+        <p>Loading reimbursement diagnostic data...</p>
+      </div>
+
+      <!-- Not-yet-loaded prompt -->
+      <div id="reimb_prompt" class="card" style="text-align:center;padding:40px;color:#64748b;">
+        <p style="font-size:15px;font-weight:600;margin-bottom:6px;">Reimbursement Form Diagnostics</p>
+        <p style="font-size:13px;">Data will load automatically when this tab is opened.</p>
+      </div>
+
+      <!-- Stat tiles (hidden until loaded) -->
+      <div class="stat-grid" id="reimb_stat_grid" style="display:none;"></div>
+
+      <!-- Field Coverage Card -->
+      <div id="reimb_coverage_card" class="card" style="display:none;">
+        <h2>Field Coverage — Reimbursement Form Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the fields defined in <code>request_reimbursement.html</code> against the columns
+          returned by <code>gettablefields</code> for the reimbursement table. A mismatch may mean
+          a field name has drifted or a DB column is missing.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="reimb_cov_search" placeholder="Search field name..." oninput="filterReimbCoverage()">
+          <select id="reimb_cov_filter" onchange="filterReimbCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="reimb_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="reimb_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Record Completeness Card -->
+      <div id="reimb_completeness_card" class="card" style="display:none;">
+        <h2>Record Completeness — Per Reimbursement Request</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Merges data from all reimbursement section reports and checks which expected fields are
+          populated for each reimbursement record. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="reimb_comp_search" placeholder="Search record ID or project name..." oninput="filterReimbCompleteness()">
+          <select id="reimb_comp_filter" onchange="filterReimbCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportReimbCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Project Name</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="reimb_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Invoice Field Coverage Card -->
+      <div id="reimb_invoice_coverage_card" class="card" style="display:none;">
+        <h2>Invoice Field Coverage — Invoice Form Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the invoice line-item fields against the columns returned by
+          <code>gettablefields</code> for the invoice child table (<code>hiymfudg8</code>).
+        </p>
+        <div class="stat-grid" id="reimb_invoice_stat_grid" style="margin-bottom:16px;"></div>
+        <div class="filter-bar">
+          <input type="text" id="inv_cov_search" placeholder="Search field name..." oninput="filterInvoiceCoverage()">
+          <select id="inv_cov_filter" onchange="filterInvoiceCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="inv_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="inv_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Invoice Records Completeness Card -->
+      <div id="reimb_invoice_completeness_card" class="card" style="display:none;">
+        <h2>Invoice Record Completeness — Per Invoice Line Item</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Checks which expected fields are populated for each invoice record in report
+          <code>1xf3fhxg8</code>. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="inv_comp_search" placeholder="Search record ID or invoice #..." oninput="filterInvoiceCompleteness()">
+          <select id="inv_comp_filter" onchange="filterInvoiceCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportInvoiceCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Invoice #</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="inv_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab_reimbursement -->
 
   </div><!-- /main -->
 </div><!-- /container -->
@@ -381,6 +534,71 @@
     { name: 'submit_acknowledgment',      label: 'Submit acknowledgment',                  section: 'Submission' }
   ];
 
+  // ── Reimbursement form fields ─────────────────────────────────
+  var REIMB_FORM_FIELDS = [
+    // Record Information
+    { name: 'related_applications',    label: 'Related Application ID',              section: 'Record Information' },
+    // Applicant Information
+    { name: 'applicant_name',          label: 'Name',                                section: 'Applicant Information' },
+    { name: 'street_address',          label: 'Street Address',                      section: 'Applicant Information' },
+    { name: 'city_state_zip',          label: 'City, State, Zip',                    section: 'Applicant Information' },
+    { name: 'email',                   label: 'Email',                               section: 'Applicant Information' },
+    { name: 'phone',                   label: 'Phone Number',                        section: 'Applicant Information' },
+    // Type of Request
+    { name: 'request_type',            label: 'Request Type (Final / Partial)',       section: 'Type of Request' },
+    { name: 'project_name',            label: 'Project Name',                        section: 'Type of Request' },
+    { name: 'contractor',              label: 'Contractor / Subcontractor(s)',        section: 'Type of Request' },
+    { name: 'project_id',              label: 'Project ID #',                        section: 'Type of Request' },
+    // Project Timeline
+    { name: 'start_date',              label: 'Start Date',                          section: 'Project Timeline' },
+    { name: 'end_date',                label: 'End / Completion Date',               section: 'Project Timeline' },
+    { name: 'total_days',              label: 'Total # Days',                        section: 'Project Timeline' },
+    // Project Cost
+    { name: 'grant_awarded',           label: 'Amount of Grant Awarded',             section: 'Project Cost' },
+    { name: 'request_amount',          label: 'Reimbursement Request Amount',        section: 'Project Cost' },
+    { name: 'current_balance',         label: 'Current Balance',                     section: 'Project Cost' },
+    { name: 'request_date',            label: 'Date of Request',                     section: 'Project Cost' },
+    { name: 'work_completed',          label: 'Work Completed (%)',                  section: 'Project Cost' },
+    // Summary
+    { name: 'total_invoice_amount',    label: 'Total Invoice Amount',                section: 'Summary' },
+    { name: 'amount_requested',        label: 'Amount Requested (this submission)',  section: 'Summary' },
+    { name: 'summary_notes',           label: 'Notes',                               section: 'Summary' },
+    // Certification
+    { name: 'applicant_officer',       label: 'Applicant / Authorized Officer',      section: 'Certification' },
+    { name: 'applicant_title',         label: 'Applicant Title',                     section: 'Certification' },
+    { name: 'applicant_signature',     label: 'Applicant Signature (typed)',         section: 'Certification' },
+    { name: 'applicant_date',          label: 'Applicant Date',                      section: 'Certification' },
+    { name: 'sorta_officer',           label: 'SORTA Authorized Officer',            section: 'Certification' },
+    { name: 'sorta_title',             label: 'SORTA Title',                         section: 'Certification' },
+    { name: 'sorta_signature',         label: 'SORTA Signature (typed)',             section: 'Certification' },
+    { name: 'sorta_date',              label: 'SORTA Date',                          section: 'Certification' }
+  ];
+
+  // ── Reimbursement API config ──────────────────────────────────
+  var REIMB_API = {
+    tableFieldsId:        'qo5o45ww5',
+    invoiceTableFieldsId: 'hiymfudg8',
+    invoiceReportId:      '1xf3fhxg8',
+    reports: [
+      { id: 'oiohxveq2', label: 'Reimbursement (main)' },
+      { id: 'zwpv41ow4', label: 'Applicant Information' },
+      { id: 'jndonn3a8', label: 'Type of Request' },
+      { id: '4qgqkdla5', label: 'Project Timeline' },
+      { id: 'xpasbusq8', label: 'Project Cost' },
+      { id: 'chiu6d9w1', label: 'Summary' },
+      { id: '9zjin6eg8', label: 'Certification' }
+    ]
+  };
+
+  // ── Invoice child-table fields ────────────────────────────────
+  var INVOICE_FIELDS = [
+    { name: 'invoice_date',                    label: 'Invoice Date',                   section: 'Invoice Detail' },
+    { name: 'invoice_number',                  label: 'Invoice #',                      section: 'Invoice Detail' },
+    { name: 'invoice_description',             label: 'Description',                    section: 'Invoice Detail' },
+    { name: 'invoice_amount',                  label: 'Amount',                         section: 'Invoice Detail' },
+    { name: 'related_reimbursement_requests',  label: 'Related Reimbursement Request',  section: 'Invoice Detail' }
+  ];
+
   // ── Token helpers ─────────────────────────────────────────────
   function bootstrapToken() {
     var enc = '';
@@ -404,8 +622,9 @@
   }
 
   // ── API calls ─────────────────────────────────────────────────
-  function getTableFields(token) {
-    return fetch(API.baseURL + '/api/Report/gettablefields?id=' + API.tableFieldsId, {
+  function getTableFields(token, tableId) {
+    var id = tableId || API.tableFieldsId;
+    return fetch(API.baseURL + '/api/Report/gettablefields?id=' + id, {
       method: 'GET',
       headers: headers(token)
     }).then(function(r) {
@@ -498,6 +717,17 @@
   var allCoverageRows = [];
   var allCompletenessRows = [];
   var expandedRows = {};
+
+  // Reimbursement state
+  var allReimbCoverageRows = [];
+  var allReimbCompletenessRows = [];
+  var reimbExpandedRows = {};
+  var reimbDataLoaded = false;
+  var reimbDataLoading = false;
+
+  // Invoice (child table) state
+  var allInvoiceCoverageRows = [];
+  var allInvoiceCompletenessRows = [];
 
   // ── Render: Field Coverage ────────────────────────────────────
   function renderCoverage(dbFields) {
@@ -687,14 +917,490 @@
     if (chev) chev.textContent = open ? '▶' : '▼';
   }
 
+  // ── Reimbursement: Field Coverage ────────────────────────────
+  function renderReimbCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+
+    var rows = REIMB_FORM_FIELDS.map(function(f) {
+      var n = norm(f.name);
+      var matched = dbNorm[n] || null;
+      if (!matched) { var nl = norm(f.label); matched = dbNorm[nl] || null; }
+      return { field: f, matched: matched };
+    });
+    allReimbCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    var unmatched = rows.length - matched;
+    document.getElementById('reimb_stat_grid').innerHTML =
+      statTile(dbFields.length, 'DB Columns', 'blue') +
+      statTile(rows.length, 'Form Fields', 'blue') +
+      statTile(matched, 'Matched', 'green') +
+      statTile(unmatched, 'Not in DB', 'red') +
+      statTile(dbOnly.length, 'DB Only (extra)', 'amber');
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length > 0) {
+      dbOnlyHtml = '<div style="margin-top:8px;"><h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#0f172a;">DB Columns Not Mapped to Any Form Field (' + dbOnly.length + ')</h3>';
+      dbOnlyHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      dbOnly.forEach(function(f) {
+        var name = f.fieldName || f.name || f.label || f.FieldName || f.Name || JSON.stringify(f);
+        dbOnlyHtml += '<span style="background:#fef9c3;border:1px solid #fde68a;color:#78350f;border-radius:6px;padding:3px 9px;font-size:12px;font-family:monospace;">' + esc(name) + '</span>';
+      });
+      dbOnlyHtml += '</div></div>';
+    }
+    document.getElementById('reimb_coverage_db_only').innerHTML = dbOnlyHtml;
+
+    filterReimbCoverage();
+  }
+
+  function filterReimbCoverage() {
+    var search = (document.getElementById('reimb_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('reimb_cov_filter').value;
+
+    var visible = allReimbCoverageRows.filter(function(r) {
+      var matchText = !search ||
+        r.field.name.toLowerCase().includes(search) ||
+        r.field.label.toLowerCase().includes(search) ||
+        r.field.section.toLowerCase().includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   &&  r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('reimb_coverage_tbody');
+    var html = '';
+    var lastSection = '';
+    visible.forEach(function(r) {
+      if (r.field.section !== lastSection) {
+        lastSection = r.field.section;
+        html += '<tr class="section-header"><td colspan="4">' + esc(r.field.section) + '</td></tr>';
+      }
+      var inDb = r.matched
+        ? '<span class="badge badge-ok">✓ Yes</span>'
+        : '<span class="badge badge-missing">✗ No</span>';
+      var matchedCol = r.matched
+        ? '<code style="font-size:11px;color:#059669;">' + esc(r.matched) + '</code>'
+        : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+      html += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(r.field.section) + '</td>' +
+        '<td><code style="font-size:12px;">' + esc(r.field.name) + '</code><br>' +
+             '<span style="font-size:11px;color:#94a3b8;">' + esc(r.field.label) + '</span></td>' +
+        '<td>' + inDb + '</td>' +
+        '<td>' + matchedCol + '</td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No matching fields</td></tr>';
+  }
+
+  // ── Reimbursement: Record Completeness ────────────────────────
+  function reimbCompletenessOf(record) {
+    var results = REIMB_FORM_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section,
+               value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  function renderReimbCompleteness(merged) {
+    allReimbCompletenessRows = merged.map(function(record) {
+      var rid = getRecordId(record);
+      var name = getFieldValue(record, 'project_name') || getFieldValue(record, 'project name') || '(unnamed)';
+      var comp = reimbCompletenessOf(record);
+      return { rid: rid, name: name, record: record, comp: comp };
+    }).filter(function(r){ return r.rid; })
+      .sort(function(a,b){ return Number(b.rid) - Number(a.rid); });
+
+    filterReimbCompleteness();
+  }
+
+  function filterReimbCompleteness() {
+    var search  = (document.getElementById('reimb_comp_search').value || '').toLowerCase();
+    var filter  = document.getElementById('reimb_comp_filter').value;
+
+    var visible = allReimbCompletenessRows.filter(function(r) {
+      var matchText = !search ||
+        r.rid.includes(search) ||
+        String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('reimb_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      var badgeCls = p >= 80 ? 'badge-ok' : p >= 40 ? 'badge-warn' : 'badge-missing';
+      html += '<tr class="expandable" onclick="toggleReimbExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="reimb_chevron_' + esc(r.rid) + '">▶</span></td>' +
+        '</tr>' +
+        '<tr class="expand-row" id="reimb_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildReimbDetailHtml(r) + '</div></td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No records found</td></tr>';
+  }
+
+  function buildReimbDetailHtml(r) {
+    var sections = {};
+    r.comp.fields.forEach(function(f) {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    var html = '';
+    Object.keys(sections).forEach(function(sec) {
+      html += '<div class="detail-section-header">' + esc(sec) + '</div>';
+      html += '<div class="detail-fields">';
+      sections[sec].forEach(function(f) {
+        var icon = f.populated ? '✅' : '❌';
+        var valDisplay = f.populated
+          ? '<span class="field-value">' + esc(String(f.value).substring(0, 120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+          : '<span class="field-value empty">empty</span>';
+        html += '<div class="detail-field">' +
+          '<span class="icon">' + icon + '</span>' +
+          '<div>' +
+            '<div class="field-label">' + esc(f.label) + '</div>' +
+            valDisplay +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function toggleReimbExpand(rid) {
+    var row  = document.getElementById('reimb_expand_' + rid);
+    var chev = document.getElementById('reimb_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportReimbCsv() {
+    var rows = [['Record ID', 'Project Name', 'Completeness %', 'Populated', 'Empty'].concat(
+      REIMB_FORM_FIELDS.map(function(f){ return f.label; })
+    )];
+    allReimbCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'reimb_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Invoice: Field Coverage ───────────────────────────────────
+  function renderInvoiceCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+
+    var rows = INVOICE_FIELDS.map(function(f) {
+      var n = norm(f.name);
+      var matched = dbNorm[n] || null;
+      if (!matched) { var nl = norm(f.label); matched = dbNorm[nl] || null; }
+      return { field: f, matched: matched };
+    });
+    allInvoiceCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    var unmatched = rows.length - matched;
+    document.getElementById('reimb_invoice_stat_grid').innerHTML =
+      statTile(dbFields.length, 'Invoice DB Cols', 'blue') +
+      statTile(rows.length, 'Invoice Fields', 'blue') +
+      statTile(matched, 'Matched', 'green') +
+      statTile(unmatched, 'Not in DB', 'red') +
+      statTile(dbOnly.length, 'DB Only (extra)', 'amber');
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length > 0) {
+      dbOnlyHtml = '<div style="margin-top:8px;"><h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#0f172a;">Invoice DB Columns Not Mapped to Any Form Field (' + dbOnly.length + ')</h3>';
+      dbOnlyHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      dbOnly.forEach(function(f) {
+        var name = f.fieldName || f.name || f.label || f.FieldName || f.Name || JSON.stringify(f);
+        dbOnlyHtml += '<span style="background:#fef9c3;border:1px solid #fde68a;color:#78350f;border-radius:6px;padding:3px 9px;font-size:12px;font-family:monospace;">' + esc(name) + '</span>';
+      });
+      dbOnlyHtml += '</div></div>';
+    }
+    document.getElementById('inv_coverage_db_only').innerHTML = dbOnlyHtml;
+
+    filterInvoiceCoverage();
+  }
+
+  function filterInvoiceCoverage() {
+    var search = (document.getElementById('inv_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('inv_cov_filter').value;
+
+    var visible = allInvoiceCoverageRows.filter(function(r) {
+      var matchText = !search ||
+        r.field.name.toLowerCase().includes(search) ||
+        r.field.label.toLowerCase().includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   &&  r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('inv_coverage_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var inDb = r.matched
+        ? '<span class="badge badge-ok">✓ Yes</span>'
+        : '<span class="badge badge-missing">✗ No</span>';
+      var matchedCol = r.matched
+        ? '<code style="font-size:11px;color:#059669;">' + esc(r.matched) + '</code>'
+        : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+      html += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(r.field.section) + '</td>' +
+        '<td><code style="font-size:12px;">' + esc(r.field.name) + '</code><br>' +
+             '<span style="font-size:11px;color:#94a3b8;">' + esc(r.field.label) + '</span></td>' +
+        '<td>' + inDb + '</td>' +
+        '<td>' + matchedCol + '</td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No matching fields</td></tr>';
+  }
+
+  // ── Invoice: Record Completeness ──────────────────────────────
+  function invoiceCompletenessOf(record) {
+    var results = INVOICE_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section,
+               value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  function renderInvoiceCompleteness(invoiceRows) {
+    allInvoiceCompletenessRows = invoiceRows.map(function(record) {
+      var rid = getRecordId(record);
+      var invNum = getFieldValue(record, 'invoice_number') || getFieldValue(record, 'invoice number') || '(no #)';
+      var comp = invoiceCompletenessOf(record);
+      return { rid: rid, name: invNum, record: record, comp: comp };
+    }).filter(function(r){ return r.rid; })
+      .sort(function(a,b){ return Number(b.rid) - Number(a.rid); });
+
+    filterInvoiceCompleteness();
+  }
+
+  function filterInvoiceCompleteness() {
+    var search = (document.getElementById('inv_comp_search').value || '').toLowerCase();
+    var filter = document.getElementById('inv_comp_filter').value;
+
+    var visible = allInvoiceCompletenessRows.filter(function(r) {
+      var matchText = !search ||
+        r.rid.includes(search) ||
+        String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+
+    var tbody = document.getElementById('inv_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      var badgeCls = p >= 80 ? 'badge-ok' : p >= 40 ? 'badge-warn' : 'badge-missing';
+      html += '<tr class="expandable" onclick="toggleInvoiceExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="inv_chevron_' + esc(r.rid) + '">▶</span></td>' +
+        '</tr>' +
+        '<tr class="expand-row" id="inv_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildInvoiceDetailHtml(r) + '</div></td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No invoice records found</td></tr>';
+  }
+
+  function buildInvoiceDetailHtml(r) {
+    var html = '<div class="detail-section-header">Invoice Detail</div><div class="detail-fields">';
+    r.comp.fields.forEach(function(f) {
+      var icon = f.populated ? '✅' : '❌';
+      var valDisplay = f.populated
+        ? '<span class="field-value">' + esc(String(f.value).substring(0, 120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+        : '<span class="field-value empty">empty</span>';
+      html += '<div class="detail-field">' +
+        '<span class="icon">' + icon + '</span>' +
+        '<div>' +
+          '<div class="field-label">' + esc(f.label) + '</div>' +
+          valDisplay +
+        '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function toggleInvoiceExpand(rid) {
+    var row  = document.getElementById('inv_expand_' + rid);
+    var chev = document.getElementById('inv_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportInvoiceCsv() {
+    var rows = [['Record ID', 'Invoice #', 'Completeness %', 'Populated', 'Empty'].concat(
+      INVOICE_FIELDS.map(function(f){ return f.label; })
+    )];
+    allInvoiceCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'invoice_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Reimbursement: Lazy load ──────────────────────────────────
+  function loadReimbData() {
+    if (reimbDataLoaded || reimbDataLoading) return;
+    reimbDataLoading = true;
+
+    var token = bootstrapToken();
+    if (!token) {
+      document.getElementById('reimb_prompt').innerHTML =
+        '<p style="color:#991b1b;font-size:13px;">Not authenticated — please log in via the SORTA portal first.</p>';
+      reimbDataLoading = false;
+      return;
+    }
+
+    document.getElementById('reimb_prompt').style.display = 'none';
+    document.getElementById('reimb_loading').style.display = 'block';
+
+    var reportPromises = REIMB_API.reports.map(function(r) {
+      return queryReport(token, r.id).then(function(rows) {
+        console.log('[ReimbDiag] Report', r.label, '(' + r.id + '):', rows.length, 'rows');
+        return rows;
+      }).catch(function(err) {
+        console.warn('[ReimbDiag] Report', r.label, 'failed:', err.message);
+        return [];
+      });
+    });
+
+    var invoiceReportPromise = queryReport(token, REIMB_API.invoiceReportId).then(function(rows) {
+      console.log('[ReimbDiag] Invoice report (' + REIMB_API.invoiceReportId + '):', rows.length, 'rows');
+      return rows;
+    }).catch(function(err) {
+      console.warn('[ReimbDiag] Invoice report failed:', err.message);
+      return [];
+    });
+
+    Promise.all([
+      getTableFields(token, REIMB_API.tableFieldsId),
+      getTableFields(token, REIMB_API.invoiceTableFieldsId).catch(function(err) {
+        console.warn('[ReimbDiag] Invoice table fields failed:', err.message);
+        return [];
+      }),
+      invoiceReportPromise
+    ].concat(reportPromises))
+      .then(function(results) {
+        var dbFields      = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || []);
+        var invDbFields   = Array.isArray(results[1]) ? results[1] : (results[1].data || results[1].fields || []);
+        var invoiceRows   = results[2];
+        var allRowArrays  = results.slice(3);
+
+        console.log('[ReimbDiag] Reimb DB fields:', dbFields.length, '| Invoice DB fields:', invDbFields.length);
+        console.log('[ReimbDiag] Invoice rows:', invoiceRows.length);
+
+        var merged = mergeAllRows(allRowArrays);
+        console.log('[ReimbDiag] Merged reimbursement records:', merged.length);
+
+        document.getElementById('reimb_loading').style.display              = 'none';
+        document.getElementById('reimb_stat_grid').style.display            = '';
+        document.getElementById('reimb_coverage_card').style.display        = 'block';
+        document.getElementById('reimb_completeness_card').style.display    = 'block';
+        document.getElementById('reimb_invoice_coverage_card').style.display    = 'block';
+        document.getElementById('reimb_invoice_completeness_card').style.display = 'block';
+
+        renderReimbCoverage(dbFields);
+        renderReimbCompleteness(merged);
+        renderInvoiceCoverage(invDbFields);
+        renderInvoiceCompleteness(invoiceRows);
+
+        reimbDataLoaded  = true;
+        reimbDataLoading = false;
+      }).catch(function(err) {
+        console.error('[ReimbDiag] Error:', err);
+        document.getElementById('reimb_loading').style.display = 'none';
+        document.getElementById('reimb_prompt').innerHTML =
+          '<p style="color:#991b1b;font-size:13px;">Error loading reimbursement diagnostic data: ' + esc(err.message) + '</p>';
+        document.getElementById('reimb_prompt').style.display = 'block';
+        reimbDataLoading = false;
+      });
+  }
+
   // ── Tab switcher ──────────────────────────────────────────────
   function switchTab(name) {
-    ['coverage','completeness'].forEach(function(t) {
+    ['coverage','completeness','reimbursement'].forEach(function(t) {
       document.getElementById('tab_' + t).classList.toggle('active', t === name);
     });
     document.querySelectorAll('.tab-btn').forEach(function(b, i) {
-      b.classList.toggle('active', ['coverage','completeness'][i] === name);
+      b.classList.toggle('active', ['coverage','completeness','reimbursement'][i] === name);
     });
+    if (name === 'reimbursement') {
+      loadReimbData();
+    }
   }
 
   // ── Export CSV ────────────────────────────────────────────────
@@ -779,11 +1485,19 @@
   }
 
   // Expose globals for inline event handlers
-  window.switchTab      = switchTab;
-  window.filterCoverage = filterCoverage;
-  window.filterCompleteness = filterCompleteness;
-  window.toggleExpand   = toggleExpand;
-  window.exportCsv      = exportCsv;
+  window.switchTab               = switchTab;
+  window.filterCoverage          = filterCoverage;
+  window.filterCompleteness      = filterCompleteness;
+  window.toggleExpand            = toggleExpand;
+  window.exportCsv               = exportCsv;
+  window.filterReimbCoverage     = filterReimbCoverage;
+  window.filterReimbCompleteness = filterReimbCompleteness;
+  window.toggleReimbExpand       = toggleReimbExpand;
+  window.exportReimbCsv          = exportReimbCsv;
+  window.filterInvoiceCoverage   = filterInvoiceCoverage;
+  window.filterInvoiceCompleteness = filterInvoiceCompleteness;
+  window.toggleInvoiceExpand     = toggleInvoiceExpand;
+  window.exportInvoiceCsv        = exportInvoiceCsv;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
