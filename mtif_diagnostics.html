@@ -2275,11 +2275,31 @@
   }
 
   // ── Communications: Record Completeness ───────────────────────
+  function commCompletenessOf(record) {
+    var results = COMM_FORM_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section, value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  function commDocCompletenessOf(record) {
+    var results = COMM_DOC_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section, value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
   function renderCommCompleteness(rows) {
     allCommCompletenessRows = rows.map(function(row) {
       var rid  = getRecordId(row);
       var subj = getFieldValue(row, 'subject') || '';
-      return { rid: rid, name: subj, comp: checkCompleteness(row, COMM_FORM_FIELDS) };
+      return { rid: rid, name: subj, comp: commCompletenessOf(row) };
     });
     filterCommCompleteness();
   }
@@ -2434,7 +2454,7 @@
     allCommDocCompletenessRows = rows.map(function(row) {
       var rid  = getRecordId(row);
       var name = getFieldValue(row, 'name') || getFieldValue(row, 'file') || '';
-      return { rid: rid, name: name, comp: checkCompleteness(row, COMM_DOC_FIELDS) };
+      return { rid: rid, name: name, comp: commDocCompletenessOf(row) };
     });
     filterCommDocCompleteness();
   }
