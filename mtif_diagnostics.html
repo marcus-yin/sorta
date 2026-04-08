@@ -2027,6 +2027,9 @@
     document.querySelectorAll('.tab-btn').forEach(function(b, i) {
       b.classList.toggle('active', ['coverage','completeness','reimbursement','quarterly'][i] === name);
     });
+    // The application stat grid only applies to the two application tabs
+    var appTabs = ['coverage', 'completeness'];
+    document.getElementById('stat_grid').style.display = appTabs.includes(name) ? '' : 'none';
     if (name === 'reimbursement') loadReimbData();
     if (name === 'quarterly')     loadQprData();
   }
