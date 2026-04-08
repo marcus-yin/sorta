@@ -793,6 +793,31 @@
     }
 
     // ============================================================
+    // API: Fetch table schema (diagnostic – logs column names & keys)
+    // ============================================================
+    function logTableSchema(token) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/gettablefields?id=' + API_CONFIG.communicationsTableKey, {
+        method: 'GET',
+        headers: apiHeaders(token)
+      }).then(function (r) {
+        if (!r.ok) { console.warn('[COMM] gettablefields failed:', r.status); return; }
+        return r.json();
+      }).then(function (fields) {
+        if (!fields) return;
+        var arr = Array.isArray(fields) ? fields : (fields.data || fields.fields || []);
+        console.log('[COMM SCHEMA] Communications table has', arr.length, 'columns:');
+        arr.forEach(function (f) {
+          var name  = f.fieldName || f.name  || f.Name  || f.FieldName  || '?';
+          var label = f.label     || f.Label || '';
+          var key   = f.key       || f.Key   || f.fieldKey || f.FieldKey || f.id || '';
+          console.log('  column:', name, '| label:', label, '| key:', key, '| raw:', JSON.stringify(f));
+        });
+      }).catch(function (err) {
+        console.warn('[COMM] Schema fetch error:', err.message);
+      });
+    }
+
+    // ============================================================
     // API: Query communications
     // ============================================================
     function queryCommunications(token) {
@@ -877,6 +902,8 @@
         payload.FieldsList.push(relEntry);
       }
 
+      console.log('[COMM] Sending postdata payload:', JSON.stringify(payload, null, 2));
+
       return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
         method: 'POST',
         headers: apiHeaders(token),
@@ -884,6 +911,9 @@
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
         return r.json();
+      }).then(function (result) {
+        console.log('[COMM] postdata response:', JSON.stringify(result));
+        return result;
       });
     }
 
@@ -1244,6 +1274,8 @@
           renderTable([]);
           return;
         }
+
+        logTableSchema(token); // log column names to console for diagnostics
 
         return getUserProfile(token).then(function (profile) {
           currentUserEmail = (profile && profile.Email) || '';
