@@ -202,6 +202,7 @@
       <button class="tab-btn active" onclick="switchTab('coverage')">Field Coverage</button>
       <button class="tab-btn" onclick="switchTab('completeness')">Record Completeness</button>
       <button class="tab-btn" onclick="switchTab('reimbursement')">Reimbursement Form</button>
+      <button class="tab-btn" onclick="switchTab('quarterly')">Quarterly Report</button>
     </div>
 
     <!-- Field Coverage Tab -->
@@ -427,6 +428,156 @@
 
     </div><!-- /tab_reimbursement -->
 
+    <!-- Quarterly Report Tab -->
+    <div id="tab_quarterly" class="tab-panel">
+
+      <div id="qpr_loading" class="spinner-wrap" style="display:none;">
+        <div class="spinner"></div>
+        <p>Loading quarterly report diagnostic data...</p>
+      </div>
+
+      <div id="qpr_prompt" class="card" style="text-align:center;padding:40px;color:#64748b;">
+        <p style="font-size:15px;font-weight:600;margin-bottom:6px;">Quarterly Report Diagnostics</p>
+        <p style="font-size:13px;">Data will load automatically when this tab is opened.</p>
+      </div>
+
+      <!-- Stat tiles -->
+      <div class="stat-grid" id="qpr_stat_grid" style="display:none;"></div>
+
+      <!-- Field Coverage Card -->
+      <div id="qpr_coverage_card" class="card" style="display:none;">
+        <h2>Field Coverage — Quarterly Report Form Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the fields defined in <code>quarterly_progress_report.html</code> against the
+          columns returned by <code>gettablefields</code> for the quarterly table
+          (<code>q4zsuxna5</code>).
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="qpr_cov_search" placeholder="Search field name..." oninput="filterQprCoverage()">
+          <select id="qpr_cov_filter" onchange="filterQprCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="qpr_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="qpr_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Record Completeness Card -->
+      <div id="qpr_completeness_card" class="card" style="display:none;">
+        <h2>Record Completeness — Per Quarterly Report</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Queries report <code>r49img3w8</code> and checks which expected fields are
+          populated for each quarterly report record. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="qpr_comp_search" placeholder="Search record ID or project name..." oninput="filterQprCompleteness()">
+          <select id="qpr_comp_filter" onchange="filterQprCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportQprCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Contractor</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="qpr_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Documents Field Coverage Card -->
+      <div id="qpr_doc_coverage_card" class="card" style="display:none;">
+        <h2>Document Field Coverage — Site Documentation Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the site documentation fields against the columns returned by
+          <code>gettablefields</code> for the documents child table (<code>eoeify9w2</code>).
+        </p>
+        <div class="stat-grid" id="qpr_doc_stat_grid" style="margin-bottom:16px;"></div>
+        <div class="filter-bar">
+          <input type="text" id="qpr_doc_cov_search" placeholder="Search field name..." oninput="filterQprDocCoverage()">
+          <select id="qpr_doc_cov_filter" onchange="filterQprDocCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="qpr_doc_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="qpr_doc_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Documents Records Completeness Card -->
+      <div id="qpr_doc_completeness_card" class="card" style="display:none;">
+        <h2>Document Record Completeness — Per Site Documentation Upload</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Checks which expected fields are populated for each document record in report
+          <code>dqe5kymw5</code>. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="qpr_doc_comp_search" placeholder="Search record ID or file name..." oninput="filterQprDocCompleteness()">
+          <select id="qpr_doc_comp_filter" onchange="filterQprDocCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportQprDocCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>File Name</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="qpr_doc_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab_quarterly -->
+
   </div><!-- /main -->
 </div><!-- /container -->
 
@@ -599,6 +750,50 @@
     { name: 'related_reimbursement_requests',  label: 'Related Reimbursement Request',  section: 'Invoice Detail' }
   ];
 
+  // ── Quarterly Progress Report form fields ────────────────────
+  var QPR_FORM_FIELDS = [
+    // Record Information
+    { name: 'related_applications',    label: 'Related Application ID',         section: 'Record Information' },
+    // Report Basics
+    { name: 'report_date',             label: 'Report Date',                    section: 'Report Basics' },
+    { name: 'prepared_by',             label: 'Prepared By',                    section: 'Report Basics' },
+    { name: 'jurisdiction',            label: 'Jurisdiction',                   section: 'Report Basics' },
+    { name: 'address',                 label: 'Address',                        section: 'Report Basics' },
+    // Project Description
+    { name: 'project_description',     label: 'Project Description',            section: 'Project Description' },
+    { name: 'contractor',              label: 'Contractor',                     section: 'Project Description' },
+    // Project Information
+    { name: 'owner',                   label: 'Owner',                          section: 'Project Information' },
+    { name: 'owner_manager',           label: "Owner's Project Manager",        section: 'Project Information' },
+    { name: 'last_report_percent',     label: 'Last Report (% Completion)',     section: 'Project Information' },
+    { name: 'current_report_percent',  label: 'Current Report (% Completion)',  section: 'Project Information' },
+    { name: 'payment_status',          label: 'Payment Status',                 section: 'Project Information' },
+    { name: 'payment_explain',         label: 'Payment Explain',                section: 'Project Information' },
+    { name: 'amount_expended',         label: 'Amount Expended',                section: 'Project Information' },
+    { name: 'total_project_cost',      label: 'Total Project Cost',             section: 'Project Information' },
+    // Risks, Issues & Schedule
+    { name: 'potential_risks',         label: 'Potential Risks',                section: 'Risks, Issues & Schedule' },
+    { name: 'issues_concerns',         label: 'Issues / Concerns',              section: 'Risks, Issues & Schedule' },
+    { name: 'schedule_update',         label: 'Schedule Update',                section: 'Risks, Issues & Schedule' }
+  ];
+
+  // ── Quarterly documents child-table fields ────────────────────
+  var QPR_DOC_FIELDS = [
+    { name: 'name',                       label: 'Document Name',             section: 'Site Documentation' },
+    { name: 'file',                       label: 'File',                      section: 'Site Documentation' },
+    { name: 'related_quarterly_reports',  label: 'Related Quarterly Report',  section: 'Site Documentation' }
+  ];
+
+  // ── Quarterly API config ──────────────────────────────────────
+  var QPR_API = {
+    tableFieldsId:     'q4zsuxna5',
+    docsTableFieldsId: 'eoeify9w2',
+    docsReportId:      'dqe5kymw5',
+    reports: [
+      { id: 'r49img3w8', label: 'Quarterly Reports (main)' }
+    ]
+  };
+
   // ── Token helpers ─────────────────────────────────────────────
   function bootstrapToken() {
     var enc = '';
@@ -728,6 +923,14 @@
   // Invoice (child table) state
   var allInvoiceCoverageRows = [];
   var allInvoiceCompletenessRows = [];
+
+  // Quarterly report state
+  var allQprCoverageRows = [];
+  var allQprCompletenessRows = [];
+  var allQprDocCoverageRows = [];
+  var allQprDocCompletenessRows = [];
+  var qprDataLoaded = false;
+  var qprDataLoading = false;
 
   // ── Render: Field Coverage ────────────────────────────────────
   function renderCoverage(dbFields) {
@@ -1390,17 +1593,442 @@
       });
   }
 
+  // ── Quarterly: Field Coverage ─────────────────────────────────
+  function renderQprCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+
+    var rows = QPR_FORM_FIELDS.map(function(f) {
+      var n = norm(f.name);
+      var matched = dbNorm[n] || null;
+      if (!matched) { var nl = norm(f.label); matched = dbNorm[nl] || null; }
+      return { field: f, matched: matched };
+    });
+    allQprCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    document.getElementById('qpr_stat_grid').innerHTML =
+      statTile(dbFields.length, 'DB Columns', 'blue') +
+      statTile(rows.length, 'Form Fields', 'blue') +
+      statTile(matched, 'Matched', 'green') +
+      statTile(rows.length - matched, 'Not in DB', 'red') +
+      statTile(dbOnly.length, 'DB Only (extra)', 'amber');
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length > 0) {
+      dbOnlyHtml = '<div style="margin-top:8px;"><h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#0f172a;">DB Columns Not Mapped to Any Form Field (' + dbOnly.length + ')</h3>';
+      dbOnlyHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      dbOnly.forEach(function(f) {
+        var name = f.fieldName || f.name || f.label || f.FieldName || f.Name || JSON.stringify(f);
+        dbOnlyHtml += '<span style="background:#fef9c3;border:1px solid #fde68a;color:#78350f;border-radius:6px;padding:3px 9px;font-size:12px;font-family:monospace;">' + esc(name) + '</span>';
+      });
+      dbOnlyHtml += '</div></div>';
+    }
+    document.getElementById('qpr_coverage_db_only').innerHTML = dbOnlyHtml;
+    filterQprCoverage();
+  }
+
+  function filterQprCoverage() {
+    var search = (document.getElementById('qpr_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('qpr_cov_filter').value;
+    var visible = allQprCoverageRows.filter(function(r) {
+      var matchText = !search ||
+        r.field.name.toLowerCase().includes(search) ||
+        r.field.label.toLowerCase().includes(search) ||
+        r.field.section.toLowerCase().includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   &&  r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('qpr_coverage_tbody');
+    var html = ''; var lastSection = '';
+    visible.forEach(function(r) {
+      if (r.field.section !== lastSection) {
+        lastSection = r.field.section;
+        html += '<tr class="section-header"><td colspan="4">' + esc(r.field.section) + '</td></tr>';
+      }
+      var inDb = r.matched ? '<span class="badge badge-ok">✓ Yes</span>' : '<span class="badge badge-missing">✗ No</span>';
+      var matchedCol = r.matched
+        ? '<code style="font-size:11px;color:#059669;">' + esc(r.matched) + '</code>'
+        : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+      html += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(r.field.section) + '</td>' +
+        '<td><code style="font-size:12px;">' + esc(r.field.name) + '</code><br>' +
+             '<span style="font-size:11px;color:#94a3b8;">' + esc(r.field.label) + '</span></td>' +
+        '<td>' + inDb + '</td>' +
+        '<td>' + matchedCol + '</td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No matching fields</td></tr>';
+  }
+
+  // ── Quarterly: Record Completeness ────────────────────────────
+  function qprCompletenessOf(record) {
+    var results = QPR_FORM_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section, value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  function renderQprCompleteness(rows) {
+    allQprCompletenessRows = rows.map(function(record) {
+      var rid  = getRecordId(record);
+      var name = getFieldValue(record, 'contractor') || getFieldValue(record, 'project_description') || '(unnamed)';
+      var comp = qprCompletenessOf(record);
+      return { rid: rid, name: name, record: record, comp: comp };
+    }).filter(function(r){ return r.rid; })
+      .sort(function(a,b){ return Number(b.rid) - Number(a.rid); });
+    filterQprCompleteness();
+  }
+
+  function filterQprCompleteness() {
+    var search = (document.getElementById('qpr_comp_search').value || '').toLowerCase();
+    var filter = document.getElementById('qpr_comp_filter').value;
+    var visible = allQprCompletenessRows.filter(function(r) {
+      var matchText = !search || r.rid.includes(search) || String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('qpr_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      html += '<tr class="expandable" onclick="toggleQprExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="qpr_chevron_' + esc(r.rid) + '">▶</span></td></tr>' +
+        '<tr class="expand-row" id="qpr_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildQprDetailHtml(r) + '</div></td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No records found</td></tr>';
+  }
+
+  function buildQprDetailHtml(r) {
+    var sections = {};
+    r.comp.fields.forEach(function(f) {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    var html = '';
+    Object.keys(sections).forEach(function(sec) {
+      html += '<div class="detail-section-header">' + esc(sec) + '</div><div class="detail-fields">';
+      sections[sec].forEach(function(f) {
+        var icon = f.populated ? '✅' : '❌';
+        var valDisplay = f.populated
+          ? '<span class="field-value">' + esc(String(f.value).substring(0,120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+          : '<span class="field-value empty">empty</span>';
+        html += '<div class="detail-field"><span class="icon">' + icon + '</span><div>' +
+          '<div class="field-label">' + esc(f.label) + '</div>' + valDisplay + '</div></div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function toggleQprExpand(rid) {
+    var row  = document.getElementById('qpr_expand_' + rid);
+    var chev = document.getElementById('qpr_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportQprCsv() {
+    var rows = [['Record ID', 'Contractor', 'Completeness %', 'Populated', 'Empty'].concat(
+      QPR_FORM_FIELDS.map(function(f){ return f.label; })
+    )];
+    allQprCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'qpr_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Quarterly: Document Field Coverage ───────────────────────
+  function renderQprDocCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+    var rows = QPR_DOC_FIELDS.map(function(f) {
+      var n = norm(f.name);
+      var matched = dbNorm[n] || null;
+      if (!matched) { var nl = norm(f.label); matched = dbNorm[nl] || null; }
+      return { field: f, matched: matched };
+    });
+    allQprDocCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    document.getElementById('qpr_doc_stat_grid').innerHTML =
+      statTile(dbFields.length, 'Doc DB Cols', 'blue') +
+      statTile(rows.length, 'Doc Fields', 'blue') +
+      statTile(matched, 'Matched', 'green') +
+      statTile(rows.length - matched, 'Not in DB', 'red') +
+      statTile(dbOnly.length, 'DB Only (extra)', 'amber');
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length > 0) {
+      dbOnlyHtml = '<div style="margin-top:8px;"><h3 style="font-size:14px;font-weight:700;margin-bottom:10px;color:#0f172a;">Doc DB Columns Not Mapped (' + dbOnly.length + ')</h3>';
+      dbOnlyHtml += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      dbOnly.forEach(function(f) {
+        var name = f.fieldName || f.name || f.label || f.FieldName || f.Name || JSON.stringify(f);
+        dbOnlyHtml += '<span style="background:#fef9c3;border:1px solid #fde68a;color:#78350f;border-radius:6px;padding:3px 9px;font-size:12px;font-family:monospace;">' + esc(name) + '</span>';
+      });
+      dbOnlyHtml += '</div></div>';
+    }
+    document.getElementById('qpr_doc_coverage_db_only').innerHTML = dbOnlyHtml;
+    filterQprDocCoverage();
+  }
+
+  function filterQprDocCoverage() {
+    var search = (document.getElementById('qpr_doc_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('qpr_doc_cov_filter').value;
+    var visible = allQprDocCoverageRows.filter(function(r) {
+      var matchText = !search ||
+        r.field.name.toLowerCase().includes(search) ||
+        r.field.label.toLowerCase().includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   &&  r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('qpr_doc_coverage_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var inDb = r.matched ? '<span class="badge badge-ok">✓ Yes</span>' : '<span class="badge badge-missing">✗ No</span>';
+      var matchedCol = r.matched
+        ? '<code style="font-size:11px;color:#059669;">' + esc(r.matched) + '</code>'
+        : '<span style="color:#94a3b8;font-size:12px;">—</span>';
+      html += '<tr>' +
+        '<td style="color:#64748b;font-size:12px;">' + esc(r.field.section) + '</td>' +
+        '<td><code style="font-size:12px;">' + esc(r.field.name) + '</code><br>' +
+             '<span style="font-size:11px;color:#94a3b8;">' + esc(r.field.label) + '</span></td>' +
+        '<td>' + inDb + '</td>' +
+        '<td>' + matchedCol + '</td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No matching fields</td></tr>';
+  }
+
+  // ── Quarterly: Document Record Completeness ───────────────────
+  function qprDocCompletenessOf(record) {
+    var results = QPR_DOC_FIELDS.map(function(f) {
+      var val = getFieldValue(record, f.name);
+      return { name: f.name, label: f.label, section: f.section, value: val, populated: isPopulated(val) };
+    });
+    var pop = results.filter(function(r){ return r.populated; }).length;
+    return { fields: results, populated: pop, total: results.length,
+             pct: Math.round(pop / results.length * 100) };
+  }
+
+  function renderQprDocCompleteness(rows) {
+    allQprDocCompletenessRows = rows.map(function(record) {
+      var rid  = getRecordId(record);
+      var name = getFieldValue(record, 'name') || '(no filename)';
+      var comp = qprDocCompletenessOf(record);
+      return { rid: rid, name: name, record: record, comp: comp };
+    }).filter(function(r){ return r.rid; })
+      .sort(function(a,b){ return Number(b.rid) - Number(a.rid); });
+    filterQprDocCompleteness();
+  }
+
+  function filterQprDocCompleteness() {
+    var search = (document.getElementById('qpr_doc_comp_search').value || '').toLowerCase();
+    var filter = document.getElementById('qpr_doc_comp_filter').value;
+    var visible = allQprDocCompletenessRows.filter(function(r) {
+      var matchText = !search || r.rid.includes(search) || String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('qpr_doc_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      html += '<tr class="expandable" onclick="toggleQprDocExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="qpr_doc_chevron_' + esc(r.rid) + '">▶</span></td></tr>' +
+        '<tr class="expand-row" id="qpr_doc_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildQprDocDetailHtml(r) + '</div></td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No document records found</td></tr>';
+  }
+
+  function buildQprDocDetailHtml(r) {
+    var html = '<div class="detail-section-header">Site Documentation</div><div class="detail-fields">';
+    r.comp.fields.forEach(function(f) {
+      var icon = f.populated ? '✅' : '❌';
+      var valDisplay = f.populated
+        ? '<span class="field-value">' + esc(String(f.value).substring(0,120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+        : '<span class="field-value empty">empty</span>';
+      html += '<div class="detail-field"><span class="icon">' + icon + '</span><div>' +
+        '<div class="field-label">' + esc(f.label) + '</div>' + valDisplay + '</div></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function toggleQprDocExpand(rid) {
+    var row  = document.getElementById('qpr_doc_expand_' + rid);
+    var chev = document.getElementById('qpr_doc_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportQprDocCsv() {
+    var rows = [['Record ID', 'File Name', 'Completeness %', 'Populated', 'Empty'].concat(
+      QPR_DOC_FIELDS.map(function(f){ return f.label; })
+    )];
+    allQprDocCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'qpr_docs_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Quarterly: Lazy load ──────────────────────────────────────
+  function loadQprData() {
+    if (qprDataLoaded || qprDataLoading) return;
+    qprDataLoading = true;
+
+    var token = bootstrapToken();
+    if (!token) {
+      document.getElementById('qpr_prompt').innerHTML =
+        '<p style="color:#991b1b;font-size:13px;">Not authenticated — please log in via the SORTA portal first.</p>';
+      qprDataLoading = false;
+      return;
+    }
+
+    document.getElementById('qpr_prompt').style.display   = 'none';
+    document.getElementById('qpr_loading').style.display  = 'block';
+
+    var reportPromises = QPR_API.reports.map(function(r) {
+      return queryReport(token, r.id).then(function(rows) {
+        console.log('[QPRDiag] Report', r.label, '(' + r.id + '):', rows.length, 'rows');
+        return rows;
+      }).catch(function(err) {
+        console.warn('[QPRDiag] Report', r.label, 'failed:', err.message);
+        return [];
+      });
+    });
+
+    var docsReportPromise = queryReport(token, QPR_API.docsReportId).then(function(rows) {
+      console.log('[QPRDiag] Docs report (' + QPR_API.docsReportId + '):', rows.length, 'rows');
+      return rows;
+    }).catch(function(err) {
+      console.warn('[QPRDiag] Docs report failed:', err.message);
+      return [];
+    });
+
+    Promise.all([
+      getTableFields(token, QPR_API.tableFieldsId),
+      getTableFields(token, QPR_API.docsTableFieldsId).catch(function(err) {
+        console.warn('[QPRDiag] Docs table fields failed:', err.message);
+        return [];
+      }),
+      docsReportPromise
+    ].concat(reportPromises))
+      .then(function(results) {
+        var dbFields     = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || []);
+        var docDbFields  = Array.isArray(results[1]) ? results[1] : (results[1].data || results[1].fields || []);
+        var docRows      = results[2];
+        var allRowArrays = results.slice(3);
+
+        console.log('[QPRDiag] Quarterly DB fields:', dbFields.length, '| Doc DB fields:', docDbFields.length);
+        console.log('[QPRDiag] Document rows:', docRows.length);
+
+        var merged = mergeAllRows(allRowArrays);
+        console.log('[QPRDiag] Merged quarterly records:', merged.length);
+
+        document.getElementById('qpr_loading').style.display            = 'none';
+        document.getElementById('qpr_stat_grid').style.display          = '';
+        document.getElementById('qpr_coverage_card').style.display      = 'block';
+        document.getElementById('qpr_completeness_card').style.display  = 'block';
+        document.getElementById('qpr_doc_coverage_card').style.display      = 'block';
+        document.getElementById('qpr_doc_completeness_card').style.display  = 'block';
+
+        renderQprCoverage(dbFields);
+        renderQprCompleteness(merged);
+        renderQprDocCoverage(docDbFields);
+        renderQprDocCompleteness(docRows);
+
+        qprDataLoaded  = true;
+        qprDataLoading = false;
+      }).catch(function(err) {
+        console.error('[QPRDiag] Error:', err);
+        document.getElementById('qpr_loading').style.display = 'none';
+        document.getElementById('qpr_prompt').innerHTML =
+          '<p style="color:#991b1b;font-size:13px;">Error loading quarterly report data: ' + esc(err.message) + '</p>';
+        document.getElementById('qpr_prompt').style.display = 'block';
+        qprDataLoading = false;
+      });
+  }
+
   // ── Tab switcher ──────────────────────────────────────────────
   function switchTab(name) {
-    ['coverage','completeness','reimbursement'].forEach(function(t) {
+    ['coverage','completeness','reimbursement','quarterly'].forEach(function(t) {
       document.getElementById('tab_' + t).classList.toggle('active', t === name);
     });
     document.querySelectorAll('.tab-btn').forEach(function(b, i) {
-      b.classList.toggle('active', ['coverage','completeness','reimbursement'][i] === name);
+      b.classList.toggle('active', ['coverage','completeness','reimbursement','quarterly'][i] === name);
     });
-    if (name === 'reimbursement') {
-      loadReimbData();
-    }
+    if (name === 'reimbursement') loadReimbData();
+    if (name === 'quarterly')     loadQprData();
   }
 
   // ── Export CSV ────────────────────────────────────────────────
@@ -1494,10 +2122,18 @@
   window.filterReimbCompleteness = filterReimbCompleteness;
   window.toggleReimbExpand       = toggleReimbExpand;
   window.exportReimbCsv          = exportReimbCsv;
-  window.filterInvoiceCoverage   = filterInvoiceCoverage;
+  window.filterInvoiceCoverage     = filterInvoiceCoverage;
   window.filterInvoiceCompleteness = filterInvoiceCompleteness;
-  window.toggleInvoiceExpand     = toggleInvoiceExpand;
-  window.exportInvoiceCsv        = exportInvoiceCsv;
+  window.toggleInvoiceExpand       = toggleInvoiceExpand;
+  window.exportInvoiceCsv          = exportInvoiceCsv;
+  window.filterQprCoverage         = filterQprCoverage;
+  window.filterQprCompleteness     = filterQprCompleteness;
+  window.toggleQprExpand           = toggleQprExpand;
+  window.exportQprCsv              = exportQprCsv;
+  window.filterQprDocCoverage      = filterQprDocCoverage;
+  window.filterQprDocCompleteness  = filterQprDocCompleteness;
+  window.toggleQprDocExpand        = toggleQprDocExpand;
+  window.exportQprDocCsv           = exportQprDocCsv;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
