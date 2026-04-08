@@ -188,7 +188,7 @@
   <!-- Loading -->
   <div id="loading" class="spinner-wrap">
     <div class="spinner"></div>
-    <p>Loading diagnostic data...</p>
+    <p>Loading diagnostic data — querying all application reports...</p>
   </div>
 
   <!-- Main content (hidden until loaded) -->
@@ -243,8 +243,8 @@
       <div class="card">
         <h2>Record Completeness — Per Application</h2>
         <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
-          Merges data from both reports and checks which expected fields are populated for
-          each application. Click any row to see a field-by-field breakdown.
+          Merges data from all 10 section reports and checks which expected fields are
+          populated for each application. Click any row to see a field-by-field breakdown.
         </p>
         <div class="filter-bar">
           <input type="text" id="comp_search" placeholder="Search record ID or project name..." oninput="filterCompleteness()">
@@ -286,11 +286,21 @@
   var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
 
   var API = {
-    baseURL:          IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
-    tableKey:         'iw3twwkw2',
-    tableFieldsId:    'iw3twwkw2',
-    report1:          's3derd1q7',
-    report2:          'tn3omkcq4'
+    baseURL:       IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+    tableFieldsId: 'iw3twwkw2',
+    // All reports used across mtif_application.html and mtif_application_evaluator.html
+    reports: [
+      { id: 's3derd1q7',  label: 'Project Header' },
+      { id: 'niazpvhq8',  label: 'Applicant / Jurisdiction' },
+      { id: '6tvmwupw6',  label: 'Location / Transit' },
+      { id: 'tvp6ny9w7',  label: 'Budget / Funding' },
+      { id: 'fz3k5d5q2',  label: 'Schedule & ROW' },
+      { id: 'xqovqejg3',  label: 'Submission / Attestation' },
+      { id: 'tn3omkcq4',  label: 'Applications (general)' },
+      { id: '1ko0gu0g8',  label: 'Scoring Data (part 1)' },
+      { id: 'hol4pvng1',  label: 'Scoring Data (part 2)' },
+      { id: 'bgjvkccw7',  label: 'Scoring Data (part 3)' }
+    ]
   };
 
   // ── Expected form fields ──────────────────────────────────────
@@ -444,17 +454,16 @@
     return true;
   }
 
-  function mergeRows(rows1, rows2) {
+  function mergeAllRows(allRowArrays) {
     var byId = {};
-    rows1.forEach(function(r) {
-      var id = getRecordId(r);
-      if (id) byId[id] = Object.assign({}, r);
-    });
-    rows2.forEach(function(r) {
-      var id = getRecordId(r);
-      if (!id) return;
-      if (byId[id]) { Object.assign(byId[id], r); }
-      else           { byId[id] = Object.assign({}, r); }
+    allRowArrays.forEach(function(rows) {
+      if (!Array.isArray(rows)) return;
+      rows.forEach(function(r) {
+        var id = getRecordId(r);
+        if (!id) return;
+        if (byId[id]) { Object.assign(byId[id], r); }
+        else           { byId[id] = Object.assign({}, r); }
+      });
     });
     return Object.values(byId);
   }
@@ -725,33 +734,40 @@
       return;
     }
 
-    Promise.all([
-      getTableFields(token),
-      queryReport(token, API.report1),
-      queryReport(token, API.report2)
-    ]).then(function(results) {
-      var dbFields = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || [results[0]]);
-      var rows1    = results[1];
-      var rows2    = results[2];
-
-      console.log('[Diag] DB fields:', dbFields.length, 'R1 rows:', rows1.length, 'R2 rows:', rows2.length);
-      if (dbFields.length > 0) console.log('[Diag] Sample DB field:', JSON.stringify(dbFields[0]));
-      if (rows1.length > 0) console.log('[Diag] Sample R1 keys:', Object.keys(rows1[0]));
-      if (rows2.length > 0) console.log('[Diag] Sample R2 keys:', Object.keys(rows2[0]));
-
-      var merged = mergeRows(rows1, rows2);
-      console.log('[Diag] Merged records:', merged.length);
-
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('main').style.display    = 'block';
-
-      renderCoverage(dbFields);
-      renderCompleteness(merged);
-    }).catch(function(err) {
-      console.error('[Diag] Error:', err);
-      document.getElementById('loading').style.display = 'none';
-      showError('Error loading diagnostic data: ' + err.message);
+    // Query DB schema + all reports in parallel
+    var reportPromises = API.reports.map(function(r) {
+      return queryReport(token, r.id).then(function(rows) {
+        console.log('[Diag] Report', r.label, '(' + r.id + '):', rows.length, 'rows');
+        if (rows.length > 0) console.log('[Diag]   Sample keys:', Object.keys(rows[0]).slice(0, 8).join(', '));
+        return rows;
+      }).catch(function(err) {
+        console.warn('[Diag] Report', r.label, 'failed:', err.message);
+        return [];
+      });
     });
+
+    Promise.all([getTableFields(token)].concat(reportPromises))
+      .then(function(results) {
+        var dbFields    = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || []);
+        var allRowArrays = results.slice(1);
+
+        console.log('[Diag] DB fields:', dbFields.length);
+        if (dbFields.length > 0) console.log('[Diag] Sample DB field:', JSON.stringify(dbFields[0]));
+
+        var merged = mergeAllRows(allRowArrays);
+        console.log('[Diag] Merged records:', merged.length);
+        if (merged.length > 0) console.log('[Diag] Sample merged keys:', Object.keys(merged[0]).slice(0, 10).join(', '));
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main').style.display    = 'block';
+
+        renderCoverage(dbFields);
+        renderCompleteness(merged);
+      }).catch(function(err) {
+        console.error('[Diag] Error:', err);
+        document.getElementById('loading').style.display = 'none';
+        showError('Error loading diagnostic data: ' + err.message);
+      });
   }
 
   // Expose globals for inline event handlers
