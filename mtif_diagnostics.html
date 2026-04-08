@@ -180,7 +180,7 @@
          src="https://www.go-metro.com/wp-content/themes/planeteriaweb/img/logo.svg"
          alt="Metro logo" />
     <h3>Application Diagnostics</h3>
-    <p>Field coverage &amp; record completeness checker — MTIF Applications &amp; Reimbursement Tables</p>
+    <p>Field coverage &amp; record completeness checker — MTIF Applications, Reimbursements, Quarterly Reports &amp; Communications</p>
   </div>
 
   <div id="error_banner" class="alert-error" style="display:none;"></div>
@@ -203,6 +203,7 @@
       <button class="tab-btn" onclick="switchTab('completeness')">Record Completeness</button>
       <button class="tab-btn" onclick="switchTab('reimbursement')">Reimbursement Form</button>
       <button class="tab-btn" onclick="switchTab('quarterly')">Quarterly Report</button>
+      <button class="tab-btn" onclick="switchTab('communications')">Communications</button>
     </div>
 
     <!-- Field Coverage Tab -->
@@ -578,6 +579,155 @@
 
     </div><!-- /tab_quarterly -->
 
+    <!-- Communications Tab -->
+    <div id="tab_communications" class="tab-panel">
+
+      <div id="comm_diag_loading" class="spinner-wrap" style="display:none;">
+        <div class="spinner"></div>
+        <p>Loading communications diagnostic data...</p>
+      </div>
+
+      <div id="comm_diag_prompt" class="card" style="text-align:center;padding:40px;color:#64748b;">
+        <p style="font-size:15px;font-weight:600;margin-bottom:6px;">Communications Diagnostics</p>
+        <p style="font-size:13px;">Data will load automatically when this tab is opened.</p>
+      </div>
+
+      <!-- Stat tiles -->
+      <div class="stat-grid" id="comm_diag_stat_grid" style="display:none;"></div>
+
+      <!-- Field Coverage Card -->
+      <div id="comm_diag_coverage_card" class="card" style="display:none;">
+        <h2>Field Coverage — Communications Form Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the fields used in <code>communications_list.html</code> against the columns
+          returned by <code>gettablefields</code> for the communications table (<code>ia2vnshw7</code>).
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="comm_diag_cov_search" placeholder="Search field name..." oninput="filterCommCoverage()">
+          <select id="comm_diag_cov_filter" onchange="filterCommCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="comm_diag_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="comm_diag_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Record Completeness Card -->
+      <div id="comm_diag_completeness_card" class="card" style="display:none;">
+        <h2>Record Completeness — Per Communication</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Queries report <code>48keiqwa8</code> and checks which expected fields are
+          populated for each communication record. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="comm_diag_comp_search" placeholder="Search record ID or subject..." oninput="filterCommCompleteness()">
+          <select id="comm_diag_comp_filter" onchange="filterCommCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportCommCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Subject</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="comm_diag_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Document Field Coverage Card -->
+      <div id="comm_diag_doc_coverage_card" class="card" style="display:none;">
+        <h2>Document Field Coverage — Attachment Fields vs Database</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Compares the attachment fields against the columns returned by
+          <code>gettablefields</code> for the shared documents table (<code>eoeify9w2</code>).
+        </p>
+        <div class="stat-grid" id="comm_diag_doc_stat_grid" style="margin-bottom:16px;"></div>
+        <div class="filter-bar">
+          <input type="text" id="comm_diag_doc_cov_search" placeholder="Search field name..." oninput="filterCommDocCoverage()">
+          <select id="comm_diag_doc_cov_filter" onchange="filterCommDocCoverage()">
+            <option value="all">All fields</option>
+            <option value="matched">Matched only</option>
+            <option value="form_only">In form, not in DB</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Form Field Name (DB key)</th>
+                <th>In Database?</th>
+                <th>Matched DB Column</th>
+              </tr>
+            </thead>
+            <tbody id="comm_diag_doc_coverage_tbody"></tbody>
+          </table>
+        </div>
+        <div id="comm_diag_doc_coverage_db_only" style="margin-top:24px;"></div>
+      </div>
+
+      <!-- Document Record Completeness Card -->
+      <div id="comm_diag_doc_completeness_card" class="card" style="display:none;">
+        <h2>Document Record Completeness — Per Attachment</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+          Checks which expected fields are populated for each document record in report
+          <code>8ozjrd6a8</code> that is linked to a communication. Click any row to see a field-by-field breakdown.
+        </p>
+        <div class="filter-bar">
+          <input type="text" id="comm_diag_doc_comp_search" placeholder="Search record ID or file name..." oninput="filterCommDocCompleteness()">
+          <select id="comm_diag_doc_comp_filter" onchange="filterCommDocCompleteness()">
+            <option value="all">All records</option>
+            <option value="low">Low completeness (&lt; 40%)</option>
+            <option value="medium">Medium (40–80%)</option>
+            <option value="high">High (&gt; 80%)</option>
+          </select>
+          <button class="btn btn-sm" onclick="exportCommDocCsv()">Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>File Name</th>
+                <th>Completeness</th>
+                <th>Populated</th>
+                <th>Empty</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="comm_diag_doc_completeness_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab_communications -->
+
   </div><!-- /main -->
 </div><!-- /container -->
 
@@ -794,6 +944,38 @@
     ]
   };
 
+  // ── Communications form fields ────────────────────────────────
+  var COMM_FORM_FIELDS = [
+    // Message Content
+    { name: 'subject',              label: 'Subject',              section: 'Message Content' },
+    { name: 'message',              label: 'Message',              section: 'Message Content' },
+    // Participants
+    { name: 'from_sender',          label: 'From (Sender Email)',  section: 'Participants' },
+    { name: 'to_recipient',         label: 'To (Recipient)',       section: 'Participants' },
+    { name: 'sender',               label: 'Sender (User ID/Email)',section: 'Participants' },
+    // Metadata
+    { name: 'direction',            label: 'Direction',            section: 'Metadata' },
+    { name: 'related_application',  label: 'Related Application',  section: 'Metadata' }
+  ];
+
+  // ── Communications document (attachment) fields ───────────────
+  var COMM_DOC_FIELDS = [
+    { name: 'file',                    label: 'File Attachment',        section: 'Attachment' },
+    { name: 'name',                    label: 'Document Name',          section: 'Attachment' },
+    { name: 'description',             label: 'Description',            section: 'Attachment' },
+    { name: 'related_communications',  label: 'Related Communication',  section: 'Attachment' }
+  ];
+
+  // ── Communications API config ─────────────────────────────────
+  var COMM_API = {
+    tableFieldsId:     'ia2vnshw7',
+    docsTableFieldsId: 'eoeify9w2',
+    docsReportId:      '8ozjrd6a8',
+    reports: [
+      { id: '48keiqwa8', label: 'Communications (main)' }
+    ]
+  };
+
   // ── Token helpers ─────────────────────────────────────────────
   function bootstrapToken() {
     var enc = '';
@@ -931,6 +1113,14 @@
   var allQprDocCompletenessRows = [];
   var qprDataLoaded = false;
   var qprDataLoading = false;
+
+  // Communications state
+  var allCommCoverageRows = [];
+  var allCommCompletenessRows = [];
+  var allCommDocCoverageRows = [];
+  var allCommDocCompletenessRows = [];
+  var commDataLoaded = false;
+  var commDataLoading = false;
 
   // ── Render: Field Coverage ────────────────────────────────────
   function renderCoverage(dbFields) {
@@ -2019,19 +2209,411 @@
       });
   }
 
+  // ── Communications: Field Coverage ───────────────────────────
+  function renderCommCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+    var rows = COMM_FORM_FIELDS.map(function(f) {
+      var matched = dbNorm[norm(f.name)] || dbNorm[norm(f.label)] || null;
+      return { field: f, matched: matched };
+    });
+    allCommCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    var grid = document.getElementById('comm_diag_stat_grid');
+    grid.innerHTML =
+      '<div class="stat-tile blue"><div class="stat-num">'  + COMM_FORM_FIELDS.length + '</div><div class="stat-label">Form Fields</div></div>' +
+      '<div class="stat-tile green"><div class="stat-num">' + matched + '</div><div class="stat-label">Matched in DB</div></div>' +
+      '<div class="stat-tile red"><div class="stat-num">'   + (COMM_FORM_FIELDS.length - matched) + '</div><div class="stat-label">Not Found in DB</div></div>' +
+      '<div class="stat-tile amber"><div class="stat-num">' + dbOnly.length + '</div><div class="stat-label">DB-Only Columns</div></div>';
+
+    filterCommCoverage();
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length) {
+      dbOnlyHtml = '<h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">DB-Only Columns (not in form)</h3><div class="table-wrap"><table><thead><tr><th>DB Column Name</th></tr></thead><tbody>' +
+        dbOnly.map(function(f) {
+          var n = f.fieldName || f.name || f.Name || f.FieldName || JSON.stringify(f);
+          return '<tr><td><code>' + esc(n) + '</code></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    document.getElementById('comm_diag_coverage_db_only').innerHTML = dbOnlyHtml;
+  }
+
+  function filterCommCoverage() {
+    var search = (document.getElementById('comm_diag_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('comm_diag_cov_filter').value;
+    var visible = allCommCoverageRows.filter(function(r) {
+      var matchText = !search || norm(r.field.name).includes(search) || norm(r.field.label).includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   && r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('comm_diag_coverage_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var statusIcon = r.matched ? '✅' : '❌';
+      var matchedName = r.matched ? '<code>' + esc(r.matched) + '</code>' : '<span style="color:#94a3b8">—</span>';
+      html += '<tr>' +
+        '<td><span class="badge badge-ok">' + esc(r.field.section) + '</span></td>' +
+        '<td><code>' + esc(r.field.name) + '</code></td>' +
+        '<td>' + statusIcon + '</td>' +
+        '<td>' + matchedName + '</td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No fields found</td></tr>';
+  }
+
+  // ── Communications: Record Completeness ───────────────────────
+  function renderCommCompleteness(rows) {
+    allCommCompletenessRows = rows.map(function(row) {
+      var rid  = getRecordId(row);
+      var subj = getFieldValue(row, 'subject') || '';
+      return { rid: rid, name: subj, comp: checkCompleteness(row, COMM_FORM_FIELDS) };
+    });
+    filterCommCompleteness();
+  }
+
+  function filterCommCompleteness() {
+    var search = (document.getElementById('comm_diag_comp_search').value || '').toLowerCase();
+    var filter = document.getElementById('comm_diag_comp_filter').value;
+    var visible = allCommCompletenessRows.filter(function(r) {
+      var matchText = !search || r.rid.includes(search) || String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('comm_diag_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      html += '<tr class="expandable" onclick="toggleCommExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="comm_chevron_' + esc(r.rid) + '">▶</span></td></tr>' +
+        '<tr class="expand-row" id="comm_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildCommDetailHtml(r) + '</div></td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No records found</td></tr>';
+  }
+
+  function buildCommDetailHtml(r) {
+    var sections = {};
+    r.comp.fields.forEach(function(f) {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    var html = '';
+    Object.keys(sections).forEach(function(sec) {
+      html += '<div class="detail-section-header">' + esc(sec) + '</div><div class="detail-fields">';
+      sections[sec].forEach(function(f) {
+        var icon = f.populated ? '✅' : '❌';
+        var valDisplay = f.populated
+          ? '<span class="field-value">' + esc(String(f.value).substring(0,120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+          : '<span class="field-value empty">empty</span>';
+        html += '<div class="detail-field"><span class="icon">' + icon + '</span><div>' +
+          '<div class="field-label">' + esc(f.label) + '</div>' + valDisplay + '</div></div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function toggleCommExpand(rid) {
+    var row  = document.getElementById('comm_expand_' + rid);
+    var chev = document.getElementById('comm_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportCommCsv() {
+    var rows = [['Record ID', 'Subject', 'Completeness %', 'Populated', 'Empty'].concat(
+      COMM_FORM_FIELDS.map(function(f){ return f.label; })
+    )];
+    allCommCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'comm_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Communications: Document Field Coverage ───────────────────
+  function renderCommDocCoverage(dbFields) {
+    var dbNorm = {};
+    dbFields.forEach(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      names.forEach(function(n) { if (n) dbNorm[norm(n)] = n; });
+    });
+    var rows = COMM_DOC_FIELDS.map(function(f) {
+      var matched = dbNorm[norm(f.name)] || dbNorm[norm(f.label)] || null;
+      return { field: f, matched: matched };
+    });
+    allCommDocCoverageRows = rows;
+
+    var matchedNorms = new Set(rows.filter(function(r){ return r.matched; })
+      .map(function(r){ return norm(r.field.name); }));
+    var dbOnly = dbFields.filter(function(f) {
+      var names = [f.fieldName, f.name, f.label, f.FieldName, f.Name, f.Label];
+      return !names.some(function(n){ return n && matchedNorms.has(norm(n)); });
+    });
+
+    var matched = rows.filter(function(r){ return r.matched; }).length;
+    var grid = document.getElementById('comm_diag_doc_stat_grid');
+    grid.innerHTML =
+      '<div class="stat-tile blue"><div class="stat-num">'  + COMM_DOC_FIELDS.length + '</div><div class="stat-label">Doc Fields</div></div>' +
+      '<div class="stat-tile green"><div class="stat-num">' + matched + '</div><div class="stat-label">Matched in DB</div></div>' +
+      '<div class="stat-tile red"><div class="stat-num">'   + (COMM_DOC_FIELDS.length - matched) + '</div><div class="stat-label">Not Found in DB</div></div>' +
+      '<div class="stat-tile amber"><div class="stat-num">' + dbOnly.length + '</div><div class="stat-label">DB-Only Columns</div></div>';
+
+    filterCommDocCoverage();
+
+    var dbOnlyHtml = '';
+    if (dbOnly.length) {
+      dbOnlyHtml = '<h3 style="font-size:14px;font-weight:700;margin-bottom:10px;">DB-Only Columns (not in form)</h3><div class="table-wrap"><table><thead><tr><th>DB Column Name</th></tr></thead><tbody>' +
+        dbOnly.map(function(f) {
+          var n = f.fieldName || f.name || f.Name || f.FieldName || JSON.stringify(f);
+          return '<tr><td><code>' + esc(n) + '</code></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+    document.getElementById('comm_diag_doc_coverage_db_only').innerHTML = dbOnlyHtml;
+  }
+
+  function filterCommDocCoverage() {
+    var search = (document.getElementById('comm_diag_doc_cov_search').value || '').toLowerCase();
+    var filter = document.getElementById('comm_diag_doc_cov_filter').value;
+    var visible = allCommDocCoverageRows.filter(function(r) {
+      var matchText = !search || norm(r.field.name).includes(search) || norm(r.field.label).includes(search);
+      var matchFilter = filter === 'all' ||
+        (filter === 'matched'   && r.matched) ||
+        (filter === 'form_only' && !r.matched);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('comm_diag_doc_coverage_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var statusIcon = r.matched ? '✅' : '❌';
+      var matchedName = r.matched ? '<code>' + esc(r.matched) + '</code>' : '<span style="color:#94a3b8">—</span>';
+      html += '<tr>' +
+        '<td><span class="badge badge-ok">' + esc(r.field.section) + '</span></td>' +
+        '<td><code>' + esc(r.field.name) + '</code></td>' +
+        '<td>' + statusIcon + '</td>' +
+        '<td>' + matchedName + '</td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:30px;">No fields found</td></tr>';
+  }
+
+  // ── Communications: Document Record Completeness ───────────────
+  function renderCommDocCompleteness(rows) {
+    allCommDocCompletenessRows = rows.map(function(row) {
+      var rid  = getRecordId(row);
+      var name = getFieldValue(row, 'name') || getFieldValue(row, 'file') || '';
+      return { rid: rid, name: name, comp: checkCompleteness(row, COMM_DOC_FIELDS) };
+    });
+    filterCommDocCompleteness();
+  }
+
+  function filterCommDocCompleteness() {
+    var search = (document.getElementById('comm_diag_doc_comp_search').value || '').toLowerCase();
+    var filter = document.getElementById('comm_diag_doc_comp_filter').value;
+    var visible = allCommDocCompletenessRows.filter(function(r) {
+      var matchText = !search || r.rid.includes(search) || String(r.name).toLowerCase().includes(search);
+      var p = r.comp.pct;
+      var matchFilter = filter === 'all' ||
+        (filter === 'low'    && p <  40) ||
+        (filter === 'medium' && p >= 40 && p <= 80) ||
+        (filter === 'high'   && p >  80);
+      return matchText && matchFilter;
+    });
+    var tbody = document.getElementById('comm_diag_doc_completeness_tbody');
+    var html = '';
+    visible.forEach(function(r) {
+      var p = r.comp.pct;
+      html += '<tr class="expandable" onclick="toggleCommDocExpand(\'' + esc(r.rid) + '\')">' +
+        '<td><strong>' + esc(r.rid) + '</strong></td>' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td style="min-width:140px;">' + progressBar(p) +
+          '<span style="font-size:12px;color:#64748b;margin-top:3px;display:block;">' + p + '%</span></td>' +
+        '<td><span class="badge badge-ok">' + r.comp.populated + '</span></td>' +
+        '<td><span class="badge ' + (r.comp.total - r.comp.populated > 0 ? 'badge-missing' : 'badge-ok') + '">' +
+          (r.comp.total - r.comp.populated) + '</span></td>' +
+        '<td><span style="font-size:18px;color:#003da5;" id="comm_doc_chevron_' + esc(r.rid) + '">▶</span></td></tr>' +
+        '<tr class="expand-row" id="comm_doc_expand_' + esc(r.rid) + '" style="display:none;">' +
+          '<td colspan="6"><div class="detail-panel">' + buildCommDocDetailHtml(r) + '</div></td></tr>';
+    });
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:30px;">No records found</td></tr>';
+  }
+
+  function buildCommDocDetailHtml(r) {
+    var sections = {};
+    r.comp.fields.forEach(function(f) {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    var html = '';
+    Object.keys(sections).forEach(function(sec) {
+      html += '<div class="detail-section-header">' + esc(sec) + '</div><div class="detail-fields">';
+      sections[sec].forEach(function(f) {
+        var icon = f.populated ? '✅' : '❌';
+        var valDisplay = f.populated
+          ? '<span class="field-value">' + esc(String(f.value).substring(0,120)) + (String(f.value).length > 120 ? '…' : '') + '</span>'
+          : '<span class="field-value empty">empty</span>';
+        html += '<div class="detail-field"><span class="icon">' + icon + '</span><div>' +
+          '<div class="field-label">' + esc(f.label) + '</div>' + valDisplay + '</div></div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function toggleCommDocExpand(rid) {
+    var row  = document.getElementById('comm_doc_expand_' + rid);
+    var chev = document.getElementById('comm_doc_chevron_' + rid);
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    if (chev) chev.textContent = open ? '▶' : '▼';
+  }
+
+  function exportCommDocCsv() {
+    var rows = [['Record ID', 'File Name', 'Completeness %', 'Populated', 'Empty'].concat(
+      COMM_DOC_FIELDS.map(function(f){ return f.label; })
+    )];
+    allCommDocCompletenessRows.forEach(function(r) {
+      var row = [r.rid, r.name, r.comp.pct, r.comp.populated, r.comp.total - r.comp.populated];
+      r.comp.fields.forEach(function(f) {
+        row.push(f.populated ? String(f.value).replace(/,/g,';') : '');
+      });
+      rows.push(row);
+    });
+    var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'comm_doc_completeness_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+  }
+
+  // ── Communications: Lazy load ─────────────────────────────────
+  function loadCommData() {
+    if (commDataLoaded || commDataLoading) return;
+    commDataLoading = true;
+
+    var token = bootstrapToken();
+    if (!token) {
+      document.getElementById('comm_diag_prompt').innerHTML =
+        '<p style="color:#991b1b;font-size:13px;">Not authenticated — please log in via the SORTA portal first.</p>';
+      commDataLoading = false;
+      return;
+    }
+
+    document.getElementById('comm_diag_prompt').style.display  = 'none';
+    document.getElementById('comm_diag_loading').style.display = 'block';
+
+    var reportPromises = COMM_API.reports.map(function(r) {
+      return queryReport(token, r.id).then(function(rows) {
+        console.log('[CommDiag] Report', r.label, '(' + r.id + '):', rows.length, 'rows');
+        return rows;
+      }).catch(function(err) {
+        console.warn('[CommDiag] Report', r.label, 'failed:', err.message);
+        return [];
+      });
+    });
+
+    var docsReportPromise = queryReport(token, COMM_API.docsReportId).then(function(rows) {
+      console.log('[CommDiag] Docs report (' + COMM_API.docsReportId + '):', rows.length, 'rows');
+      // Only include docs that are linked to a communication
+      return rows.filter(function(row) {
+        return !!(getFieldValue(row, 'related_communications'));
+      });
+    }).catch(function(err) {
+      console.warn('[CommDiag] Docs report failed:', err.message);
+      return [];
+    });
+
+    Promise.all([
+      getTableFields(token, COMM_API.tableFieldsId),
+      getTableFields(token, COMM_API.docsTableFieldsId).catch(function(err) {
+        console.warn('[CommDiag] Docs table fields failed:', err.message);
+        return [];
+      }),
+      docsReportPromise
+    ].concat(reportPromises))
+      .then(function(results) {
+        var dbFields    = Array.isArray(results[0]) ? results[0] : (results[0].data || results[0].fields || []);
+        var docDbFields = Array.isArray(results[1]) ? results[1] : (results[1].data || results[1].fields || []);
+        var docRows     = results[2];
+        var allRowArrays = results.slice(3);
+
+        console.log('[CommDiag] Comm DB fields:', dbFields.length, '| Doc DB fields:', docDbFields.length);
+        console.log('[CommDiag] Communication rows:', allRowArrays[0] ? allRowArrays[0].length : 0, '| Linked doc rows:', docRows.length);
+
+        var merged = mergeAllRows(allRowArrays);
+
+        document.getElementById('comm_diag_loading').style.display                  = 'none';
+        document.getElementById('comm_diag_stat_grid').style.display                = '';
+        document.getElementById('comm_diag_coverage_card').style.display            = 'block';
+        document.getElementById('comm_diag_completeness_card').style.display        = 'block';
+        document.getElementById('comm_diag_doc_coverage_card').style.display        = 'block';
+        document.getElementById('comm_diag_doc_completeness_card').style.display    = 'block';
+
+        renderCommCoverage(dbFields);
+        renderCommCompleteness(merged);
+        renderCommDocCoverage(docDbFields);
+        renderCommDocCompleteness(docRows);
+
+        commDataLoaded  = true;
+        commDataLoading = false;
+      }).catch(function(err) {
+        console.error('[CommDiag] Error:', err);
+        document.getElementById('comm_diag_loading').style.display = 'none';
+        document.getElementById('comm_diag_prompt').innerHTML =
+          '<p style="color:#991b1b;font-size:13px;">Error loading communications data: ' + esc(err.message) + '</p>';
+        document.getElementById('comm_diag_prompt').style.display = 'block';
+        commDataLoading = false;
+      });
+  }
+
   // ── Tab switcher ──────────────────────────────────────────────
   function switchTab(name) {
-    ['coverage','completeness','reimbursement','quarterly'].forEach(function(t) {
+    var allTabs = ['coverage','completeness','reimbursement','quarterly','communications'];
+    allTabs.forEach(function(t) {
       document.getElementById('tab_' + t).classList.toggle('active', t === name);
     });
     document.querySelectorAll('.tab-btn').forEach(function(b, i) {
-      b.classList.toggle('active', ['coverage','completeness','reimbursement','quarterly'][i] === name);
+      b.classList.toggle('active', allTabs[i] === name);
     });
     // The application stat grid only applies to the two application tabs
     var appTabs = ['coverage', 'completeness'];
     document.getElementById('stat_grid').style.display = appTabs.includes(name) ? '' : 'none';
-    if (name === 'reimbursement') loadReimbData();
-    if (name === 'quarterly')     loadQprData();
+    if (name === 'reimbursement')   loadReimbData();
+    if (name === 'quarterly')       loadQprData();
+    if (name === 'communications')  loadCommData();
   }
 
   // ── Export CSV ────────────────────────────────────────────────
@@ -2137,6 +2719,14 @@
   window.filterQprDocCompleteness  = filterQprDocCompleteness;
   window.toggleQprDocExpand        = toggleQprDocExpand;
   window.exportQprDocCsv           = exportQprDocCsv;
+  window.filterCommCoverage        = filterCommCoverage;
+  window.filterCommCompleteness    = filterCommCompleteness;
+  window.toggleCommExpand          = toggleCommExpand;
+  window.exportCommCsv             = exportCommCsv;
+  window.filterCommDocCoverage     = filterCommDocCoverage;
+  window.filterCommDocCompleteness = filterCommDocCompleteness;
+  window.toggleCommDocExpand       = toggleCommDocExpand;
+  window.exportCommDocCsv          = exportCommDocCsv;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
