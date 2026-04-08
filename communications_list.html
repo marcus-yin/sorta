@@ -670,12 +670,12 @@
       toFieldKey: 'YOUR_COMMUNICATIONS_TO_FIELD_KEY_HERE',
       fromFieldKey: 'YOUR_COMMUNICATIONS_FROM_FIELD_KEY_HERE',
       directionFieldKey: 'YOUR_COMMUNICATIONS_DIRECTION_FIELD_KEY_HERE',
-      documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
+      documentsTableKey: 'eoeify9w2',
       documentsReportId: 'YOUR_DOCUMENTS_REPORT_ID_HERE',
-      documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
-      documentsFileFieldKey: 'YOUR_DOCUMENTS_FILE_FIELD_KEY_HERE',
-      documentsNameFieldKey: 'YOUR_DOCUMENTS_NAME_FIELD_KEY_HERE',
-      documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
+      documentsRelatedCommunicationFieldKey: 'vdfpl3wg5',
+      documentsFileFieldKey: '8x889kog8',
+      documentsNameFieldKey: 't8ycbweq7',
+      documentsDescriptionFieldKey: 'vtgd8jnw3'
     };
 
     // ============================================================
@@ -867,7 +867,7 @@
       }).then(function (result) {
         var rows = (result && result.Records) || (Array.isArray(result) ? result : (result.data || result.Data || []));
         return rows.filter(function (row) {
-          var rel = extractFieldValue(row, 'related_notification') || extractFieldValue(row, 'related_communication') || '';
+          var rel = extractFieldValue(row, 'related_communications') || '';
           return String(rel) === String(commRid);
         });
       }).catch(function () { return []; });
@@ -919,8 +919,8 @@
 
     function uploadAttachment(token, file, commRid) {
       var docTable = API_CONFIG.documentsTableKey;
-      var docNotifKey = API_CONFIG.documentsRelatedNotificationFieldKey;
-      if (!docTable || docTable.indexOf('YOUR_') === 0 || !docNotifKey || docNotifKey.indexOf('YOUR_') === 0) {
+      var relKey  = API_CONFIG.documentsRelatedCommunicationFieldKey;
+      if (!docTable || docTable.indexOf('YOUR_') === 0 || !relKey || relKey.indexOf('YOUR_') === 0) {
         return Promise.resolve(null);
       }
 
@@ -931,10 +931,10 @@
           var payload = {
             ApplicationTableKey: docTable,
             FieldsList: [
-              { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
-              { Key: docNotifKey, Name: 'related_notification', Value: String(commRid) },
-              { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
-              { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: 'Communication Attachment' }
+              { Key: API_CONFIG.documentsFileFieldKey,  Name: 'file',                   Value: file.name, base64EncodedFile: base64, fileName: file.name },
+              { Key: relKey,                             Name: 'related_communications', Value: String(commRid) },
+              { Key: API_CONFIG.documentsNameFieldKey,  Name: 'name',                   Value: file.name },
+              { Key: API_CONFIG.documentsDescriptionFieldKey, Name: 'description',      Value: 'Communication Attachment' }
             ]
           };
           fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
