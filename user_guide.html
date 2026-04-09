@@ -324,6 +324,7 @@
       <a href="#app-schedule">Schedule &amp; ROW</a>
       <a href="#app-scoring">Scoring / Criteria</a>
       <a href="#app-acknowledgment">Acknowledgment &amp; Attestation</a>
+      <a href="#app-messaging">Send Message</a>
 
       <div class="toc-section-title">Reimbursement Request</div>
       <a href="#reimb-overview">Reimbursement Overview</a>
@@ -451,13 +452,13 @@
       <tbody>
         <tr><td>Project Name</td><td>Descriptive name for the project</td><td></td></tr>
         <tr><td>Project Description</td><td>Brief narrative describing the project scope</td><td></td></tr>
-        <tr><td>Project ID</td><td>SORTA MTIF project identifier</td><td></td></tr>
-        <tr><td>Year Project Funded</td><td>Year the project received funding</td><td></td></tr>
-        <tr><td>Date of Project Award</td><td>Official award date</td><td></td></tr>
-        <tr><td>Program Year / Round</td><td>e.g., "Round 5 - 2025"</td><td></td></tr>
+        <tr><td>Project ID</td><td>SORTA MTIF project identifier</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Application Year</td><td>Calendar year of the application; defaults to the current year</td><td></td></tr>
+        <tr><td>Round</td><td>Funding round number (e.g., 5)</td><td></td></tr>
+        <tr><td>Program Year</td><td>Auto-built from Application Year and Round (e.g., "Round 5 - 2025")</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Date of Project Award</td><td>Official award date</td><td><span class="badge badge-auto">Auto</span></td></tr>
         <tr><td>Project Type</td><td>Category such as Road, Bridge, Sidewalk, Multimodal, ITS, or Transit Facility</td><td></td></tr>
         <tr><td>Large vs Small Project</td><td>Large (&ge; $1M) or Small (&lt; $1M)</td><td></td></tr>
-        <tr><td>Emergency Project</td><td>Yes or No</td><td></td></tr>
       </tbody>
     </table>
     <a class="back-to-top" href="#top">Back to top</a>
@@ -475,10 +476,13 @@
         <tr><td>Project Vicinity Map</td><td>Upload a map showing the project area</td><td><span class="badge badge-file">File Upload</span></td></tr>
         <tr><td>Latitude / Longitude</td><td>Auto-populated from the interactive Google Map</td><td><span class="badge badge-auto">Auto</span></td></tr>
         <tr><td>GIS Shapefile</td><td>Upload the project's GIS shapefile</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>Identify Nearest Fixed Route</td><td>Name or description of the nearest fixed bus route</td><td></td></tr>
         <tr><td>Distance to Transit</td><td>Miles to nearest fixed-route transit</td><td></td></tr>
         <tr><td>Within 3/4 Mile of Transit</td><td>Yes or No</td><td></td></tr>
         <tr><td>Weekday Trips</td><td>Number of weekday fixed-route trips using the corridor</td><td></td></tr>
         <tr><td>On BRT Corridor</td><td>Yes or No</td><td></td></tr>
+        <tr><td>Project Location Photos</td><td>Upload site photos of the project area</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>BUS Trip Form</td><td>Upload the BUS trip form supporting your transit proximity data</td><td><span class="badge badge-file">File Upload</span></td></tr>
       </tbody>
     </table>
     <div class="tip"><strong>Tip:</strong> Use the interactive Google Map to place a marker on your project location. The latitude and longitude fields will populate automatically.</div>
@@ -492,15 +496,20 @@
       <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td>Local Funds Budgeted</td><td>Dollar amount of local funds committed</td><td></td></tr>
+        <tr><td>Local Funds Share (%)</td><td>Local funding as a percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
         <tr><td>SORTA MTIF Funds Awarded</td><td>Dollar amount of MTIF grant funds</td><td></td></tr>
+        <tr><td>MTIF Funds Share (%)</td><td>MTIF funding as a percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
         <tr><td>Other Funds Budgeted</td><td>Dollar amount from other funding sources</td><td></td></tr>
+        <tr><td>Other Funds Share (%)</td><td>Other funding as a percentage of total budget</td><td><span class="badge badge-calc">Calculated</span></td></tr>
         <tr><td>Total Project Budget</td><td>Sum of all funding sources</td><td><span class="badge badge-calc">Calculated</span></td></tr>
-        <tr><td>Share Percentages</td><td>Local %, MTIF %, Other %</td><td><span class="badge badge-calc">Calculated</span></td></tr>
         <tr><td>Max Grant %</td><td>Must not exceed 90% of construction cost</td><td></td></tr>
         <tr><td>Multi-Year Funding</td><td>Number of funding years (1&ndash;5)</td><td></td></tr>
+        <tr><td>Construction Contingency %</td><td>Contingency percentage for construction cost overruns</td><td></td></tr>
+        <tr><td>Useful Life Estimate</td><td>Expected useful life of the infrastructure (years)</td><td></td></tr>
         <tr><td>Cost Estimate</td><td>Upload a detailed cost estimate</td><td><span class="badge badge-file">File Upload</span></td></tr>
         <tr><td>PE License</td><td>Upload engineer's stamp / PE license</td><td><span class="badge badge-file">File Upload</span></td></tr>
         <tr><td>Certification of Funds</td><td>Upload letter certifying availability of matching funds</td><td><span class="badge badge-file">File Upload</span></td></tr>
+        <tr><td>CFO Certification of Local Funds</td><td>Upload the CFO's signed certification of local matching funds</td><td><span class="badge badge-file">File Upload</span></td></tr>
         <tr><td>Authorizing Legislation</td><td>Upload authorizing legislation document</td><td><span class="badge badge-file">File Upload</span></td></tr>
       </tbody>
     </table>
@@ -533,14 +542,11 @@
       <tbody>
         <tr><td>Physical Condition</td><td>Describe the current physical condition of the infrastructure</td></tr>
         <tr><td>Safety Issues</td><td>Describe any safety concerns the project will address</td></tr>
-        <tr><td>Priority Ranking</td><td>Rank this project among your submitted projects (1st, 2nd, 3rd, etc.)</td></tr>
-        <tr><td>Economic Growth &amp; Connectivity</td><td>Describe how the project promotes economic growth</td></tr>
+        <tr><td>Economic Growth &amp; Connectivity</td><td>Describe how the project promotes economic growth and connectivity</td></tr>
         <tr><td>Regional Impact</td><td>Describe the regional significance of the project</td></tr>
-        <tr><td>Average Daily Traffic (ADT)</td><td>Current average daily traffic count</td></tr>
-        <tr><td>Relative Economic Strength</td><td>Economic strength score for the area</td></tr>
         <tr><td>Transit Impact</td><td>Describe how the project impacts transit service</td></tr>
-        <tr><td>Multimodal Infrastructure</td><td>Details on multimodal (bike, pedestrian, transit) elements</td></tr>
-        <tr><td>Sustainability Measures</td><td>Checklist of sustainability features incorporated</td></tr>
+        <tr><td>Multimodal Infrastructure</td><td>Details on multimodal (bike, pedestrian, transit) elements incorporated</td></tr>
+        <tr><td>Sustainability Measures</td><td>Checklist of sustainability features incorporated in the project</td></tr>
       </tbody>
     </table>
     <a class="back-to-top" href="#top">Back to top</a>
@@ -559,7 +565,24 @@
         <tr><td>Acknowledgment Checkbox</td><td>Check to confirm you have read and agree to the terms</td><td><span class="badge badge-required">Required</span></td></tr>
       </tbody>
     </table>
-    <div class="warning"><strong>Important:</strong> All required fields must be completed before you can submit the application. Once submitted, the application cannot be edited.</div>
+      <div class="warning"><strong>Important:</strong> All required fields must be completed before you can submit the application. Once submitted, the application cannot be edited.</div>
+    <a class="back-to-top" href="#top">Back to top</a>
+  </section>
+
+  <section class="guide-section" id="app-messaging">
+    <h3>Send Message</h3>
+    <p>The application page includes a <strong>Send Message</strong> button that allows you to send a communication directly to the SORTA review team. Messages are saved to the database and visible from the Communications page.</p>
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>To</td><td>Name or email address of the intended recipient</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>From</td><td>Your email address</td><td><span class="badge badge-auto">Auto</span></td></tr>
+        <tr><td>Subject</td><td>Brief subject line for the message</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Message</td><td>Full message body</td><td><span class="badge badge-required">Required</span></td></tr>
+        <tr><td>Attachments</td><td>Optional file attachments (multiple files supported)</td><td><span class="badge badge-file">File Upload</span></td></tr>
+      </tbody>
+    </table>
+    <div class="tip"><strong>Tip:</strong> Use the Send Message feature to ask questions about your application or respond to reviewer requests for additional information.</div>
     <a class="back-to-top" href="#top">Back to top</a>
   </section>
 
