@@ -286,6 +286,33 @@
         margin-top: 8px;
       }
 
+      /* ── Submitted banner ── */
+      #mtif_submitted_banner {
+        display: none;
+        align-items: center;
+        gap: 14px;
+        background: #f0fdf4;
+        border: 1.5px solid #86efac;
+        border-radius: 10px;
+        padding: 14px 20px;
+        margin: 0 0 20px;
+        font-size: 14px;
+        color: #166534;
+      }
+      #mtif_submitted_banner .sb-icon { font-size: 24px; flex-shrink: 0; }
+      #mtif_submitted_banner strong { display: block; font-size: 15px; margin-bottom: 2px; }
+      #mtif_submitted_banner span { opacity: .8; font-size: 13px; }
+
+      /* ── Locked field style ── */
+      .mtif-locked input:not([type=file]),
+      .mtif-locked textarea,
+      .mtif-locked select {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        cursor: not-allowed !important;
+        pointer-events: none;
+      }
+
       /* ── Transit tool button ── */
       #mtif_transit_tool_btn {
         display: inline-flex;
@@ -509,6 +536,14 @@
     </style>
   </head>
   <body>
+  <div id="mtif_submitted_banner" role="alert">
+    <span class="sb-icon">✅</span>
+    <div>
+      <strong>Application Submitted</strong>
+      <span>This application has been submitted and is now read-only. Contact SORTA to make changes.</span>
+    </div>
+  </div>
+
   <div id="mtif_transit_toast" role="status" aria-live="polite">
     <span class="t-icon">🚌</span>
     <div class="t-body">
@@ -2652,6 +2687,20 @@
         console.warn('[MTIF] Error loading attestation data:', atErr);
       }
 
+      // Check if this application is submitted — lock the form if so
+      var appStatus = '';
+      for (var sk in appData) {
+        if (sk === 'status' || sk.replace(/^tbl\d+_/, '') === 'status') {
+          appStatus = String(appData[sk] || '');
+          break;
+        }
+      }
+      console.log('[MTIF] Application status:', appStatus);
+      if (appStatus === 'Submitted') {
+        // Slight delay ensures all dynamic fields are rendered before locking
+        setTimeout(lockForm, 300);
+      }
+
       console.log('[MTIF] Successfully loaded application from API');
       return true;
 
@@ -3050,6 +3099,48 @@
   }
 
   // ============================================================
+  // ============================================================
+  // Lock form when application status is Submitted
+  // ============================================================
+  function lockForm() {
+    // Show submitted banner — insert it at the top of the form
+    var banner = document.getElementById('mtif_submitted_banner');
+    var form = document.getElementById('mtifForm');
+    if (banner) {
+      banner.style.display = 'flex';
+      if (form) form.insertBefore(banner, form.firstChild);
+    }
+
+    // Add locked class to body so CSS disables pointer events on fields
+    document.body.classList.add('mtif-locked');
+
+    // Also explicitly disable inputs so they can't be tabbed into
+    document.querySelectorAll(
+      'input:not([type=hidden]):not(#mtif_record_id), textarea, select'
+    ).forEach(function(el) {
+      el.disabled = true;
+    });
+
+    // Disable file inputs
+    document.querySelectorAll('input[type=file]').forEach(function(el) {
+      el.disabled = true;
+    });
+
+    // Hide action buttons (Save Draft, Submit)
+    var actions = document.querySelector('.metro-submit-actions');
+    if (actions) actions.style.display = 'none';
+
+    // Hide transit tool button if present
+    var transitBtn = document.getElementById('mtif_transit_tool_btn');
+    if (transitBtn) transitBtn.style.display = 'none';
+
+    // Hide Send Message button if present
+    var msgBtn = document.getElementById('openMessageModalBtn');
+    if (msgBtn) msgBtn.style.display = 'none';
+
+    console.log('[MTIF] Form locked — status is Submitted.');
+  }
+
   // ============================================================
   // Transit proximity tool popup
   // ============================================================
