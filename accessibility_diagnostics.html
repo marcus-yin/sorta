@@ -700,6 +700,130 @@
     return wrapper;
   }
 
+  // ── Source locator ────────────────────────────────────────────────────
+  // Find the 1-based line number in rawSourceLines where a failing node lives.
+  // Uses multiple strategies in priority order.
+
+  function findNodeInSource(sourceLines, node) {
+    if (!sourceLines || !node || !node.html) return null;
+
+    var html = node.html;
+
+    // Strategy 1: match by id attribute (most reliable)
+    var idMatch = html.match(/\bid=["']([^"']+)["']/i);
+    if (idMatch) {
+      var idVal = idMatch[1];
+      for (var i = 0; i < sourceLines.length; i++) {
+        var l = sourceLines[i];
+        if (l.indexOf('id="' + idVal + '"') !== -1 || l.indexOf("id='" + idVal + "'") !== -1) {
+          return i + 1;
+        }
+      }
+    }
+
+    // Strategy 2: match by name attribute
+    var nameMatch = html.match(/\bname=["']([^"']+)["']/i);
+    if (nameMatch) {
+      var nameVal = nameMatch[1];
+      for (var i = 0; i < sourceLines.length; i++) {
+        var l = sourceLines[i];
+        if (l.indexOf('name="' + nameVal + '"') !== -1 || l.indexOf("name='" + nameVal + "'") !== -1) {
+          return i + 1;
+        }
+      }
+    }
+
+    // Strategy 3: match by for attribute (labels)
+    var forMatch = html.match(/\bfor=["']([^"']+)["']/i);
+    if (forMatch) {
+      var forVal = forMatch[1];
+      for (var i = 0; i < sourceLines.length; i++) {
+        var l = sourceLines[i];
+        if (l.indexOf('for="' + forVal + '"') !== -1 || l.indexOf("for='" + forVal + "'") !== -1) {
+          return i + 1;
+        }
+      }
+    }
+
+    // Strategy 4: match on a significant substring of the opening tag
+    var tagChunk = html.replace(/\s+/g, ' ').slice(0, 80);
+    // strip any dynamic content, keep the opening tag portion
+    var tagOnly = tagChunk.replace(/>[\s\S]*/, '');
+    if (tagOnly.length > 8) {
+      for (var i = 0; i < sourceLines.length; i++) {
+        if (sourceLines[i].indexOf(tagOnly) !== -1) return i + 1;
+      }
+    }
+
+    return null; // element was created dynamically — no source line
+  }
+
+  // Render a mini source-code viewer centred on lineNum (1-based).
+  function buildSourceViewer(sourceLines, node, pageFile) {
+    var lineNum = findNodeInSource(sourceLines, node);
+    if (!lineNum) return null;
+
+    var ctx = 4; // lines of context either side
+    var start = Math.max(0, lineNum - 1 - ctx);
+    var end   = Math.min(sourceLines.length, lineNum + ctx);
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'margin-top:8px;border-radius:8px;overflow:hidden;border:1px solid #334155;';
+
+    // Header bar
+    var header = document.createElement('div');
+    header.style.cssText =
+      'display:flex;align-items:center;justify-content:space-between;' +
+      'padding:5px 10px;background:#1e293b;color:#94a3b8;font-size:10px;' +
+      'font-family:"Consolas","Courier New",monospace;';
+    header.innerHTML =
+      '<span style="color:#e2e8f0;">&#128196; ' + esc(pageFile || '') + '</span>' +
+      '<span>Line ' + lineNum + '</span>';
+    wrapper.appendChild(header);
+
+    // Code lines
+    var codeBlock = document.createElement('div');
+    codeBlock.style.cssText = 'background:#0f172a;overflow-x:auto;';
+
+    for (var i = start; i < end; i++) {
+      var isHit = (i === lineNum - 1);
+      var lineEl = document.createElement('div');
+      lineEl.style.cssText =
+        'display:flex;align-items:stretch;min-height:20px;' +
+        (isHit ? 'background:#450a0a;' : '');
+
+      // Gutter: error indicator
+      var gutter = document.createElement('span');
+      gutter.style.cssText =
+        'width:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;' +
+        'font-size:10px;' + (isHit ? 'color:#f87171;' : 'color:transparent;');
+      gutter.textContent = isHit ? '▶' : ' ';
+      lineEl.appendChild(gutter);
+
+      // Line number
+      var lineNumEl = document.createElement('span');
+      lineNumEl.style.cssText =
+        'width:36px;flex-shrink:0;text-align:right;padding:1px 8px 1px 0;' +
+        'font-size:11px;font-family:"Consolas","Courier New",monospace;user-select:none;' +
+        'color:' + (isHit ? '#fca5a5' : '#475569') + ';border-right:1px solid #1e293b;';
+      lineNumEl.textContent = (i + 1);
+      lineEl.appendChild(lineNumEl);
+
+      // Code text
+      var codeEl = document.createElement('span');
+      codeEl.style.cssText =
+        'padding:1px 12px;font-size:11px;font-family:"Consolas","Courier New",monospace;' +
+        'white-space:pre;color:' + (isHit ? '#fca5a5' : '#cbd5e1') + ';';
+      codeEl.textContent = sourceLines[i];
+      lineEl.appendChild(codeEl);
+
+      codeBlock.appendChild(lineEl);
+    }
+
+    wrapper.appendChild(codeBlock);
+    return wrapper;
+  }
+
   function sortViolations(violations) {
     return violations.slice().sort(function (a, b) {
       return IMPACT_ORDER.indexOf(a.impact) - IMPACT_ORDER.indexOf(b.impact);
@@ -736,7 +860,7 @@
 
   // ── Build violation table rows ─────────────────────────────────────────
 
-  function buildViolationRows(tbody, violations, impactFilter, textFilter) {
+  function buildViolationRows(tbody, violations, impactFilter, textFilter, sourceLines, pageFile) {
     tbody.innerHTML = '';
     var shown = 0;
 
@@ -780,6 +904,13 @@
           '<div class="node-label">Element ' + (ni + 1) + ' of ' + v.nodes.length + '</div>' +
           (failureLines.length ? '<div class="node-failure">' + esc(failureLines.join(' · ')) + '</div>' : '') +
           '<div class="node-html">' + esc(node.html) + '</div>';
+
+        // Source location viewer
+        if (sourceLines) {
+          var viewer = buildSourceViewer(sourceLines, node, pageFile);
+          if (viewer) nodeDiv.appendChild(viewer);
+        }
+
         detail.appendChild(nodeDiv);
       });
 
@@ -935,7 +1066,7 @@
         '</tr></thead>';
 
       var tbody = document.createElement('tbody');
-      var shown = buildViolationRows(tbody, violations, impactFilter, textFilter);
+      var shown = buildViolationRows(tbody, violations, impactFilter, textFilter, s.sourceLines, page.file);
       table.appendChild(tbody);
       tableWrap.appendChild(table);
       resultsEl.appendChild(tableWrap);
@@ -970,12 +1101,15 @@
     var btn = document.getElementById('scanbtn_' + pageId);
     if (btn) btn.disabled = true;
 
+    var rawSourceLines = null; // captured before any HTML modifications
+
     return fetch(page.file + '?_nocache=' + Date.now())
       .then(function (resp) {
         if (!resp.ok) throw new Error('HTTP ' + resp.status + ' loading ' + page.file);
         return resp.text();
       })
       .then(function (html) {
+        rawSourceLines = html.split('\n'); // save original source before modifications
         // Inject an absolute <base> so relative resource URLs (scripts, styles, images)
         // resolve correctly inside the srcdoc iframe (whose own URL is about:srcdoc).
         // Try window.location first, then document.baseURI, then skip the tag entirely
@@ -1047,7 +1181,7 @@
         });
       })
       .then(function (results) {
-        state[pageId] = { status: 'complete', results: results };
+        state[pageId] = { status: 'complete', results: results, sourceLines: rawSourceLines };
       })
       .catch(function (err) {
         state[pageId] = { status: 'error', error: esc(err.message) };
