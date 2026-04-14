@@ -498,6 +498,7 @@
                 <th>Program Year Round</th>
                 <th>Project Type</th>
                 <th>Project Size</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -535,6 +536,7 @@
       aesKey: AES_KEY,
       applicationTableKey: 'iw3twwkw2',
       applicationsReportId: 's3derd1q7',
+      submissionStatusReportId: 'pclffuha7',
       applicationsIdFieldKey: 'dyd4osqa5',
       applicationsCreatedByFieldKey: 'dfz9fb2g2',
       reimbursementTableKey: 'qo5o45ww5',
@@ -788,7 +790,8 @@
     // ============================================================
     var latestApp = null;
 
-    function renderTable(apps) {
+    function renderTable(apps, statusMap) {
+      statusMap = statusMap || {};
       var tbody  = $('sorta_tbody');
       var wrap   = $('sorta_table_wrap');
       var empty  = $('sorta_empty');
@@ -823,6 +826,7 @@
         var progYear  = extractFieldValue(app, 'program year round') || '-';
         var projType  = extractFieldValue(app, 'project type category') || '-';
         var projSize  = extractFieldValue(app, 'project size category') || '-';
+        var status    = (rid && statusMap[String(rid)]) || '';
 
         var tr = document.createElement('tr');
         tr.innerHTML =
@@ -835,6 +839,7 @@
           '<td>' + progYear + '</td>' +
           '<td>' + projType + '</td>' +
           '<td>' + projSize + '</td>' +
+          '<td>' + statusBadge(status) + '</td>' +
           '<td class="sorta-actions-cell">' +
             '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">Edit</button>' +
             '<button class="sorta-button-child" data-action="reimbursement" data-rid="' + rid + '">Reimbursement</button>' +
@@ -920,8 +925,29 @@
           var email = (profile && profile.Email) || '';
           $('sorta_user_email').textContent = email || 'Unknown user';
 
-          return queryApplications(token, email);
-        }).then(function (apps) {
+          // Load applications and submission status report in parallel
+          var appsPromise = queryApplications(token, email);
+          var statusPromise = fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify({ ReportId: API_CONFIG.submissionStatusReportId, Filters: [] })
+          }).then(function(r) { return r.ok ? r.json() : []; })
+            .then(function(result) {
+              var rows = Array.isArray(result) ? result : (result.data || result.Data || []);
+              // Build recordId → status map
+              var map = {};
+              rows.forEach(function(row) {
+                var rid = String(row.id || row.Rid || '');
+                var st  = extractFieldValue(row, 'status') || '';
+                if (rid) map[rid] = st;
+              });
+              return map;
+            }).catch(function() { return {}; });
+
+          return Promise.all([appsPromise, statusPromise]);
+        }).then(function (results) {
+          var apps      = results[0];
+          var statusMap = results[1];
           $('sorta_loading').style.display = 'none';
 
           if (apps && apps.length > 0) {
@@ -929,7 +955,7 @@
             if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
           }
 
-          renderTable(apps);
+          renderTable(apps, statusMap);
         });
       }).catch(function (err) {
         console.error('[SORTA] Init error:', err);
