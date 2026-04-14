@@ -717,7 +717,7 @@
     authorizingLegislationFieldKey: 'aw5i0xuq4',
     budgetFundingReportId: 'tvp6ny9w7',
     scheduleRowReportId: 'fz3k5d5q2',
-    attestationReportId: 'xqovqejg3',
+    attestationReportId: 'pclffuha7',
     scoringCriteriaReportId: 'm2baj0jg2',
     statusFieldKey: 'caxzgb2w5',
     notificationsTableKey: 'ia2vnshw7',
@@ -2646,7 +2646,7 @@
             var AT_COL_TO_FORM = {
               'certification':          'mtif_certification',
               'signature':              'mtif_signature',
-              'signature_title':        'mtif_signer_title',
+              'signer_title':           'mtif_signer_title',
               'signature_date':         'mtif_signature_date',
               'submit_acknowledgment':  'mtif_submit_acknowledgment'
             };
@@ -2745,13 +2745,21 @@
         console.warn('[MTIF] Error loading scoring criteria narratives:', scErr);
       }
 
-      // Check if this application is submitted — lock the form if so
+      // Check if this application is submitted — lock the form if so.
+      // atData (from attestationReportId pclffuha7) is the most reliable source
+      // since it explicitly contains the status column.
       var appStatus = '';
-      for (var sk in appData) {
-        if (sk === 'status' || sk.replace(/^tbl\d+_/, '') === 'status') {
-          appStatus = String(appData[sk] || '');
-          break;
+      var statusSources = [typeof atData !== 'undefined' ? atData : null, appData];
+      for (var si2 = 0; si2 < statusSources.length; si2++) {
+        var src = statusSources[si2];
+        if (!src) continue;
+        for (var sk in src) {
+          if (sk === 'status' || sk.replace(/^tbl\d+_/, '') === 'status') {
+            appStatus = String(src[sk] || '');
+            break;
+          }
         }
+        if (appStatus) break;
       }
       console.log('[MTIF] Application status:', appStatus);
       if (appStatus === 'Submitted') {
