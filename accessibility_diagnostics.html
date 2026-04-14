@@ -575,8 +575,14 @@
         return resp.text();
       })
       .then(function (html) {
-        // Inject <base> to resolve relative URLs inside the iframe
-        var baseHref = new URL(page.file, window.location.href).href.replace(/[^/]+$/, '');
+        // Inject <base> to resolve relative URLs inside the iframe.
+        // Use the current page's directory; fall back to './' if location is not a standard URL.
+        var baseHref;
+        try {
+          baseHref = new URL('./', window.location.href).href;
+        } catch (e) {
+          baseHref = './';
+        }
         if (html.toLowerCase().indexOf('<base') === -1) {
           html = html.replace(/(<head[^>]*>)/i, '$1<base href="' + baseHref + '">');
         }
