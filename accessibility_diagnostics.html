@@ -976,15 +976,19 @@
         return resp.text();
       })
       .then(function (html) {
-        // Inject <base> to resolve relative URLs inside the iframe.
-        // Use the current page's directory; fall back to './' if location is not a standard URL.
-        var baseHref;
-        try {
-          baseHref = new URL('./', window.location.href).href;
-        } catch (e) {
-          baseHref = './';
+        // Inject an absolute <base> so relative resource URLs (scripts, styles, images)
+        // resolve correctly inside the srcdoc iframe (whose own URL is about:srcdoc).
+        // Try window.location first, then document.baseURI, then skip the tag entirely
+        // rather than inject a relative base that would break resource loading.
+        var baseHref = null;
+        var baseCandidates = [window.location.href, document.baseURI];
+        for (var bi = 0; bi < baseCandidates.length; bi++) {
+          try {
+            var candidate = new URL('./', baseCandidates[bi]).href;
+            if (candidate && candidate.indexOf('http') === 0) { baseHref = candidate; break; }
+          } catch (e) { /* try next */ }
         }
-        if (html.toLowerCase().indexOf('<base') === -1) {
+        if (baseHref && html.toLowerCase().indexOf('<base') === -1) {
           html = html.replace(/(<head[^>]*>)/i, '$1<base href="' + baseHref + '">');
         }
 
