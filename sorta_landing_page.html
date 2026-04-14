@@ -841,7 +841,7 @@
           '<td>' + projSize + '</td>' +
           '<td>' + statusBadge(status) + '</td>' +
           '<td class="sorta-actions-cell">' +
-            '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">Edit</button>' +
+            '<button class="sorta-button sorta-button-small" data-action="edit" data-rid="' + rid + '">' + (status === 'Submitted' ? 'View' : 'Edit') + '</button>' +
             '<button class="sorta-button-child" data-action="reimbursement" data-rid="' + rid + '">Reimbursement</button>' +
             '<button class="sorta-button-child" data-action="quarterly" data-rid="' + rid + '">Quarterly Report</button>' +
             '<button class="sorta-button-child" data-action="closeout" data-rid="' + rid + '">Closeout Report</button>' +
