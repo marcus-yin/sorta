@@ -718,6 +718,7 @@
     budgetFundingReportId: 'tvp6ny9w7',
     scheduleRowReportId: 'fz3k5d5q2',
     attestationReportId: 'xqovqejg3',
+    scoringCriteriaReportId: 'm2baj0jg2',
     statusFieldKey: 'caxzgb2w5',
     notificationsTableKey: 'ia2vnshw7',
     notificationsReportId: '48keiqwa8',
@@ -2693,6 +2694,60 @@
         }
       } catch (atErr) {
         console.warn('[MTIF] Error loading attestation data:', atErr);
+      }
+
+      // ---- Load Scoring / Criteria narratives from report m2baj0jg2 ----
+      try {
+        console.log('[MTIF] Loading scoring criteria narratives from report', API_CONFIG.scoringCriteriaReportId);
+        var scResponse = await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ReportId: API_CONFIG.scoringCriteriaReportId, Filters: [] })
+        });
+
+        if (scResponse.ok) {
+          var scResult = await scResponse.json();
+          var scRows = Array.isArray(scResult) ? scResult : (scResult.data || scResult.Data || []);
+
+          var scData = null;
+          for (var sci = 0; sci < scRows.length; sci++) {
+            if (String(scRows[sci].id || scRows[sci].Rid || '') === String(recordId)) {
+              scData = scRows[sci];
+              break;
+            }
+          }
+
+          if (scData) {
+            console.log('[MTIF] Found scoring criteria data. Keys:', Object.keys(scData));
+
+            var SC_COL_TO_FORM = {
+              'physical_condition_narrative':  'field-scoring-criteria-physical-condition-narrative',
+              'safety_issues_narrative':       'field-scoring-criteria-safety-issues-narrative',
+              'economic_growth_narrative':     'field-scoring-criteria-economic-growth-connectivity-narrative',
+              'regional_impact_narrative':     'field-scoring-criteria-regional-impact-narrative',
+              'transit_impact_narrative':      'field-scoring-criteria-transit-impact-narrative'
+            };
+
+            Object.keys(scData).forEach(function(scKey) {
+              var val = scData[scKey];
+              if (val === null || val === undefined || val === '') return;
+              var col = stripPrefix(scKey);
+              var formId = SC_COL_TO_FORM[col];
+              if (!formId) return;
+
+              var field = document.getElementById(formId);
+              if (!field) return;
+
+              field.value = val;
+              field.dispatchEvent(new Event('input'));
+              console.log('[MTIF] Set scoring field:', formId, '(' + col + ') =', val);
+            });
+          } else {
+            console.log('[MTIF] No scoring criteria data found for record:', recordId);
+          }
+        }
+      } catch (scErr) {
+        console.warn('[MTIF] Error loading scoring criteria narratives:', scErr);
       }
 
       // Check if this application is submitted — lock the form if so
