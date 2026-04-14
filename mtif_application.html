@@ -2868,7 +2868,7 @@
     var acknowledgment = document.getElementById('mtif_submit_acknowledgment');
 
     var missing = [];
-    if (!certification || !certification.value) missing.push('Certification');
+    if (!certification || certification.value !== 'I certify') missing.push('Certification (you must select "I certify")');
     if (!signature || !signature.value.trim()) missing.push('Signature');
     if (!signerTitle || !signerTitle.value.trim()) missing.push('Name & Title');
     if (!signatureDate || !signatureDate.value) missing.push('Date');
@@ -2876,11 +2876,6 @@
 
     if (missing.length > 0) {
       alert('Please complete the following required fields before submitting:\n\n- ' + missing.join('\n- '));
-      return;
-    }
-
-    if (certification.value === 'I do not certify') {
-      alert('You must select "I certify" to submit this application.');
       return;
     }
 
