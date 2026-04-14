@@ -1958,7 +1958,12 @@
     const fields = {};
     document.querySelectorAll('[data-field-id]').forEach(function(field) {
       if (field.type === 'file') return;
-      fields[field.dataset.fieldId] = field.value;
+      // Checkboxes: use boolean true/false so the OpenGov API recognises the field type
+      if (field.type === 'checkbox') {
+        fields[field.dataset.fieldId] = field.checked ? true : false;
+      } else {
+        fields[field.dataset.fieldId] = field.value;
+      }
     });
     return fields;
   };
@@ -2896,7 +2901,7 @@
       formData['mtif_signature'] = signature.value.trim();
       formData['mtif_signer_title'] = signerTitle.value.trim();
       formData['mtif_signature_date'] = signatureDate.value;
-      formData['mtif_submit_acknowledgment'] = 'Yes';
+      formData['mtif_submit_acknowledgment'] = true;
 
       var fieldsList = [];
       Object.keys(FIELD_MAPPING).forEach(function(formFieldId) {
