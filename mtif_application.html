@@ -2099,14 +2099,7 @@
     'city':                                   'field-location-transit-municipality-township-county',
     'total_eligbile_improvement_costs':       'field-budget-funding-total-project-budget-dollars',
     'transit_infrastructure_fund_assistnace': 'field-budget-funding-sorta-mtif-funds-awarded-dollars',
-    // Scoring / Criteria narratives — stored in the main applications table
-    'physical_condition_narrative':           'field-scoring-criteria-physical-condition-narrative',
-    'safety_issues_narrative':                'field-scoring-criteria-safety-issues-narrative',
-    'economic_growth_narrative':              'field-scoring-criteria-economic-growth-connectivity-narrative',
-    'regional_impact_narrative':              'field-scoring-criteria-regional-impact-narrative',
-    'transit_impact_narrative':               'field-scoring-criteria-transit-impact-narrative',
-    'multimodal_infrastructure_details':      'field-scoring-criteria-multimodal-infrastructure-details',
-    'sustainability_measures':                'field-scoring-criteria-sustainability-measures-checklist'
+    // Scoring / Criteria narratives are loaded via scoringCriteriaReportId (m2baj0jg2)
   };
 
   // ============================================================
@@ -2721,11 +2714,13 @@
             console.log('[MTIF] Found scoring criteria data. Keys:', Object.keys(scData));
 
             var SC_COL_TO_FORM = {
-              'physical_condition_narrative':  'field-scoring-criteria-physical-condition-narrative',
-              'safety_issues_narrative':       'field-scoring-criteria-safety-issues-narrative',
-              'economic_growth_narrative':     'field-scoring-criteria-economic-growth-connectivity-narrative',
-              'regional_impact_narrative':     'field-scoring-criteria-regional-impact-narrative',
-              'transit_impact_narrative':      'field-scoring-criteria-transit-impact-narrative'
+              'physical_condition_narrative':    'field-scoring-criteria-physical-condition-narrative',
+              'safety_issues_narrative':         'field-scoring-criteria-safety-issues-narrative',
+              'economic_growth_narrative':       'field-scoring-criteria-economic-growth-connectivity-narrative',
+              'regional_impact_narrative':       'field-scoring-criteria-regional-impact-narrative',
+              'transit_impact_narrative':        'field-scoring-criteria-transit-impact-narrative',
+              'multimodal_infrastructure_details': 'field-scoring-criteria-multimodal-infrastructure-details',
+              'sustainability_measures':         'field-scoring-criteria-sustainability-measures-checklist'
             };
 
             Object.keys(scData).forEach(function(scKey) {
