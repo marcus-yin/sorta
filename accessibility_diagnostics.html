@@ -303,6 +303,403 @@
     return { critical: '#fee2e2', serious: '#ffedd5', moderate: '#fef3c7', minor: '#dbeafe' }[impact] || '#f1f5f9';
   }
 
+  // ── Rule fix library ───────────────────────────────────────────────────
+  // Each entry: { why, fix(v, node) → HTML string of suggested corrected markup }
+
+  var RULE_FIXES = {
+    'label': {
+      why: 'Screen readers announce form fields by their label. Without one, users cannot tell what to type.',
+      fix: function (v, node) {
+        var idMatch = node.html.match(/id=["']([^"']+)["']/);
+        var id = idMatch ? idMatch[1] : 'field-id';
+        return [
+          '&lt;!-- Option A: explicit &lt;label&gt; --&gt;',
+          '&lt;label for="' + esc(id) + '"&gt;Descriptive label text&lt;/label&gt;',
+          '&lt;input id="' + esc(id) + '" ... /&gt;',
+          '',
+          '&lt;!-- Option B: aria-label on the input --&gt;',
+          '&lt;input id="' + esc(id) + '" aria-label="Descriptive label text" ... /&gt;'
+        ].join('\n');
+      }
+    },
+    'select-name': {
+      why: 'Select dropdowns need a label so assistive technology can identify the purpose of the control.',
+      fix: function (v, node) {
+        var idMatch = node.html.match(/id=["']([^"']+)["']/);
+        var id = idMatch ? idMatch[1] : 'select-id';
+        return [
+          '&lt;label for="' + esc(id) + '"&gt;Descriptive label text&lt;/label&gt;',
+          '&lt;select id="' + esc(id) + '"&gt;...&lt;/select&gt;'
+        ].join('\n');
+      }
+    },
+    'button-name': {
+      why: 'Buttons without a text label are opaque to screen reader users and voice-control software.',
+      fix: function (v, node) {
+        var isIcon = !/>[^<]{2,}</.test(node.html);
+        if (isIcon) {
+          return [
+            '&lt;!-- Add aria-label when the button contains only an icon --&gt;',
+            '&lt;button type="button" aria-label="Close dialog"&gt;',
+            '  &lt;svg aria-hidden="true" focusable="false"&gt;...&lt;/svg&gt;',
+            '&lt;/button&gt;'
+          ].join('\n');
+        }
+        return [
+          '&lt;!-- Ensure the button has visible text or aria-label --&gt;',
+          '&lt;button type="button"&gt;Save application&lt;/button&gt;',
+          '',
+          '&lt;!-- Or use aria-label if text is not practical --&gt;',
+          '&lt;button type="button" aria-label="Save application"&gt;...&lt;/button&gt;'
+        ].join('\n');
+      }
+    },
+    'input-button-name': {
+      why: 'Input buttons (type=submit/button/reset) need a value or aria-label to describe their action.',
+      fix: function () {
+        return [
+          '&lt;input type="submit" value="Submit Application" /&gt;',
+          '',
+          '&lt;!-- Or use aria-label if value cannot be set --&gt;',
+          '&lt;input type="button" aria-label="Submit Application" /&gt;'
+        ].join('\n');
+      }
+    },
+    'image-alt': {
+      why: 'Images without alt text leave blind users with no context about what the image conveys.',
+      fix: function (v, node) {
+        var src = (node.html.match(/src=["']([^"']+)["']/) || [])[1] || 'image.png';
+        return [
+          '&lt;!-- Meaningful image: describe what it shows --&gt;',
+          '&lt;img src="' + esc(src) + '" alt="Description of the image" /&gt;',
+          '',
+          '&lt;!-- Decorative image: empty alt suppresses announcement --&gt;',
+          '&lt;img src="' + esc(src) + '" alt="" role="presentation" /&gt;'
+        ].join('\n');
+      }
+    },
+    'color-contrast': {
+      why: 'Low-contrast text is hard to read for users with low vision or colour-blindness. WCAG requires 4.5:1 for normal text, 3:1 for large text (18 px+ or 14 px bold).',
+      fix: function (v, node) {
+        var check = (node.any || []).find(function (c) { return c.id === 'color-contrast'; });
+        var ratio = check && check.data && check.data.contrastRatio
+          ? 'Actual ratio: ' + check.data.contrastRatio.toFixed(2) + ':1'
+          : '';
+        var fg = check && check.data && check.data.fgColor ? ' (fg: ' + check.data.fgColor + ')' : '';
+        var bg = check && check.data && check.data.bgColor ? ' (bg: ' + check.data.bgColor + ')' : '';
+        return [
+          '&lt;!-- ' + ratio + fg + bg + ' — target ≥ 4.5:1 --&gt;',
+          '&lt;!-- Darken the text colour or lighten the background --&gt;',
+          '&lt;!-- Use https://webaim.org/resources/contrastchecker/ to find safe values --&gt;',
+          'color: #1e293b;   /* dark slate — passes on white */',
+          'background: #fff; /* white background */'
+        ].join('\n');
+      }
+    },
+    'link-name': {
+      why: 'Links without descriptive text ("click here", empty anchors) give screen reader users no clue about the destination.',
+      fix: function () {
+        return [
+          '&lt;!-- Replace vague text with descriptive text --&gt;',
+          '&lt;a href="/reports"&gt;View quarterly reports&lt;/a&gt;',
+          '',
+          '&lt;!-- Or add aria-label when the link wraps an icon --&gt;',
+          '&lt;a href="/reports" aria-label="View quarterly reports"&gt;',
+          '  &lt;svg aria-hidden="true"&gt;...&lt;/svg&gt;',
+          '&lt;/a&gt;'
+        ].join('\n');
+      }
+    },
+    'heading-order': {
+      why: 'Screen reader users navigate by headings. Skipping levels (h1 → h3) breaks the document outline.',
+      fix: function () {
+        return [
+          '&lt;!-- Correct heading hierarchy --&gt;',
+          '&lt;h1&gt;Page title&lt;/h1&gt;',
+          '  &lt;h2&gt;Section title&lt;/h2&gt;',
+          '    &lt;h3&gt;Sub-section&lt;/h3&gt;',
+          '',
+          '&lt;!-- Never skip a level just for visual sizing —',
+          '     use CSS instead: h3 { font-size: 24px; } --&gt;'
+        ].join('\n');
+      }
+    },
+    'duplicate-id': {
+      why: 'Duplicate IDs break label associations, ARIA references, and fragment navigation.',
+      fix: function (v, node) {
+        var idMatch = node.html.match(/id=["']([^"']+)["']/);
+        var id = idMatch ? idMatch[1] : 'duplicate-id';
+        return [
+          '&lt;!-- Each id must be unique on the page --&gt;',
+          '&lt;!-- Before: two elements share id="' + esc(id) + '" --&gt;',
+          '&lt;input id="' + esc(id) + '_1" ... /&gt;',
+          '&lt;input id="' + esc(id) + '_2" ... /&gt;',
+          '',
+          '&lt;!-- Update any for="...", aria-labelledby="..." references to match --&gt;'
+        ].join('\n');
+      }
+    },
+    'duplicate-id-active': {
+      why: 'Interactive elements with duplicate IDs cause broken focus management and ARIA relationships.',
+      fix: function (v, node) { return RULE_FIXES['duplicate-id'].fix(v, node); }
+    },
+    'duplicate-id-aria': {
+      why: 'ARIA attributes that reference a duplicate ID will target the wrong element.',
+      fix: function (v, node) { return RULE_FIXES['duplicate-id'].fix(v, node); }
+    },
+    'aria-required-attr': {
+      why: 'Certain ARIA roles require specific attributes to communicate state to assistive technology.',
+      fix: function (v, node) {
+        var check = (node.any || []).find(function (c) { return c.id === 'aria-required-attr'; });
+        var missing = check && check.data && check.data.values ? check.data.values.join(', ') : 'required attribute';
+        return [
+          '&lt;!-- Add missing required ARIA attribute(s): ' + esc(missing) + ' --&gt;',
+          '&lt;div role="checkbox" aria-checked="false" tabindex="0"&gt;...&lt;/div&gt;',
+          '&lt;div role="slider" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"&gt;...&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'aria-valid-attr-value': {
+      why: 'Invalid ARIA attribute values are ignored by assistive technology, leaving users with missing state information.',
+      fix: function (v, node) {
+        var check = (node.any || []).find(function (c) { return c.id === 'aria-valid-attr-value'; });
+        var attrs = check && check.data ? JSON.stringify(check.data) : '';
+        return [
+          '&lt;!-- Correct the ARIA attribute value --&gt;',
+          '&lt;!-- aria-expanded must be "true" or "false" (string or boolean) --&gt;',
+          '&lt;button aria-expanded="false"&gt;Toggle&lt;/button&gt;',
+          '',
+          '&lt;!-- aria-haspopup valid values: true, menu, listbox, tree, grid, dialog --&gt;',
+          (attrs ? '&lt;!-- Flagged: ' + esc(attrs) + ' --&gt;' : '')
+        ].filter(Boolean).join('\n');
+      }
+    },
+    'aria-valid-attr': {
+      why: 'Non-existent ARIA attributes are silently ignored, which may leave users without critical state information.',
+      fix: function () {
+        return [
+          '&lt;!-- Remove or correct the invalid attribute --&gt;',
+          '&lt;!-- Valid: aria-label, aria-labelledby, aria-describedby, aria-hidden,',
+          '     aria-expanded, aria-controls, aria-live, aria-role (use role= instead) --&gt;',
+          '&lt;div aria-label="Section description"&gt;...&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'aria-hidden-focus': {
+      why: 'Elements inside aria-hidden are invisible to screen readers, but if they are focusable, keyboard users will land on them with no context.',
+      fix: function () {
+        return [
+          '&lt;!-- Option A: remove aria-hidden from the container --&gt;',
+          '&lt;div&gt; &lt;!-- was aria-hidden="true" --&gt;',
+          '  &lt;button&gt;Focusable button&lt;/button&gt;',
+          '&lt;/div&gt;',
+          '',
+          '&lt;!-- Option B: add tabindex="-1" and focusable=false to stop keyboard access --&gt;',
+          '&lt;div aria-hidden="true"&gt;',
+          '  &lt;button tabindex="-1"&gt;Decorative button&lt;/button&gt;',
+          '&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'html-has-lang': {
+      why: 'The lang attribute tells screen readers which language to use for pronunciation rules.',
+      fix: function () {
+        return '&lt;html lang="en"&gt;';
+      }
+    },
+    'html-lang-valid': {
+      why: 'An invalid language code causes screen readers to fall back to a default that may mispronounce content.',
+      fix: function () {
+        return [
+          '&lt;!-- Use a valid BCP 47 language tag --&gt;',
+          '&lt;html lang="en"&gt;       &lt;!-- English --&gt;',
+          '&lt;html lang="en-US"&gt;    &lt;!-- American English --&gt;',
+          '&lt;html lang="es"&gt;       &lt;!-- Spanish --&gt;'
+        ].join('\n');
+      }
+    },
+    'document-title': {
+      why: 'The page title is the first thing a screen reader announces; it also labels browser tabs.',
+      fix: function () {
+        return [
+          '&lt;head&gt;',
+          '  &lt;title&gt;SORTA MTIF – Application Form&lt;/title&gt;',
+          '&lt;/head&gt;'
+        ].join('\n');
+      }
+    },
+    'frame-title': {
+      why: 'Iframes without a title are announced as "frame" with no context about what they contain.',
+      fix: function () {
+        return '&lt;iframe src="..." title="Transit Proximity Tool"&gt;&lt;/iframe&gt;';
+      }
+    },
+    'bypass': {
+      why: 'Keyboard users must tab through every navigation link on every page without a skip link.',
+      fix: function () {
+        return [
+          '&lt;!-- First focusable element on the page --&gt;',
+          '&lt;a href="#main-content" class="skip-link"&gt;Skip to main content&lt;/a&gt;',
+          '',
+          '&lt;main id="main-content"&gt;...&lt;/main&gt;',
+          '',
+          '/* CSS: visually hide until focused */',
+          '.skip-link { position:absolute; left:-9999px; }',
+          '.skip-link:focus { left:0; top:0; z-index:9999; }'
+        ].join('\n');
+      }
+    },
+    'landmark-one-main': {
+      why: 'A <main> landmark lets screen reader users jump directly to the primary content.',
+      fix: function () {
+        return [
+          '&lt;body&gt;',
+          '  &lt;header&gt;...&lt;/header&gt;',
+          '  &lt;main id="main-content"&gt;',
+          '    &lt;!-- primary page content --&gt;',
+          '  &lt;/main&gt;',
+          '  &lt;footer&gt;...&lt;/footer&gt;',
+          '&lt;/body&gt;'
+        ].join('\n');
+      }
+    },
+    'region': {
+      why: 'Content outside landmark regions cannot be reached by screen reader landmark navigation.',
+      fix: function () {
+        return [
+          '&lt;!-- Wrap all content in appropriate landmarks --&gt;',
+          '&lt;header role="banner"&gt;...&lt;/header&gt;',
+          '&lt;nav role="navigation" aria-label="Main navigation"&gt;...&lt;/nav&gt;',
+          '&lt;main role="main"&gt;...&lt;/main&gt;',
+          '&lt;footer role="contentinfo"&gt;...&lt;/footer&gt;'
+        ].join('\n');
+      }
+    },
+    'page-has-heading-one': {
+      why: 'An h1 provides screen reader users with a page-level anchor for orientation.',
+      fix: function () {
+        return '&lt;h1&gt;MTIF Application Form&lt;/h1&gt;  &lt;!-- one h1 per page --&gt;';
+      }
+    },
+    'interactive-supports-focus': {
+      why: 'Custom interactive elements must be in the tab order so keyboard users can reach and activate them.',
+      fix: function () {
+        return [
+          '&lt;!-- Add tabindex="0" to make a custom element keyboard-reachable --&gt;',
+          '&lt;div role="button" tabindex="0" onclick="handleClick()"',
+          '     onkeydown="if(event.key===\'Enter\'||event.key===\' \') handleClick()"&gt;',
+          '  Click me',
+          '&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'focus-order-semantics': {
+      why: 'Elements in the focus order should have a semantic role so their purpose is clear when reached by keyboard.',
+      fix: function () {
+        return [
+          '&lt;!-- Use a native interactive element instead of a div with tabindex --&gt;',
+          '&lt;button type="button"&gt;Action&lt;/button&gt;  &lt;!-- preferred over &lt;div tabindex="0"&gt; --&gt;',
+          '',
+          '&lt;!-- If a div is unavoidable, add a role --&gt;',
+          '&lt;div role="button" tabindex="0"&gt;Action&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'list': {
+      why: 'Screen readers announce list semantics (e.g. "3 items"). Broken list structure removes this context.',
+      fix: function () {
+        return [
+          '&lt;!-- Only &lt;li&gt; elements are valid direct children of &lt;ul&gt;/&lt;ol&gt; --&gt;',
+          '&lt;ul&gt;',
+          '  &lt;li&gt;Item one&lt;/li&gt;',
+          '  &lt;li&gt;Item two&lt;/li&gt;',
+          '&lt;/ul&gt;'
+        ].join('\n');
+      }
+    },
+    'listitem': {
+      why: 'List items must be inside a &lt;ul&gt; or &lt;ol&gt;; orphaned &lt;li&gt; elements confuse the accessibility tree.',
+      fix: function () {
+        return [
+          '&lt;!-- Wrap loose &lt;li&gt; elements in a list --&gt;',
+          '&lt;ul&gt;',
+          '  &lt;li&gt;Item&lt;/li&gt;',
+          '&lt;/ul&gt;'
+        ].join('\n');
+      }
+    },
+    'scrollable-region-focusable': {
+      why: 'Scrollable regions must be keyboard-reachable so users without a mouse can scroll them.',
+      fix: function () {
+        return [
+          '&lt;!-- Add tabindex="0" to make a scrollable container keyboard-accessible --&gt;',
+          '&lt;div style="overflow:auto;height:300px;" tabindex="0"',
+          '     role="region" aria-label="Scrollable results"&gt;',
+          '  ...content...',
+          '&lt;/div&gt;'
+        ].join('\n');
+      }
+    },
+    'td-headers-attr': {
+      why: 'Table cells that reference headers via the headers attribute must match valid th IDs.',
+      fix: function () {
+        return [
+          '&lt;table&gt;',
+          '  &lt;thead&gt;',
+          '    &lt;tr&gt;&lt;th id="col-name"&gt;Name&lt;/th&gt;&lt;th id="col-value"&gt;Value&lt;/th&gt;&lt;/tr&gt;',
+          '  &lt;/thead&gt;',
+          '  &lt;tbody&gt;',
+          '    &lt;tr&gt;&lt;td headers="col-name"&gt;Project A&lt;/td&gt;&lt;td headers="col-value"&gt;$50,000&lt;/td&gt;&lt;/tr&gt;',
+          '  &lt;/tbody&gt;',
+          '&lt;/table&gt;'
+        ].join('\n');
+      }
+    },
+    'th-has-data-cells': {
+      why: 'Header cells with no associated data cells are misleading to screen reader users.',
+      fix: function () {
+        return [
+          '&lt;!-- Ensure every &lt;th&gt; has data cells in its row or column --&gt;',
+          '&lt;table&gt;',
+          '  &lt;thead&gt;&lt;tr&gt;&lt;th scope="col"&gt;Name&lt;/th&gt;&lt;th scope="col"&gt;Amount&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;',
+          '  &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Project A&lt;/td&gt;&lt;td&gt;$50k&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;',
+          '&lt;/table&gt;'
+        ].join('\n');
+      }
+    }
+  };
+
+  function buildFixSuggestion(v, node) {
+    var rule = RULE_FIXES[v.id];
+    if (!rule) return null;
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'padding:0;border-top:1px solid #e2e8f0;';
+
+    var fixHeader = document.createElement('div');
+    fixHeader.className = 'expand-detail-header';
+    fixHeader.style.cssText = 'background:#f0fdf4;color:#166534;display:flex;align-items:center;gap:6px;';
+    fixHeader.innerHTML = '<span>&#9889;</span> Suggested Fix';
+    wrapper.appendChild(fixHeader);
+
+    var whyDiv = document.createElement('div');
+    whyDiv.style.cssText = 'padding:8px 14px 4px;font-size:12px;color:#475569;font-style:italic;border-bottom:1px solid #e2e8f0;';
+    whyDiv.textContent = rule.why;
+    wrapper.appendChild(whyDiv);
+
+    var codeDiv = document.createElement('div');
+    codeDiv.style.cssText = 'padding:10px 14px;';
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'font-size:11px;background:#0f172a;color:#86efac;padding:10px 14px;' +
+      'border-radius:8px;overflow-x:auto;white-space:pre;font-family:"Consolas","Courier New",monospace;margin:0;';
+    pre.innerHTML = rule.fix(v, node);
+    codeDiv.appendChild(pre);
+    wrapper.appendChild(codeDiv);
+
+    return wrapper;
+  }
+
   function sortViolations(violations) {
     return violations.slice().sort(function (a, b) {
       return IMPACT_ORDER.indexOf(a.impact) - IMPACT_ORDER.indexOf(b.impact);
@@ -395,9 +792,13 @@
         detail.appendChild(moreDiv);
       }
 
+      // Suggested fix panel (uses first failing node for context)
+      var fixEl = buildFixSuggestion(v, v.nodes[0] || {});
+      if (fixEl) detail.appendChild(fixEl);
+
       var helpDiv = document.createElement('div');
       helpDiv.className = 'help-link';
-      helpDiv.innerHTML = '&#128218; <a href="' + esc(v.helpUrl) + '" target="_blank" rel="noopener">How to fix: ' + esc(v.id) + '</a>';
+      helpDiv.innerHTML = '&#128218; <a href="' + esc(v.helpUrl) + '" target="_blank" rel="noopener">Full guidance: ' + esc(v.id) + '</a>';
       detail.appendChild(helpDiv);
 
       expandTd.appendChild(detail);
