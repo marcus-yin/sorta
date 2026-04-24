@@ -378,6 +378,81 @@
       .scoring-guidance-panel .guidance-rubric li { padding: 3px 0; border-bottom: 1px solid #f1f5f9; }
       .scoring-guidance-panel .guidance-rubric li:last-child { border-bottom: none; }
       .scoring-guidance-panel .guidance-rubric strong { color: #003da5; }
+      .scoring-guidance-panel .guidance-rubric li.clickable {
+        cursor: pointer;
+        padding: 6px 10px;
+        margin: 2px -10px;
+        border-radius: 6px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.15s ease, transform 0.05s ease;
+      }
+      .scoring-guidance-panel .guidance-rubric li.clickable:hover { background: #e0f2fe; }
+      .scoring-guidance-panel .guidance-rubric li.clickable:active { transform: scale(0.99); }
+      .scoring-guidance-panel .guidance-rubric li.clickable:focus-visible {
+        outline: 2px solid #003da5;
+        outline-offset: 1px;
+      }
+      .scoring-guidance-panel .guidance-rubric li.just-clicked { background: #bbf7d0 !important; }
+      .scoring-guidance-panel .rubric-hint {
+        font-size: 11.5px; color: #64748b; margin: 4px 0 6px; font-style: italic;
+      }
+
+      .inline-weighted-score {
+        margin: 10px 0 4px;
+        padding: 12px 14px;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 10px;
+      }
+      .inline-weighted-score .iws-header {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        margin-bottom: 8px;
+      }
+      .inline-weighted-score .iws-title {
+        font-size: 12.5px; font-weight: 700; color: #9a3412; letter-spacing: 0.02em; text-transform: uppercase;
+      }
+      .inline-weighted-score .iws-badge {
+        font-size: 11px; color: #fff; background: #e4002b; padding: 2px 8px; border-radius: 999px; font-weight: 700;
+      }
+      .inline-weighted-score .iws-grid {
+        display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; align-items: end;
+      }
+      .inline-weighted-score label {
+        font-size: 11.5px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;
+      }
+      .inline-weighted-score input[type="number"] {
+        width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+        font-size: 14px; text-align: center; outline: none; background: #fff;
+      }
+      .inline-weighted-score input[type="number"]:focus {
+        border-color: rgba(0,61,165,0.6); box-shadow: 0 0 0 3px rgba(0,61,165,0.15);
+      }
+      .inline-weighted-score input.iws-readonly {
+        background: #f1f5f9; border-color: #e2e8f0; color: #64748b; cursor: default;
+      }
+      .inline-weighted-score .iws-result {
+        text-align: center; font-weight: 700; font-size: 16px; color: var(--metro-blue);
+        padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      }
+      .inline-weighted-score textarea {
+        width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px;
+        font-size: 13px; font-family: inherit; resize: vertical; min-height: 44px; background: #fff;
+      }
+      .inline-weighted-score .iws-hint {
+        font-size: 11.5px; color: #9a3412; margin-top: 6px; font-style: italic;
+      }
+      .inline-weighted-score.iws-unmatched {
+        background: #fef2f2; border-color: #fecaca;
+      }
+      .inline-weighted-score.iws-unmatched .iws-title { color: #991b1b; }
+
+      .scoring-summary-card {
+        margin-top: 18px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 10px; display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; flex-wrap: wrap;
+      }
+      .scoring-summary-card .ss-label { font-weight: 700; color: #1e293b; font-size: 14px; }
+      .scoring-summary-card .ss-total { font-size: 20px; font-weight: 800; color: #e4002b; }
       .scoring-guidance-panel .guidance-note { margin-top: 8px; font-style: italic; color: #64748b; font-size: 12px; }
       .scoring-guidance-panel .guidance-docs { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
     </style>
@@ -429,33 +504,18 @@
           </section>
         </form>
 
-        <!-- Weighted Scoring Section -->
+        <!-- Scoring Summary Section -->
         <section class="metro-section scoring-section" id="weightedScoringSection">
-          <h3>Weighted Scoring <span style="font-size:12px; color:#e4002b; font-weight:700;">(Editable)</span></h3>
-          <p style="font-size:13px; color:#475569; margin-bottom:16px;">
-            Enter a <strong>Score</strong> and <strong>Weight</strong> for each criterion. The <strong>Weighted Score</strong> (Score &times; Weight) and <strong>Total</strong> are calculated automatically.
+          <h3>Scoring Summary <span style="font-size:12px; color:#e4002b; font-weight:700;">(Editable)</span></h3>
+          <p style="font-size:13px; color:#475569; margin-bottom:14px;">
+            Enter scores inline with each narrative above. The <strong>Total Weighted Score</strong> updates automatically as you enter values.
           </p>
-          <div style="overflow-x:auto;">
-            <table class="metro-scoring-table" id="weightedScoringTable">
-              <thead>
-                <tr>
-                  <th style="min-width:180px;">Criterion</th>
-                  <th style="width:90px; text-align:center;">Score</th>
-                  <th style="width:90px; text-align:center;">Weight</th>
-                  <th style="width:110px; text-align:center;">Weighted Score</th>
-                  <th style="min-width:200px;">Comments</th>
-                </tr>
-              </thead>
-              <tbody id="weightedScoringBody"></tbody>
-              <tfoot>
-                <tr style="background:#f1f5f9;">
-                  <td style="text-align:right; font-weight:700; padding-right:12px;" colspan="4">Total Weighted Score</td>
-                  <td style="text-align:center; font-weight:700; font-size:16px; color:#e4002b;" id="weightedScoringTotal">0</td>
-                </tr>
-              </tfoot>
-            </table>
+          <div id="unmatchedCriteriaBlock"></div>
+          <div class="scoring-summary-card">
+            <div class="ss-label">Total Weighted Score</div>
+            <div class="ss-total" id="weightedScoringTotal">0</div>
           </div>
-          <div style="margin-top:20px;">
+          <div style="margin-top:18px;">
             <label for="ws_justification_summary" style="font-weight:600; font-size:14px; color:#1e293b; display:block; margin-bottom:6px;">Justification Summary</label>
             <textarea id="ws_justification_summary" rows="5" placeholder="Provide an overall justification summary for the scores above..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:80px;"></textarea>
           </div>
@@ -587,6 +647,7 @@
     locationTransitReportId: '6tvmwupw6',
     budgetFundingReportId: 'tvp6ny9w7',
     scheduleRowReportId: 'fz3k5d5q2',
+    scoringCriteriaReportId: 'm2baj0jg2',
     evaluatorTableKey: 'xrglb4cg4',
     evaluatorReportId: 'aqjsnp6w4',
     evalAssignmentTableKey: 'qynzr97g7',
@@ -758,28 +819,171 @@
     });
   }
 
-  function buildWeightedScoringTable() {
-    var tbody = document.getElementById('weightedScoringBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+  function renderCriterionControls(crit) {
+    var scoreId = 'ws_score_' + crit.id;
+    var weightId = 'ws_weight_' + crit.id;
+    var resultId = 'ws_result_' + crit.id;
+    var commentId = 'ws_comment_' + crit.id;
+    var min = (typeof crit.scaleMin === 'number') ? crit.scaleMin : 0;
+    var max = (typeof crit.scaleMax === 'number' && crit.scaleMax > 0) ? crit.scaleMax : 10;
+    return (
+      '<div class="iws-header">' +
+        '<div class="iws-title">Weighted Score \u2014 ' + escapeAttr(crit.label) + '</div>' +
+        '<div class="iws-badge">Editable</div>' +
+      '</div>' +
+      '<div class="iws-grid">' +
+        '<div class="metro-col-3">' +
+          '<label for="' + scoreId + '">Score (' + min + '\u2013' + max + ')</label>' +
+          '<input type="number" id="' + scoreId + '" min="' + min + '" max="' + max + '" step="0.01" placeholder="0" />' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label for="' + weightId + '">Weight (%)</label>' +
+          '<input type="number" class="iws-readonly" id="' + weightId + '" value="' + (crit.weightPct || '') + '" readonly tabindex="-1" />' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label>Weighted Score</label>' +
+          '<div class="iws-result" id="' + resultId + '">0</div>' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label for="' + commentId + '">Comments</label>' +
+          '<textarea id="' + commentId + '" rows="2" placeholder="Comments..."></textarea>' +
+        '</div>' +
+      '</div>' +
+      '<div class="iws-hint">Tip: click a row in the scoring guidance above to auto-populate the Score field.</div>'
+    );
+  }
+
+  function renderInlineWeightedScoring() {
+    var slots = document.querySelectorAll('.inline-weighted-score-slot');
+    var matched = {};
+
+    slots.forEach(function(slot) {
+      slot.innerHTML = '';
+      var fieldName = slot.getAttribute('data-narrative-field');
+      var crit = findCriterionForNarrative(fieldName);
+      if (!crit) {
+        slot.innerHTML =
+          '<div class="inline-weighted-score iws-unmatched">' +
+            '<div class="iws-title">No matching weighted-scoring criterion</div>' +
+            '<div class="iws-hint">This narrative could not be matched to an active scoring criterion. Check the scoring weights report.</div>' +
+          '</div>';
+        return;
+      }
+      matched[crit.id] = true;
+      var block = document.createElement('div');
+      block.className = 'inline-weighted-score';
+      block.setAttribute('data-criterion-id', crit.id);
+      block.innerHTML = renderCriterionControls(crit);
+      slot.appendChild(block);
+    });
+
+    var unmatchedContainer = document.getElementById('unmatchedCriteriaBlock');
+    if (unmatchedContainer) {
+      unmatchedContainer.innerHTML = '';
+      var extras = WEIGHTED_SCORING_CRITERIA.filter(function(c) { return !matched[c.id]; });
+      if (extras.length > 0) {
+        var header = document.createElement('div');
+        header.style.cssText = 'font-weight:700; color:#1e293b; margin-bottom:10px; font-size:14px;';
+        header.textContent = 'Additional Scoring Criteria';
+        unmatchedContainer.appendChild(header);
+        extras.forEach(function(crit) {
+          var block = document.createElement('div');
+          block.className = 'inline-weighted-score';
+          block.style.marginBottom = '10px';
+          block.setAttribute('data-criterion-id', crit.id);
+          block.innerHTML = renderCriterionControls(crit);
+          unmatchedContainer.appendChild(block);
+        });
+      }
+    }
+
     if (WEIGHTED_SCORING_CRITERIA.length === 0) {
-      var emptyRow = document.createElement('tr');
-      emptyRow.innerHTML = '<td colspan="5" style="text-align:center; color:#94a3b8; padding:24px;">No active scoring criteria found.</td>';
-      tbody.appendChild(emptyRow);
+      slots.forEach(function(slot) {
+        slot.innerHTML = '<div class="inline-weighted-score iws-unmatched">' +
+          '<div class="iws-title">No active scoring criteria found</div>' +
+          '<div class="iws-hint">Add criteria in the scoring weights report to enable scoring.</div>' +
+          '</div>';
+      });
+    }
+
+    if (!renderInlineWeightedScoring._listenerAttached) {
+      document.addEventListener('input', function(e) {
+        var t = e.target;
+        if (t && t.id && t.id.indexOf('ws_score_') === 0) recalcWeightedScores();
+      });
+      renderInlineWeightedScoring._listenerAttached = true;
+    }
+
+    recalcWeightedScores();
+  }
+
+  function escapeAttr(v) {
+    return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Map a scoring narrative field name to its matching weighted-scoring criterion.
+  // Uses slugified token overlap between the narrative name (minus generic suffixes)
+  // and each criterion's label, scoring the best match.
+  function findCriterionForNarrative(fieldName) {
+    if (!WEIGHTED_SCORING_CRITERIA || WEIGHTED_SCORING_CRITERIA.length === 0) return null;
+
+    var stopWords = { narrative: 1, details: 1, detail: 1, checklist: 1, measures: 1,
+                      measure: 1, issues: 1, issue: 1, impact: 1, and: 1, of: 1, the: 1, a: 1 };
+    var tokenize = function(s) {
+      return String(s || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .split(/\s+/)
+        .filter(function(t) { return t && !stopWords[t]; });
+    };
+
+    var narrativeTokens = tokenize(fieldName);
+    if (narrativeTokens.length === 0) return null;
+
+    var best = null;
+    var bestScore = 0;
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var critTokens = tokenize(crit.label);
+      if (critTokens.length === 0) return;
+      var shared = 0;
+      critTokens.forEach(function(ct) {
+        if (narrativeTokens.indexOf(ct) !== -1) shared++;
+      });
+      if (shared > bestScore) { bestScore = shared; best = crit; }
+    });
+
+    return bestScore > 0 ? best : null;
+  }
+
+  function handleRubricClick(narrativeFieldName, li) {
+    var score = li.getAttribute('data-score');
+    if (!score) return;
+    // Rubric scores like "1-2" can't resolve to a single number; use the first numeric token.
+    var numeric = parseFloat(String(score).replace(/[^0-9.\-]+/g, ' ').trim().split(/\s+/)[0]);
+    if (isNaN(numeric)) return;
+
+    var crit = findCriterionForNarrative(narrativeFieldName);
+    if (!crit) {
+      showToast('No matching Weighted Scoring row found for "' + narrativeFieldName + '".', 'error');
       return;
     }
-    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + crit.label + '</td>' +
-        '<td style="text-align:center;"><input type="number" id="ws_score_' + crit.id + '" min="' + (crit.scaleMin || 0) + '" max="' + (crit.scaleMax || 10) + '" step="0.01" placeholder="0" /></td>' +
-        '<td style="text-align:center;"><input type="number" id="ws_weight_' + crit.id + '" value="' + (crit.weightPct || '') + '" readonly tabindex="-1" style="background:#f1f5f9; border-color:#e2e8f0; color:#64748b; cursor:default;" /></td>' +
-        '<td class="weighted-score-cell" id="ws_result_' + crit.id + '">0</td>' +
-        '<td><textarea id="ws_comment_' + crit.id + '" rows="2" placeholder="Comments..." style="width:100%; padding:6px 8px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; font-family:inherit; resize:vertical; min-height:36px;"></textarea></td>';
-      tbody.appendChild(tr);
-    });
-    tbody.addEventListener('input', recalcWeightedScores);
+    var scoreEl = document.getElementById('ws_score_' + crit.id);
+    if (!scoreEl) {
+      showToast('Weighted Scoring input not yet loaded. Please try again.', 'error');
+      return;
+    }
+    var clamped = numeric;
+    if (typeof crit.scaleMax === 'number' && clamped > crit.scaleMax) clamped = crit.scaleMax;
+    if (typeof crit.scaleMin === 'number' && clamped < crit.scaleMin) clamped = crit.scaleMin;
+    scoreEl.value = clamped;
+    scoreEl.dispatchEvent(new Event('input', { bubbles: true }));
     recalcWeightedScores();
+
+    li.classList.add('just-clicked');
+    setTimeout(function() { li.classList.remove('just-clicked'); }, 650);
+
+    showToast('Set "' + crit.label + '" score to ' + clamped + '.', 'success');
   }
 
   function recalcWeightedScores() {
@@ -1373,9 +1577,11 @@
 
           var html = '<div class="guidance-question">' + guidance.question + '</div>';
           if (guidance.description) html += '<p>' + guidance.description + '</p>';
+          html += '<div class="rubric-hint">Click a row below to populate the matching Weighted Scoring row.</div>';
           html += '<ul class="guidance-rubric">';
           guidance.rubric.forEach(function(r) {
-            html += '<li><strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
+            html += '<li class="clickable" tabindex="0" role="button" data-score="' + escapeAttr(r.score) + '" title="Click to set Weighted Score">' +
+                    '<strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
             if (r.desc) html += ' \u2014 ' + r.desc;
             html += '</li>';
           });
@@ -1383,6 +1589,7 @@
           if (guidance.docs) html += '<div class="guidance-docs"><strong>Documentation:</strong> ' + guidance.docs + '</div>';
           if (guidance.notes) html += '<div class="guidance-note"><strong>Note:</strong> ' + guidance.notes + '</div>';
           panel.innerHTML = html;
+          panel.dataset.narrativeField = fieldName;
 
           toggleBtn.addEventListener('click', function() {
             var p = document.getElementById(panelId);
@@ -1391,11 +1598,32 @@
             this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
           });
 
+          panel.addEventListener('click', function(e) {
+            var li = e.target.closest('li.clickable');
+            if (!li) return;
+            handleRubricClick(fieldName, li);
+          });
+          panel.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var li = e.target.closest('li.clickable');
+            if (!li) return;
+            e.preventDefault();
+            handleRubricClick(fieldName, li);
+          });
+
           fieldWrap.appendChild(toggleBtn);
           fieldWrap.appendChild(panel);
         }
 
         fieldWrap.appendChild(input);
+
+        if (category === SCORING_CATEGORY) {
+          var slot = document.createElement('div');
+          slot.className = 'inline-weighted-score-slot';
+          slot.setAttribute('data-narrative-field', fieldName);
+          fieldWrap.appendChild(slot);
+        }
+
         grid.appendChild(fieldWrap);
       });
 
@@ -1936,10 +2164,10 @@
 
           var weightsReady = loadScoringWeights(token).then(function() {
             console.log('[EVAL] Loaded', WEIGHTED_SCORING_CRITERIA.length, 'active scoring criteria');
-            buildWeightedScoringTable();
+            renderInlineWeightedScoring();
           }).catch(function(err) {
-            console.warn('[EVAL] Could not load scoring weights, table will be empty:', err);
-            buildWeightedScoringTable();
+            console.warn('[EVAL] Could not load scoring weights:', err);
+            renderInlineWeightedScoring();
           });
 
           // Load all reports
@@ -1976,7 +2204,8 @@
             console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
 
             // Load scoring criteria narratives (applicant-entered text)
-            queryReport(token, API_CONFIG.applicationsReportId).then(function(rows) {
+            queryReport(token, API_CONFIG.scoringCriteriaReportId).then(function(rows) {
+              console.log('[EVAL] Scoring criteria report returned', rows.length, 'rows');
               populateFromReport(rows, recordId, SC_COL_TO_FORM);
             }).catch(function(err) {
               console.warn('[EVAL] Could not load scoring criteria narratives:', err);
