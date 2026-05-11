@@ -307,12 +307,18 @@
         <section class="metro-section">
           <h3>Record Information</h3>
           <div class="metro-grid">
-            <div class="metro-col-6">
+            <div class="metro-col-4">
+              <label for="reimbursementStatus">Status</label>
+              <input type="text" id="reimbursementStatus" name="reimbursementStatus" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default; font-weight:700;"
+                     title="Updated automatically. New requests start as Draft; clicking Submit changes it to Submitted." />
+            </div>
+            <div class="metro-col-4">
               <label for="reimbursementRecordId">Reimbursement Record ID</label>
               <input type="text" id="reimbursementRecordId" name="reimbursementRecordId" readonly
                      style="background:#eef1f6; color:#475569; cursor:default;" />
             </div>
-            <div class="metro-col-6">
+            <div class="metro-col-4">
               <label for="relatedApplicationId">Related Application ID</label>
               <input type="text" id="relatedApplicationId" name="relatedApplicationId" readonly
                      style="background:#eef1f6; color:#475569; cursor:default;" />
@@ -341,7 +347,16 @@
             </div>
             <div class="metro-col-4">
               <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" name="phone" />
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="(123) 456-7890"
+                pattern="^\+?\d{0,2}[\s.\-]?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}$"
+                title="Enter a valid phone number, e.g. (123) 456-7890 or 123-456-7890"
+              />
             </div>
           </div>
         </section>
@@ -363,7 +378,9 @@
             </div>
             <div class="metro-col-6">
               <label for="projectName">Project Name</label>
-              <input type="text" id="projectName" name="projectName" />
+              <input type="text" id="projectName" name="projectName" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;"
+                     title="Pulled from the parent application; not editable here." />
             </div>
             <div class="metro-col-6">
               <label for="contractor">Contractor / Subcontractor(s)</label>
@@ -371,7 +388,9 @@
             </div>
             <div class="metro-col-6">
               <label for="projectId">Project ID #</label>
-              <input type="text" id="projectId" name="projectId" />
+              <input type="text" id="projectId" name="projectId" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;"
+                     title="Pulled from the parent application; not editable here." />
             </div>
           </div>
         </section>
@@ -389,7 +408,9 @@
             </div>
             <div class="metro-col-4">
               <label for="totalDays">Total # Days</label>
-              <input type="number" id="totalDays" name="totalDays" min="0" step="1" />
+              <input type="number" id="totalDays" name="totalDays" min="0" step="1" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;"
+                     title="Auto-calculated from Start Date and End / Completion Date." />
             </div>
           </div>
         </section>
@@ -476,7 +497,9 @@
           <div class="metro-grid">
             <div class="metro-col-6">
               <label for="totalInvoiceAmount">Total Invoice Amount</label>
-              <input type="number" id="totalInvoiceAmount" name="totalInvoiceAmount" readonly />
+              <input type="number" id="totalInvoiceAmount" name="totalInvoiceAmount" readonly
+                     style="background:#eef1f6; color:#475569; cursor:default;"
+                     title="Auto-calculated from the Amount column of the Invoice Detail rows above." />
             </div>
             <div class="metro-col-6">
               <label for="amountRequested">Amount Requested (this submission)</label>
@@ -532,6 +555,20 @@
             </div>
           </div>
         </section>
+
+        <section class="metro-section" style="display:flex; flex-direction:column; align-items:stretch; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="font-size:13px; color:#475569; max-width:640px;">
+              Review all sections above, then click <strong>Submit Reimbursement Request</strong>
+              to save this request to the database. You can return and edit it later.
+            </div>
+            <button class="metro-button primary" type="submit" id="submitButton"
+                    style="font-size:16px; padding:14px 28px;">
+              Submit Reimbursement Request
+            </button>
+          </div>
+          <div class="metro-status" id="submitStatus" style="text-align:right;"></div>
+        </section>
       </form>
     </main>
 
@@ -555,7 +592,47 @@
         invoiceReportId: '1xf3fhxg8',
         invoiceRelFieldKey: 'kdlm4sbg3',
         summaryReportId: 'chiu6d9w1',
-        certificationReportId: '9zjin6eg8'
+        certificationReportId: '9zjin6eg8',
+        // Used to pre-populate applicant info from the parent application
+        // when this reimbursement was just created and has no values of its own.
+        applicationTableKey: 'iw3twwkw2',
+        granteesReportId: 'niazpvhq8',
+        // Source of truth for project name and project ID on the reimbursement
+        // (those reimbursement fields are read-only and always reflect the
+        // parent application's project header).
+        projectHeaderReportId: 's3derd1q7'
+      };
+
+      // Form field id -> database column name for the main reimbursement
+      // record. Used by loadFromAPI (read) and submitReimbursement (write)
+      // so both directions stay in sync.
+      var REIMBURSEMENT_FIELD_MAP = {
+        applicantName:       'applicant_name',
+        streetAddress:       'street_address',
+        cityStateZip:        'city_state_zip',
+        email:               'email',
+        phone:               'phone',
+        // projectName and projectId are sourced from the parent application
+        // (see prepopulateProjectFromApplication). Intentionally omitted.
+        contractor:          'contractor',
+        startDate:           'start_date',
+        endDate:             'end_date',
+        totalDays:           'total_days',
+        grantAwarded:        'grant_awarded',
+        requestAmount:       'request_amount',
+        currentBalance:      'current_balance',
+        requestDate:         'request_date',
+        workCompleted:       'work_completed',
+        amountRequested:     'amount_requested',
+        summaryNotes:        'summary_notes',
+        applicantOfficer:    'applicant_officer',
+        applicantTitle:      'applicant_title',
+        applicantSignature:  'applicant_signature',
+        applicantDate:       'applicant_date',
+        sortaOfficer:        'sorta_officer',
+        sortaTitle:          'sorta_title',
+        sortaSignature:      'sorta_signature',
+        sortaDate:           'sorta_date'
       };
 
       // ============================================================
@@ -625,6 +702,330 @@
       }
 
       // ============================================================
+      // Pre-populate applicant info from the parent application's
+      // grantee/jurisdiction report. Only fills fields that are
+      // currently empty, so the reimbursement record's own data
+      // (and any in-progress user edits) always win.
+      // ============================================================
+      function setIfEmpty(formId, value) {
+        if (value === null || value === undefined) return;
+        var v = String(value).trim();
+        if (!v) return;
+        var el = document.getElementById(formId);
+        if (!el) return;
+        if (el.value && el.value.trim() !== '') return;
+        el.value = v;
+        console.log('[REIMB] Pre-populated', formId, 'from application:', v);
+      }
+
+      // Split a single-field mailing address like
+      //   "123 Main St, Cincinnati, OH 45202"
+      // into { street, cityStateZip }. Falls back to putting the
+      // whole value in `street` if we can't confidently split it.
+      function splitMailingAddress(addr) {
+        var s = String(addr || '').trim();
+        if (!s) return { street: '', cityStateZip: '' };
+
+        if (s.indexOf('\n') !== -1) {
+          var lines = s.split(/\r?\n/)
+                       .map(function (p) { return p.trim(); })
+                       .filter(Boolean);
+          return {
+            street: lines[0] || '',
+            cityStateZip: lines.slice(1).join(', ')
+          };
+        }
+
+        var parts = s.split(',').map(function (p) { return p.trim(); }).filter(Boolean);
+        if (parts.length >= 3) {
+          return { street: parts[0], cityStateZip: parts.slice(1).join(', ') };
+        }
+
+        return { street: s, cityStateZip: '' };
+      }
+
+      // Column-name -> form field mapping for the parent application's
+      // grantees/jurisdiction report (niazpvhq8). Update these keys if
+      // the API column names ever change. Each form field can accept a
+      // list of candidate column names; the first non-empty hit wins.
+      var APP_GRANTEE_FIELD_MAP = {
+        applicantName: [
+          'jurisdiction_name',
+          'jurisdiction name',
+          'applicant_name',
+          'applicant name',
+          'project_contact_name',
+          'project contact name'
+        ],
+        streetAddress: [
+          'jurisdiction_mailing_address',
+          'jurisdiction mailing address',
+          'street_address',
+          'street address',
+          'mailing_address',
+          'mailing address'
+        ],
+        cityStateZip: [
+          'city_state_zip',
+          'city state zip',
+          'city_state_zip_code',
+          'city state zip code'
+        ],
+        email: [
+          'primary_applicant_email',
+          'primary applicant email',
+          'project_contact_email',
+          'project contact email',
+          'email'
+        ],
+        phone: [
+          'project_contact_phone',
+          'project contact phone',
+          'phone',
+          'phone_number',
+          'phone number'
+        ]
+      };
+
+      function firstValue(row, candidateNames) {
+        for (var i = 0; i < candidateNames.length; i++) {
+          var v = extractFieldValue(row, candidateNames[i]);
+          if (v !== null && v !== undefined && String(v).trim() !== '') return v;
+        }
+        return '';
+      }
+
+      function prepopulateApplicantFromApplication(relatedAppId) {
+        if (!relatedAppId) {
+          console.log('[REIMB] Prepopulate skipped: no relatedAppId');
+          return;
+        }
+        if (!API_CONFIG.granteesReportId) {
+          console.log('[REIMB] Prepopulate skipped: no granteesReportId configured');
+          return;
+        }
+
+        console.log('[REIMB] Prepopulating applicant info from application', relatedAppId);
+
+        getAuthToken().then(function (token) {
+          if (!token) { console.warn('[REIMB] No auth token for applicant prepopulate'); return; }
+
+          // Match the payload shape used by mtif_application.html for the
+          // same report (`niazpvhq8`), which is known to work.
+          var payload = {
+            ReportId: API_CONFIG.granteesReportId,
+            Filters: []
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Grantees report query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            // The API can return rows under different keys depending on the
+            // endpoint version. Accept any of them.
+            var rows = (data && (data.Records || data.data || data.Data)) ||
+                       (Array.isArray(data) ? data : []) || [];
+            console.log('[REIMB] Grantees report returned', rows.length, 'rows');
+            if (rows.length > 0) {
+              console.log('[REIMB] Grantees sample row keys:', Object.keys(rows[0]));
+              console.log('[REIMB] Grantees sample row:', rows[0]);
+            }
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(relatedAppId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No grantee record for application ID', relatedAppId,
+                           '(checked', rows.length, 'rows)');
+              return;
+            }
+
+            console.log('[REIMB] Parent application grantee data:', match);
+
+            var jurisdictionName = firstValue(match, APP_GRANTEE_FIELD_MAP.applicantName);
+            var streetVal        = firstValue(match, APP_GRANTEE_FIELD_MAP.streetAddress);
+            var cityStateZipVal  = firstValue(match, APP_GRANTEE_FIELD_MAP.cityStateZip);
+            var emailVal         = firstValue(match, APP_GRANTEE_FIELD_MAP.email);
+            var phoneVal         = firstValue(match, APP_GRANTEE_FIELD_MAP.phone);
+
+            console.log('[REIMB] Resolved values:', {
+              applicantName: jurisdictionName,
+              streetAddress: streetVal,
+              cityStateZip: cityStateZipVal,
+              email: emailVal,
+              phone: phoneVal
+            });
+
+            setIfEmpty('applicantName', jurisdictionName);
+            setIfEmpty('email', emailVal);
+            setIfEmpty('phone', phoneVal);
+
+            // If the application stores a single combined mailing address,
+            // split it across the two form fields. If we already have a
+            // separate city/state/zip value, use it directly.
+            if (cityStateZipVal) {
+              setIfEmpty('streetAddress', streetVal);
+              setIfEmpty('cityStateZip', cityStateZipVal);
+            } else if (streetVal) {
+              var parts = splitMailingAddress(streetVal);
+              setIfEmpty('streetAddress', parts.street);
+              setIfEmpty('cityStateZip', parts.cityStateZip);
+            }
+          });
+        }).catch(function (err) {
+          console.warn('[REIMB] Could not prepopulate applicant info from application:', err);
+        });
+      }
+
+      // ============================================================
+      // Pre-populate Project Name and Project ID from the parent
+      // application's project header report. These fields are
+      // read-only on the reimbursement form, so the application is
+      // always the source of truth and we always overwrite.
+      // ============================================================
+      function setReadonlyFromApplication(formId, value) {
+        if (value === null || value === undefined) return;
+        var v = String(value).trim();
+        if (!v) return;
+        var el = document.getElementById(formId);
+        if (!el) return;
+        el.value = v;
+        console.log('[REIMB] Set read-only', formId, '=', v);
+      }
+
+      // Update the read-only Status field's text and color. Called after the
+      // summary report loads and after a successful submit.
+      function setStatusValue(value) {
+        var el = document.getElementById('reimbursementStatus');
+        if (!el) return;
+        el.value = value || '';
+        applyStatusStyling();
+      }
+
+      function applyStatusStyling() {
+        var el = document.getElementById('reimbursementStatus');
+        if (!el) return;
+        var v = String(el.value || '').trim().toLowerCase();
+        // Reset to the default read-only look first.
+        el.style.background = '#eef1f6';
+        el.style.color = '#475569';
+        if (v === 'submitted' || v === 'approved') {
+          el.style.background = '#dcfce7';
+          el.style.color = '#166534';
+        } else if (v === 'draft' || v === '') {
+          el.style.background = '#dbeafe';
+          el.style.color = '#1e40af';
+        } else if (v === 'rejected' || v === 'denied') {
+          el.style.background = '#fee2e2';
+          el.style.color = '#991b1b';
+        } else if (v.indexOf('review') !== -1) {
+          el.style.background = '#fef3c7';
+          el.style.color = '#92400e';
+        }
+      }
+
+      // Auto-calculate Total # Days as (endDate - startDate) in calendar days.
+      // Treats the value as a duration: e.g. May 11 -> May 28 = 17 days.
+      // Returns silently and blanks the field when either date is missing
+      // or end < start.
+      function recalcTotalDays() {
+        var startEl = document.getElementById('startDate');
+        var endEl   = document.getElementById('endDate');
+        var totalEl = document.getElementById('totalDays');
+        if (!startEl || !endEl || !totalEl) return;
+
+        var s = startEl.value;
+        var e = endEl.value;
+        if (!s || !e) { totalEl.value = ''; return; }
+
+        // <input type="date"> always returns ISO YYYY-MM-DD. Parse as local
+        // dates (avoiding the UTC interpretation of `new Date('YYYY-MM-DD')`)
+        // so the calendar-day diff isn't affected by the user's timezone.
+        var sParts = s.split('-');
+        var eParts = e.split('-');
+        if (sParts.length !== 3 || eParts.length !== 3) { totalEl.value = ''; return; }
+
+        var sDate = new Date(Number(sParts[0]), Number(sParts[1]) - 1, Number(sParts[2]));
+        var eDate = new Date(Number(eParts[0]), Number(eParts[1]) - 1, Number(eParts[2]));
+        if (isNaN(sDate.getTime()) || isNaN(eDate.getTime())) { totalEl.value = ''; return; }
+
+        var diffDays = Math.round((eDate.getTime() - sDate.getTime()) / 86400000);
+        totalEl.value = diffDays < 0 ? '' : diffDays;
+      }
+
+      function prepopulateProjectFromApplication(relatedAppId) {
+        if (!relatedAppId) {
+          console.log('[REIMB] Project prepopulate skipped: no relatedAppId');
+          return;
+        }
+        if (!API_CONFIG.projectHeaderReportId) {
+          console.log('[REIMB] Project prepopulate skipped: no projectHeaderReportId configured');
+          return;
+        }
+
+        console.log('[REIMB] Prepopulating project info from application', relatedAppId);
+
+        getAuthToken().then(function (token) {
+          if (!token) { console.warn('[REIMB] No auth token for project prepopulate'); return; }
+
+          var payload = {
+            ReportId: API_CONFIG.projectHeaderReportId,
+            Filters: []
+          };
+
+          return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Project header query ' + r.status);
+            return r.json();
+          }).then(function (data) {
+            var rows = (data && (data.Records || data.data || data.Data)) ||
+                       (Array.isArray(data) ? data : []) || [];
+            console.log('[REIMB] Project header report returned', rows.length, 'rows');
+
+            var match = null;
+            for (var i = 0; i < rows.length; i++) {
+              var rid = rows[i].id || rows[i].Rid || extractFieldValue(rows[i], 'Record Id');
+              if (String(rid) === String(relatedAppId)) { match = rows[i]; break; }
+            }
+
+            if (!match) {
+              console.warn('[REIMB] No project header for application ID', relatedAppId,
+                           '(checked', rows.length, 'rows)');
+              if (rows.length > 0) console.log('[REIMB] Project header sample keys:', Object.keys(rows[0]));
+              return;
+            }
+
+            console.log('[REIMB] Project header data:', match);
+
+            var projectName = extractFieldValue(match, 'project_name') ||
+                              extractFieldValue(match, 'project name');
+            var projectId   = extractFieldValue(match, 'project_id') ||
+                              extractFieldValue(match, 'project id');
+
+            console.log('[REIMB] Resolved project values:', {
+              projectName: projectName,
+              projectId: projectId
+            });
+
+            setReadonlyFromApplication('projectName', projectName);
+            setReadonlyFromApplication('projectId', projectId);
+          });
+        }).catch(function (err) {
+          console.warn('[REIMB] Could not prepopulate project info from application:', err);
+        });
+      }
+
+      // ============================================================
       // Load data from API for this reimbursement record
       // ============================================================
       function loadFromAPI(recordId) {
@@ -673,46 +1074,20 @@
                          extractFieldValue(match, 'related_applications') || '';
             if (relApp) document.getElementById('relatedApplicationId').value = relApp;
 
-            // Map report columns → form field IDs
-            var FIELD_MAP = {
-              'applicantName':       'applicant_name',
-              'streetAddress':       'street_address',
-              'cityStateZip':        'city_state_zip',
-              'email':               'email',
-              'phone':               'phone',
-              'projectName':         'project_name',
-              'contractor':          'contractor',
-              'projectId':           'project_id',
-              'startDate':           'start_date',
-              'endDate':             'end_date',
-              'totalDays':           'total_days',
-              'grantAwarded':        'grant_awarded',
-              'requestAmount':       'request_amount',
-              'currentBalance':      'current_balance',
-              'requestDate':         'request_date',
-              'workCompleted':       'work_completed',
-              'amountRequested':     'amount_requested',
-              'summaryNotes':        'summary_notes',
-              'applicantOfficer':    'applicant_officer',
-              'applicantTitle':      'applicant_title',
-              'applicantSignature':  'applicant_signature',
-              'applicantDate':       'applicant_date',
-              'sortaOfficer':        'sorta_officer',
-              'sortaTitle':          'sorta_title',
-              'sortaSignature':      'sorta_signature',
-              'sortaDate':           'sorta_date'
-            };
-
-            var formFieldIds = Object.keys(FIELD_MAP);
+            // Map report columns → form field IDs (single source of truth
+            // shared with submitReimbursement).
+            var formFieldIds = Object.keys(REIMBURSEMENT_FIELD_MAP);
             for (var f = 0; f < formFieldIds.length; f++) {
               var formId = formFieldIds[f];
-              var dbName = FIELD_MAP[formId];
+              var dbName = REIMBURSEMENT_FIELD_MAP[formId];
               var val = extractFieldValue(match, dbName);
               if (val) {
                 var el = document.getElementById(formId);
                 if (el) el.value = val;
               }
             }
+
+            recalcTotalDays();
 
             // Handle radio buttons (requestType)
             var reqType = extractFieldValue(match, 'request_type') || extractFieldValue(match, 'requestType');
@@ -807,10 +1182,11 @@
 
             console.log('[REIMB] Request type data:', match);
 
+            // projectName and projectId are now sourced from the parent
+            // application's project header (see prepopulateProjectFromApplication),
+            // so they're intentionally omitted from this map.
             var REQUEST_MAP = {
-              'projectName': 'project name',
-              'contractor':  'contractor',
-              'projectId':   'project id'
+              'contractor':  'contractor'
             };
 
             var fields = Object.keys(REQUEST_MAP);
@@ -866,8 +1242,8 @@
 
             var TIMELINE_MAP = {
               'startDate':  'start date',
-              'endDate':    'end date',
-              'totalDays':  'total days'
+              'endDate':    'end date'
+              // totalDays is derived from startDate/endDate via recalcTotalDays().
             };
 
             var fields = Object.keys(TIMELINE_MAP);
@@ -880,6 +1256,8 @@
                 if (el) el.value = val;
               }
             }
+
+            recalcTotalDays();
           });
 
           // Project Cost report
@@ -966,10 +1344,17 @@
 
             console.log('[REIMB] Summary data:', match);
 
+            // totalInvoiceAmount is derived from the Invoice Detail rows
+            // (see updateInvoiceTotal). Intentionally omitted here so the
+            // stored value never overwrites the live calculation.
             var SUMMARY_MAP = {
-              'totalInvoiceAmount': 'total invoice amount',
               'amountRequested':    'amount requested',
-              'summaryNotes':       'summary notes'
+              'summaryNotes':       'summary notes',
+              // The reimbursement record's lifecycle status. Updated to
+              // "Draft" on create (landing page) and "Submitted" by
+              // submitReimbursement(). Displayed read-only at the top of
+              // the form.
+              'reimbursementStatus': 'status'
             };
 
             var fields = Object.keys(SUMMARY_MAP);
@@ -982,6 +1367,8 @@
                 if (el) el.value = val;
               }
             }
+
+            applyStatusStyling();
           });
 
           // Certification report
@@ -1128,6 +1515,86 @@
           });
         }).catch(function (err) {
           console.error('[REIMB] Load invoices error:', err);
+        });
+      }
+
+      // ============================================================
+      // Submit reimbursement: save main record fields + invoices
+      // ============================================================
+      function showSubmitStatus(msg, kind) {
+        var el = document.getElementById('submitStatus');
+        if (!el) return;
+        el.textContent = msg;
+        var color = '#475569';
+        if (kind === 'error')   color = '#991b1b';
+        if (kind === 'success') color = '#166534';
+        if (kind === 'pending') color = '#1e40af';
+        el.style.color = color;
+      }
+
+      function submitReimbursement() {
+        var recordId = document.getElementById('reimbursementRecordId').value;
+        if (!recordId) {
+          showSubmitStatus('Cannot submit: no reimbursement record ID. Try reopening this request from the list.', 'error');
+          return Promise.reject(new Error('No record ID'));
+        }
+
+        var submitBtn = document.getElementById('submitButton');
+        var originalLabel = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting...'; }
+        showSubmitStatus('Submitting reimbursement request...', 'pending');
+
+        return getAuthToken().then(function (token) {
+          if (!token) throw new Error('Not authenticated');
+
+          // Build FieldsList from form values using the shared master map.
+          var fieldsList = [];
+          Object.keys(REIMBURSEMENT_FIELD_MAP).forEach(function (formId) {
+            var dbName = REIMBURSEMENT_FIELD_MAP[formId];
+            var el = document.getElementById(formId);
+            if (!el) return;
+            fieldsList.push({ Name: dbName, Value: el.value == null ? '' : String(el.value) });
+          });
+
+          var checkedRadio = document.querySelector('input[name="requestType"]:checked');
+          if (checkedRadio) {
+            fieldsList.push({ Name: 'request_type', Value: checkedRadio.value });
+          }
+
+          // Mark the record as Submitted whenever this button is clicked.
+          fieldsList.push({ Name: 'status', Value: 'Submitted' });
+
+          var payload = {
+            ApplicationTableKey: API_CONFIG.reimbursementTableKey,
+            RecordId: recordId,
+            FieldsList: fieldsList
+          };
+
+          console.log('[REIMB] Submitting reimbursement', recordId, fieldsList);
+
+          return fetch(API_CONFIG.baseURL + '/api/FormAction/putdata', {
+            method: 'POST',
+            headers: apiHeaders(token),
+            body: JSON.stringify(payload)
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Save reimbursement failed: HTTP ' + r.status);
+            return r.json();
+          });
+        }).then(function () {
+          // Now persist invoices.
+          return saveInvoices(recordId);
+        }).then(function () {
+          setStatusValue('Submitted');
+          showSubmitStatus('Reimbursement request submitted successfully.', 'success');
+          console.log('[REIMB] Submit complete for record', recordId);
+        }).catch(function (err) {
+          console.error('[REIMB] Submit error:', err);
+          showSubmitStatus('Submit failed: ' + (err && err.message ? err.message : 'unknown error'), 'error');
+          throw err;
+        }).then(function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel || 'Submit Reimbursement Request'; }
+        }, function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel || 'Submit Reimbursement Request'; }
         });
       }
 
@@ -1308,7 +1775,26 @@
 
       document.getElementById("clearButton").addEventListener("click", clearDraft);
 
+      // Submit button: type="submit" inside <form>, so the form's submit
+      // event fires (giving us native browser validation for free, e.g.
+      // the phone-number pattern in the Applicant section).
+      document.getElementById("reimbursementForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        submitReimbursement();
+      });
+
+      // Recalculate Total # Days whenever the user edits either date.
+      ['startDate', 'endDate'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', recalcTotalDays);
+          el.addEventListener('change', recalcTotalDays);
+        }
+      });
+
       loadDraft();
+      recalcTotalDays();
+      applyStatusStyling();
 
       // Load record from localStorage (set by landing page) or URL params as fallback
       (function () {
@@ -1318,11 +1804,17 @@
 
         if (recordId) {
           document.getElementById('reimbursementRecordId').value = recordId;
+          // Show a sensible default until the summary report load resolves
+          // (the landing page writes status=Draft when creating the record).
+          var statusEl = document.getElementById('reimbursementStatus');
+          if (statusEl && !statusEl.value) setStatusValue('Draft');
           loadFromAPI(recordId);
           loadInvoices(recordId);
         }
         if (relatedAppId) {
           document.getElementById('relatedApplicationId').value = relatedAppId;
+          prepopulateApplicantFromApplication(relatedAppId);
+          prepopulateProjectFromApplication(relatedAppId);
         }
       })();
     </script>

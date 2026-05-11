@@ -694,7 +694,8 @@
         tableKey: API_CONFIG.reimbursementTableKey,
         relFieldKey: API_CONFIG.reimbursementRelFieldKey,
         page: 'reimbursement',
-        label: 'Reimbursement Request'
+        label: 'Reimbursement Request',
+        defaultStatus: 'Draft'
       },
       quarterly: {
         tableKey: API_CONFIG.quarterlyTableKey,
@@ -714,11 +715,17 @@
       var cfg = CHILD_TYPES[childType];
       if (!cfg) return Promise.reject(new Error('Unknown child type: ' + childType));
 
+      var fieldsList = [
+        { Name: 'related_applications', Value: String(parentRecordId), Key: cfg.relFieldKey }
+      ];
+
+      if (cfg.defaultStatus) {
+        fieldsList.push({ Name: 'status', Value: cfg.defaultStatus });
+      }
+
       var payload = {
         ApplicationTableKey: cfg.tableKey,
-        FieldsList: [
-          { Name: 'related_applications', Value: String(parentRecordId), Key: cfg.relFieldKey }
-        ]
+        FieldsList: fieldsList
       };
 
       return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {

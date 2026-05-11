@@ -240,6 +240,17 @@
         display: block;
       }
 
+      .metro-validation-msg.metro-validation-error {
+        display: block;
+        font-weight: 600;
+      }
+
+      .mtif-invalid {
+        border-color: #e4002b !important;
+        box-shadow: 0 0 0 2px rgba(228, 0, 43, 0.15) !important;
+        background-color: #fff5f6 !important;
+      }
+
       .metro-file-status {
         font-size: 12px;
         margin-top: 6px;
@@ -712,7 +723,6 @@
     vicinityMapFileFieldKey: 'v8yhpiia7',
     gisShapefileFieldKey: '4wia8wlq4',
     costEstimateFieldKey: 'gqqeo7zw8',
-    peLicenseFieldKey: 'foa75uhw1',
     certificationFundsFieldKey: '6qt3coma3',
     authorizingLegislationFieldKey: 'aw5i0xuq4',
     budgetFundingReportId: 'tvp6ny9w7',
@@ -983,7 +993,8 @@
     'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
     'field-project-header-round': { name: 'program_year_round' },
     'field-project-header-program-year': { name: 'program_year_display' },
-    'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility': { name: 'project_type_category' },
+    'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility-other': { name: 'project_type_category' },
+    'field-project-header-project-type-other-description': { name: 'project_type_other_description' },
     'field-project-header-large-vs-small-grant-award-category-1m-vs-1m': { name: 'project_size_category' },
     'field-location-transit-project-street-name-s': { name: 'project_street_names' },
     'field-location-transit-municipality-township-county': { name: 'municipality_township_county' },
@@ -1005,13 +1016,11 @@
     'field-budget-funding-local-funds-share': { name: 'local_funds_share_pct' },
     'field-budget-funding-mtif-funds-share': { name: 'mtif_funds_share_pct' },
     'field-budget-funding-other-funds-share': { name: 'other_funds_share_pct' },
-    'field-budget-funding-max-grant-90-of-construction-cost': { name: 'max_grant_pct' },
     'field-budget-funding-local-minimum-10-match-flag': { name: 'local_min_match_flag' },
     'field-budget-funding-multi-year-project-funding-years-1-5': { name: 'multi_year_funding_years' },
-    'field-budget-funding-detailed-cost-estimate-file-upload': { name: 'cost_estimate_file', fieldKey: 'gqqeo7zw8' },
+    'field-budget-funding-engineer-s-cost-estimate-stamped-by-a-licensed-pe': { name: 'cost_estimate_file', fieldKey: 'gqqeo7zw8' },
     'field-budget-funding-construction-contingency': { name: 'construction_contingency_pct' },
     'field-budget-funding-useful-life-estimate-years': { name: 'useful_life_years' },
-    'field-budget-funding-engineer-s-stamp-pe-license-file': { name: 'pe_license_file', fieldKey: 'foa75uhw1' },
     'field-budget-funding-certification-of-funds-letter-upload': { name: 'certification_funds_file', fieldKey: '6qt3coma3' },
     'field-budget-funding-authorizing-legislation-upload': { name: 'authorizing_legislation_file', fieldKey: 'aw5i0xuq4' },
     'field-budget-funding-cfo-certification-of-local-funds-upload': { name: 'cfo_certification_file' },
@@ -1104,6 +1113,7 @@
     'Local funds budgeted (dollars)': 'A minimum 10% local match is required to receive MTIF funding.',
     'Construction contingency %': 'Construction contingency must be less than 10% of total project cost.',
     'Useful life estimate (years)': 'Preferred useful life is 20 years. Must be a minimum of 7 years.',
+    "Engineer's cost estimate (stamped by a licensed PE)": "Upload a single PDF that contains the detailed cost estimate and is stamped/signed by a licensed Professional Engineer.",
     'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
   };
 
@@ -1284,7 +1294,11 @@
         },
         {
           "Category": "Project Header",
-          "FieldName": "Project type/category (Road/Bridge/Sidewalk/Multimodal/ITS/Transit facility)"
+          "FieldName": "Project type/category (Road/Bridge/Sidewalk/Multimodal/ITS/Transit facility/Other)"
+        },
+        {
+          "Category": "Project Header",
+          "FieldName": "Project type (Other) description"
         },
         {
           "Category": "Project Header",
@@ -1372,15 +1386,11 @@
         },
         {
           "Category": "Budget / Funding",
-          "FieldName": "Max grant % (<= 90% of construction cost)"
-        },
-        {
-          "Category": "Budget / Funding",
           "FieldName": "Multi-year project funding years (1-5)"
         },
         {
           "Category": "Budget / Funding",
-          "FieldName": "Detailed cost estimate file upload"
+          "FieldName": "Engineer's cost estimate (stamped by a licensed PE)"
         },
         {
           "Category": "Budget / Funding",
@@ -1389,10 +1399,6 @@
         {
           "Category": "Budget / Funding",
           "FieldName": "Useful life estimate (years)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Engineer's stamp / PE license file"
         },
         {
           "Category": "Budget / Funding",
@@ -2360,7 +2366,8 @@
               'year_project_funded':    'field-project-header-application-year',
               'date_of_project_award':  'field-project-header-date-of-project-award',
               'program_year_round':     'field-project-header-round',
-              'project_type_category':  'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility',
+              'project_type_category':         'field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility-other',
+              'project_type_other_description': 'field-project-header-project-type-other-description',
               'project_size_category':  'field-project-header-large-vs-small-grant-award-category-1m-vs-1m',
             };
 
@@ -2507,13 +2514,11 @@
               'local_funds_share_pct':         'field-budget-funding-local-funds-share',
               'mtif_funds_share_pct':          'field-budget-funding-mtif-funds-share',
               'other_funds_share_pct':         'field-budget-funding-other-funds-share',
-              'max_grant_pct':                 'field-budget-funding-max-grant-90-of-construction-cost',
               'local_min_match_flag':          'field-budget-funding-local-minimum-10-match-flag',
               'multi_year_funding_years':      'field-budget-funding-multi-year-project-funding-years-1-5',
-              'cost_estimate_file':            'field-budget-funding-detailed-cost-estimate-file-upload',
+              'cost_estimate_file':            'field-budget-funding-engineer-s-cost-estimate-stamped-by-a-licensed-pe',
               'construction_contingency_pct':  'field-budget-funding-construction-contingency',
               'useful_life_years':             'field-budget-funding-useful-life-estimate-years',
-              'pe_license_file':               'field-budget-funding-engineer-s-stamp-pe-license-file',
               'certification_funds_file':      'field-budget-funding-certification-of-funds-letter-upload',
               'authorizing_legislation_file':  'field-budget-funding-authorizing-legislation-upload'
             };
@@ -2879,6 +2884,19 @@
       return;
     }
 
+    // Enforce minimum 10% local match. recalcBudget() has already drawn
+    // the red border + inline helper on the Local funds field; this just
+    // blocks submission and scrolls the user to it.
+    if (typeof isLocalMatchValid === 'function' && !isLocalMatchValid()) {
+      alert('Local match is below the required 10% of total project budget. Please increase Local funds budgeted or reduce other shares before submitting.');
+      var localEl = document.getElementById('field-budget-funding-local-funds-budgeted-dollars');
+      if (localEl) {
+        try { localEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+        localEl.focus();
+      }
+      return;
+    }
+
     if (!confirm('Are you sure you want to submit this application? Once submitted, you will not be able to edit it.')) {
       return;
     }
@@ -2991,6 +3009,53 @@
       if (localPctEl) localPctEl.value = total > 0 ? ((local / total) * 100).toFixed(2) : '';
       if (mtifPctEl) mtifPctEl.value = total > 0 ? ((mtif / total) * 100).toFixed(2) : '';
       if (otherPctEl) otherPctEl.value = total > 0 ? ((other / total) * 100).toFixed(2) : '';
+
+      applyLocalMatchValidation(localEl, total, local);
+    }
+
+    // Visual + ARIA feedback for the 10% local-match rule. Adds a red
+    // border and an inline helper message under the Local funds field
+    // whenever the computed local share is below 10%. Used by
+    // recalcBudget() and consulted by handleSubmitApplication().
+    function applyLocalMatchValidation(localEl, total, local) {
+      if (!localEl) return false;
+      var pct = total > 0 ? (local / total) * 100 : 0;
+      var invalid = total > 0 && pct < 10;
+
+      localEl.classList.toggle('mtif-invalid', invalid);
+      localEl.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+
+      var msgId = 'local-match-validation-msg';
+      var msg = document.getElementById(msgId);
+      if (invalid) {
+        if (!msg) {
+          msg = document.createElement('div');
+          msg.id = msgId;
+          msg.className = 'metro-validation-msg metro-validation-error';
+          msg.setAttribute('role', 'alert');
+          // Drop the message inside the field's column wrapper so it sits
+          // directly under the input.
+          var wrap = localEl.closest('.metro-col-6, .metro-col-12') || localEl.parentNode;
+          wrap.appendChild(msg);
+        }
+        msg.textContent = 'Local match must be at least 10% of total project budget (currently ' +
+                          pct.toFixed(2) + '%). Increase Local funds or reduce other shares.';
+      } else if (msg) {
+        msg.parentNode.removeChild(msg);
+      }
+      return !invalid;
+    }
+
+    function isLocalMatchValid() {
+      var localEl = document.getElementById('field-budget-funding-local-funds-budgeted-dollars');
+      var mtifEl = document.getElementById('field-budget-funding-sorta-mtif-funds-awarded-dollars');
+      var otherEl = document.getElementById('field-budget-funding-other-funds-budgeted-dollars');
+      var local = parseFloat(localEl ? localEl.value : '') || 0;
+      var mtif = parseFloat(mtifEl ? mtifEl.value : '') || 0;
+      var other = parseFloat(otherEl ? otherEl.value : '') || 0;
+      var total = local + mtif + other;
+      if (total <= 0) return true; // nothing entered yet; let the regular required-field check handle it
+      return (local / total) * 100 >= 10;
     }
 
     var budgetIds = [
@@ -3004,6 +3069,21 @@
     });
     recalcBudget();
 
+    // Hide the "Project type (Other) description" field unless the user
+    // selects "Other" in the project type dropdown.
+    function syncProjectTypeOther() {
+      var typeEl = document.getElementById('field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility-other');
+      var descEl = document.getElementById('field-project-header-project-type-other-description');
+      if (!typeEl || !descEl) return;
+      var wrap = descEl.closest('.metro-col-6, .metro-col-12') || descEl.parentNode;
+      var isOther = String(typeEl.value || '').toLowerCase() === 'other';
+      if (wrap) wrap.style.display = isOther ? '' : 'none';
+      if (!isOther) descEl.value = '';
+    }
+    var projectTypeEl = document.getElementById('field-project-header-project-type-category-road-bridge-sidewalk-multimodal-its-transit-facility-other');
+    if (projectTypeEl) projectTypeEl.addEventListener('change', syncProjectTypeOther);
+    syncProjectTypeOther();
+
     // Load from API first, then localStorage as fallback
     var loadedFromAPI = await loadFromAPI();
     if (!loadedFromAPI) {
@@ -3014,6 +3094,7 @@
     }
     updateProgramYear();
     recalcBudget();
+    syncProjectTypeOther();
 
     // Show attestation section after dynamic sections are built
     var attestationEl = document.getElementById('attestationSection');
@@ -3047,8 +3128,7 @@
   var FILE_FIELD_KEYS = {
     'field-location-transit-project-vicinity-map-file': API_CONFIG.vicinityMapFileFieldKey,
     'field-location-transit-gis-shapefile-upload': API_CONFIG.gisShapefileFieldKey,
-    'field-budget-funding-detailed-cost-estimate-file-upload': API_CONFIG.costEstimateFieldKey,
-    'field-budget-funding-engineer-s-stamp-pe-license-file': API_CONFIG.peLicenseFieldKey,
+    'field-budget-funding-engineer-s-cost-estimate-stamped-by-a-licensed-pe': API_CONFIG.costEstimateFieldKey,
     'field-budget-funding-certification-of-funds-letter-upload': API_CONFIG.certificationFundsFieldKey,
     'field-budget-funding-authorizing-legislation-upload': API_CONFIG.authorizingLegislationFieldKey
   };
