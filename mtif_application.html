@@ -765,11 +765,10 @@
     notificationsToFieldKey: 'YOUR_NOTIFICATIONS_TO_FIELD_KEY_HERE',
     notificationsFromFieldKey: 'YOUR_NOTIFICATIONS_FROM_FIELD_KEY_HERE',
     notificationsDirectionFieldKey: 'YOUR_NOTIFICATIONS_DIRECTION_FIELD_KEY_HERE',
-    documentsTableKey: 'YOUR_DOCUMENTS_TABLE_KEY_HERE',
-    documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
-    documentsFileFieldKey: 'YOUR_DOCUMENTS_FILE_FIELD_KEY_HERE',
-    documentsNameFieldKey: 'YOUR_DOCUMENTS_NAME_FIELD_KEY_HERE',
-    documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
+    documentsTableKey: 'eoeify9w2',
+    documentsRelatedApplicationFieldKey: 'tlcnehuw8',
+    documentsFileFieldKey: '8x889kog8',
+    documentsNameFieldKey: 't8ycbweq7'
   };
 
   // ============================================================
@@ -882,7 +881,7 @@
     if (modal) modal.style.display = 'none';
   }
 
-  async function uploadNotificationAttachment(file, notificationRid, token) {
+  async function uploadNotificationAttachment(file, applicationRid, token) {
     var base64 = await new Promise(function(resolve, reject) {
       var reader = new FileReader();
       reader.onload = function() { resolve(reader.result.split(',')[1]); };
@@ -893,9 +892,8 @@
       ApplicationTableKey: API_CONFIG.documentsTableKey,
       FieldsList: [
         { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
-        { Key: API_CONFIG.documentsRelatedNotificationFieldKey, Name: 'related_notification', Value: String(notificationRid) },
-        { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
-        { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: 'Notification Attachment' }
+        { Key: API_CONFIG.documentsRelatedApplicationFieldKey, Name: 'related_applications', Value: String(applicationRid) },
+        { Key: API_CONFIG.documentsNameFieldKey, Name: 'name', Value: file.name }
       ]
     };
     var response = await fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
@@ -966,11 +964,11 @@
       var notifResult = await notifRes.json();
       var notificationRid = notifResult.recordId || notifResult.Rid;
       var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
-      var docNotifKey = API_CONFIG.documentsRelatedNotificationFieldKey;
+      var docRelKey = API_CONFIG.documentsRelatedApplicationFieldKey;
       var docTable = API_CONFIG.documentsTableKey;
-      if (files.length && notificationRid && docNotifKey && docNotifKey !== 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE' && docTable && docTable !== 'YOUR_DOCUMENTS_TABLE_KEY_HERE') {
+      if (files.length && recordId && docRelKey && docRelKey.indexOf('YOUR_') !== 0 && docTable && docTable.indexOf('YOUR_') !== 0) {
         for (var i = 0; i < files.length; i++) {
-          await uploadNotificationAttachment(files[i], notificationRid, token);
+          await uploadNotificationAttachment(files[i], recordId, token);
         }
       }
       if (statusEl) { statusEl.textContent = 'Message sent.'; statusEl.style.color = '#059669'; }
@@ -3257,6 +3255,37 @@
     'field-budget-funding-authorizing-legislation-upload': API_CONFIG.authorizingLegislationFieldKey
   };
 
+  // Create a record in the documents table linked to the application. Used in
+  // addition to attaching the file onto the application record's own file field.
+  async function createDocumentRecord(file, base64File, applicationRid, token) {
+    var docTable = API_CONFIG.documentsTableKey;
+    var docRelKey = API_CONFIG.documentsRelatedApplicationFieldKey;
+    if (!docTable || docTable.indexOf('YOUR_') === 0 || !docRelKey || docRelKey.indexOf('YOUR_') === 0) {
+      console.warn('[MTIF] Documents table not configured; skipping documents-table record for', file.name);
+      return null;
+    }
+    var payload = {
+      ApplicationTableKey: docTable,
+      FieldsList: [
+        { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64File, fileName: file.name },
+        { Key: docRelKey, Name: 'related_applications', Value: String(applicationRid) },
+        { Key: API_CONFIG.documentsNameFieldKey, Name: 'name', Value: file.name }
+      ]
+    };
+    var response = await fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      var errText = await response.text();
+      throw new Error('Documents-table save failed: ' + response.status + ' - ' + errText);
+    }
+    var result = await response.json();
+    console.log('[MTIF] Documents-table record created for', file.name, result);
+    return result;
+  }
+
   async function uploadFileToField(file, fieldId) {
     var fieldKey = FILE_FIELD_KEYS[fieldId];
     if (!fieldKey) {
@@ -3318,6 +3347,14 @@
 
     var result = await response.json();
     console.log('[MTIF] File uploaded successfully:', result);
+
+    // Also create a documents-table record linked to this application.
+    try {
+      await createDocumentRecord(file, base64File, rid, token);
+    } catch (docErr) {
+      console.error('[MTIF] Documents-table save error (file still attached to application record):', docErr);
+    }
+
     return result;
   }
 
