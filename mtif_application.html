@@ -1129,15 +1129,18 @@
     'Project ID (SORTA MTIF project ID)',
     'Date of project award',
     'Program year',
+    'Construction contingency %',
     'Total project budget (dollars)',
+    'Subtotal local resources (dollars)',
     'Local funds share (%)',
     'MTIF funds share (%)',
-    'Other funds share (%)'
+    'Other funds share (%)',
+    'Total financial resources (dollars)'
   ];
 
   var FIELD_NOTICES = {
     'Local funds budgeted (dollars)': 'A minimum 10% local match is required to receive MTIF funding.',
-    'Construction contingency %': 'Construction contingency must be less than 10% of total project cost.',
+    'Construction contingency %': 'Auto-calculated as Construction contingencies \u00F7 Construction cost. Contingency should generally be 10% or less.',
     'Useful life estimate (years)': 'Preferred useful life is 20 years. Must be a minimum of 7 years.',
     "Engineer's cost estimate (stamped by a licensed PE)": "Upload a single PDF that contains the detailed cost estimate and is stamped/signed by a licensed Professional Engineer.",
     'CFO certification of local funds upload': 'Attach a statement signed by the Chief Financial Officer listed in section 5.2 certifying all local resources required for the project will be available on or before the earliest date listed in the Project Schedule section. The Transit Authority Agreement will not be executed until the local resources are certified. Failure to meet local share may result in termination of the agreement. Applicant needs to provide written confirmation for funds coming from other sources.'
@@ -1384,7 +1387,31 @@
         },
         {
           "Category": "Budget / Funding",
+          "FieldName": "Construction cost (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Construction contingencies (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Construction contingency %"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Total project budget (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
           "FieldName": "Local funds budgeted (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Other funds budgeted (dollars)"
+        },
+        {
+          "Category": "Budget / Funding",
+          "FieldName": "Subtotal local resources (dollars)"
         },
         {
           "Category": "Budget / Funding",
@@ -1400,15 +1427,7 @@
         },
         {
           "Category": "Budget / Funding",
-          "FieldName": "Other funds budgeted (dollars)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Other funds share (%)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Total project budget (dollars)"
+          "FieldName": "Total financial resources (dollars)"
         },
         {
           "Category": "Budget / Funding",
@@ -1417,10 +1436,6 @@
         {
           "Category": "Budget / Funding",
           "FieldName": "Engineer's cost estimate (stamped by a licensed PE)"
-        },
-        {
-          "Category": "Budget / Funding",
-          "FieldName": "Construction contingency %"
         },
         {
           "Category": "Budget / Funding",
@@ -1763,7 +1778,7 @@
     if (fieldName === 'Program year') return { type: 'text' };
     if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
     if (lower.includes('useful life estimate')) return { type: 'number', min: 7, max: 100, step: 1 };
-    if (lower.includes('construction contingency')) return { type: 'number', min: 0, max: 10, step: 0.01, placeholder: 'e.g. 10%' };
+    if (lower.includes('construction contingency')) return { type: 'number', min: 0, step: 0.01 };
     if (lower.includes("engineer's cost estimate")) return { type: 'file' };
     if (lower.includes('upload') || /\bfile\b/.test(lower) || lower.includes('photos')) return { type: 'file' };
     if (lower.includes('date')) return { type: 'date' };
@@ -3079,25 +3094,44 @@
     updateProgramYear();
 
     function recalcBudget() {
-      var localEl = document.getElementById('field-budget-funding-local-funds-budgeted-dollars');
-      var mtifEl = document.getElementById('field-budget-funding-sorta-mtif-funds-awarded-dollars');
-      var otherEl = document.getElementById('field-budget-funding-other-funds-budgeted-dollars');
-      var totalEl = document.getElementById('field-budget-funding-total-project-budget-dollars');
-      var localPctEl = document.getElementById('field-budget-funding-local-funds-share');
-      var mtifPctEl = document.getElementById('field-budget-funding-mtif-funds-share');
-      var otherPctEl = document.getElementById('field-budget-funding-other-funds-share');
+      var num = function(el) { return parseFloat(el ? el.value : '') || 0; };
 
-      var local = parseFloat(localEl ? localEl.value : '') || 0;
-      var mtif = parseFloat(mtifEl ? mtifEl.value : '') || 0;
-      var other = parseFloat(otherEl ? otherEl.value : '') || 0;
-      var total = local + mtif + other;
+      // 1.1 Project Estimated Costs
+      var constrEl  = document.getElementById('field-budget-funding-construction-cost-dollars');           // a
+      var contEl    = document.getElementById('field-budget-funding-construction-contingencies-dollars');  // b
+      var contPctEl = document.getElementById('field-budget-funding-construction-contingency');            // b / a
+      var totalEl   = document.getElementById('field-budget-funding-total-project-budget-dollars');        // c = a + b
 
-      if (totalEl) totalEl.value = total ? total.toFixed(2) : '0';
-      if (localPctEl) localPctEl.value = total > 0 ? ((local / total) * 100).toFixed(2) : '';
-      if (mtifPctEl) mtifPctEl.value = total > 0 ? ((mtif / total) * 100).toFixed(2) : '';
-      if (otherPctEl) otherPctEl.value = total > 0 ? ((other / total) * 100).toFixed(2) : '';
+      // 1.2 Project Financial Resources
+      var localEl    = document.getElementById('field-budget-funding-local-funds-budgeted-dollars');       // d
+      var otherEl    = document.getElementById('field-budget-funding-other-funds-budgeted-dollars');       // e
+      var subLocalEl = document.getElementById('field-budget-funding-subtotal-local-resources-dollars');   // f = d + e
+      var localPctEl = document.getElementById('field-budget-funding-local-funds-share');                  // f / h
+      var mtifEl     = document.getElementById('field-budget-funding-sorta-mtif-funds-awarded-dollars');   // g
+      var mtifPctEl  = document.getElementById('field-budget-funding-mtif-funds-share');                   // g / h
+      var totalResEl = document.getElementById('field-budget-funding-total-financial-resources-dollars');  // h = f + g
+      var otherPctEl = document.getElementById('field-budget-funding-other-funds-share');                  // e / h (not displayed)
 
-      applyLocalMatchValidation(localEl, total, local);
+      var a = num(constrEl), b = num(contEl);
+      var d = num(localEl), e = num(otherEl), g = num(mtifEl);
+
+      // Costs. Contingency % is relative to construction cost.
+      if (contPctEl) contPctEl.value = a > 0 ? ((b / a) * 100).toFixed(2) : '';
+      // Total project cost = construction + contingencies. Only overwrite when
+      // cost inputs exist so an API-loaded total isn't clobbered on reload
+      // (construction/contingency line items are not persisted to the API).
+      if (totalEl && (a > 0 || b > 0)) totalEl.value = (a + b).toFixed(2);
+
+      // Resources. Shares are relative to Total Financial Resources (h).
+      var subLocal = d + e;
+      var totalRes = d + e + g;
+      if (subLocalEl) subLocalEl.value = (d > 0 || e > 0) ? subLocal.toFixed(2) : '';
+      if (totalResEl) totalResEl.value = totalRes ? totalRes.toFixed(2) : '';
+      if (localPctEl) localPctEl.value = totalRes > 0 ? ((subLocal / totalRes) * 100).toFixed(2) : '';
+      if (mtifPctEl)  mtifPctEl.value  = totalRes > 0 ? ((g / totalRes) * 100).toFixed(2) : '';
+      if (otherPctEl) otherPctEl.value = totalRes > 0 ? ((e / totalRes) * 100).toFixed(2) : '';
+
+      applyLocalMatchValidation(localEl, totalRes, subLocal);
     }
 
     // Visual + ARIA feedback for the 10% local-match rule. Adds a red
@@ -3140,12 +3174,15 @@
       var local = parseFloat(localEl ? localEl.value : '') || 0;
       var mtif = parseFloat(mtifEl ? mtifEl.value : '') || 0;
       var other = parseFloat(otherEl ? otherEl.value : '') || 0;
-      var total = local + mtif + other;
-      if (total <= 0) return true; // nothing entered yet; let the regular required-field check handle it
-      return (local / total) * 100 >= 10;
+      var subLocal = local + other;
+      var totalRes = local + other + mtif;
+      if (totalRes <= 0) return true; // nothing entered yet; let the regular required-field check handle it
+      return (subLocal / totalRes) * 100 >= 10;
     }
 
     var budgetIds = [
+      'field-budget-funding-construction-cost-dollars',
+      'field-budget-funding-construction-contingencies-dollars',
       'field-budget-funding-local-funds-budgeted-dollars',
       'field-budget-funding-sorta-mtif-funds-awarded-dollars',
       'field-budget-funding-other-funds-budgeted-dollars'
