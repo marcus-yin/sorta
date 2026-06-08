@@ -1745,6 +1745,11 @@
       return { type: 'text' };
     }
 
+    // Special case: Applicant role includes Village as an option
+    if (lower.includes('applicant role')) {
+      return { type: 'select', options: ['City', 'Village', 'Jurisdiction', 'County', 'Township', 'HCTID', 'CRC', 'SORTA'] };
+    }
+
     const options = getSelectOptionsFromField(fieldName);
     if (options) return { type: 'select', options: options };
     if (lower.includes('yes/no') || lower.includes('flag') || lower.includes('indicator')) return { type: 'select', options: ['Yes', 'No'] };
