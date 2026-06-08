@@ -107,6 +107,62 @@
 
       .metro-back-to-top:hover { background: #eef2f7; transform: translateY(-1px); }
 
+      .budget-subgroup { margin-top: 4px; }
+      .budget-subgroup > h4 {
+        margin: 4px 0 14px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--metro-blue);
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--metro-border);
+      }
+      .budget-summary-card {
+        background: #f8fafc;
+        border: 1px solid var(--metro-border);
+        border-left: 4px solid var(--metro-blue);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin: 6px 0 4px;
+      }
+      .budget-summary-card > h4 {
+        margin: 0 0 14px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--metro-navy);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .budget-summary-tag {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--metro-blue);
+        background: #e6efff;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        padding: 2px 9px;
+      }
+      .budget-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+      }
+      .budget-summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: #ffffff;
+        border: 1px solid var(--metro-border);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .budget-summary-label { font-size: 12px; font-weight: 600; color: #64748b; }
+      .budget-summary-value { font-size: 20px; font-weight: 700; color: var(--metro-navy); }
+
       .metro-button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15,23,42,0.12); }
       .metro-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -1661,6 +1717,107 @@
         grid.appendChild(fieldWrap);
       });
 
+      // Group Budget / Funding into labeled subsections + a read-only summary
+      // card, mirroring the applicant form. All inputs here are read-only.
+      if (category === 'Budget / Funding') {
+        var bGetWrap = function(lbl) {
+          var el = grid.querySelector('[data-field-label="' + lbl + '"]');
+          return el ? el.closest('.metro-col-6, .metro-col-12') : null;
+        };
+        var bMakeGroup = function(titleText, labels) {
+          var box = document.createElement('div');
+          box.className = 'metro-col-12 budget-subgroup';
+          var h = document.createElement('h4');
+          h.textContent = titleText;
+          box.appendChild(h);
+          var g = document.createElement('div');
+          g.className = 'metro-grid';
+          box.appendChild(g);
+          labels.forEach(function(lbl) {
+            var w = bGetWrap(lbl);
+            if (w) g.appendChild(w);
+          });
+          return box;
+        };
+
+        var bCosts = bMakeGroup('Project costs', [
+          'Construction cost (dollars)',
+          'Construction contingencies (dollars)'
+        ]);
+        var bFunding = bMakeGroup('Funding sources', [
+          'Local funds budgeted (dollars)',
+          'Other funds budgeted (dollars)',
+          'SORTA MTIF funds awarded (dollars)'
+        ]);
+        var bDetails = bMakeGroup('Project details', [
+          'Multi-year project funding years (1-5)',
+          'Useful life estimate (years)'
+        ]);
+        var bAttach = bMakeGroup('Required attachments', [
+          "Engineer's cost estimate (stamped by a licensed PE)",
+          'CFO certification of local funds upload'
+        ]);
+
+        ['Construction contingency %',
+         'Total project budget (dollars)',
+         'Subtotal local resources (dollars)',
+         'Local funds share (%)',
+         'MTIF funds share (%)',
+         'Total financial resources (dollars)'].forEach(function(lbl) {
+          var w = bGetWrap(lbl);
+          if (w) w.style.display = 'none';
+        });
+
+        var bSummary = document.createElement('div');
+        bSummary.className = 'metro-col-12 budget-summary-card';
+        var bItem = function(labelText, valueId) {
+          return '<div class="budget-summary-item">' +
+                 '<span class="budget-summary-label">' + labelText + '</span>' +
+                 '<span class="budget-summary-value" id="' + valueId + '">\u2014</span></div>';
+        };
+        bSummary.innerHTML = '<h4>Budget summary <span class="budget-summary-tag">Auto-calculated</span></h4>' +
+          '<div class="budget-summary-grid">' +
+            bItem('Total project budget', 'summary-total-project-budget') +
+            bItem('Total financial resources', 'summary-total-financial-resources') +
+            bItem('Construction contingency', 'summary-contingency-pct') +
+            bItem('Local funds share', 'summary-local-share') +
+            bItem('MTIF funds share', 'summary-mtif-share') +
+          '</div>';
+
+        grid.appendChild(bCosts);
+        grid.appendChild(bFunding);
+        grid.appendChild(bSummary);
+        grid.appendChild(bDetails);
+        grid.appendChild(bAttach);
+
+        // Read-only currency display for the dollar inputs. The real numeric
+        // input stays in the DOM (hidden) so recalcBudget keeps reading it;
+        // a sibling read-only text input shows the formatted "$1,234" value.
+        [
+          'field-budget-funding-construction-cost-dollars',
+          'field-budget-funding-construction-contingencies-dollars',
+          'field-budget-funding-local-funds-budgeted-dollars',
+          'field-budget-funding-other-funds-budgeted-dollars',
+          'field-budget-funding-sorta-mtif-funds-awarded-dollars'
+        ].forEach(function(id) {
+          var real = document.getElementById(id);
+          if (!real || real.dataset.currency === 'true') return;
+          real.dataset.currency = 'true';
+          real.style.display = 'none';
+
+          var disp = document.createElement('input');
+          disp.type = 'text';
+          disp.id = id + '_display';
+          disp.readOnly = true;
+          disp.classList.add('metro-readonly-field');
+          disp.setAttribute('aria-label', real.dataset.fieldLabel || 'Amount');
+          real.parentNode.insertBefore(disp, real.nextSibling);
+
+          var n = parseFloat(real.value);
+          disp.value = isNaN(n) ? '' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        });
+      }
+
       section.appendChild(grid);
 
       var backToTop = document.createElement('button');
@@ -1702,6 +1859,31 @@
     if (localPctEl && totalRes > 0) localPctEl.value = ((subLocal / totalRes) * 100).toFixed(2);
     var mtifPctEl = document.getElementById('field-budget-funding-mtif-funds-share');
     if (mtifPctEl && totalRes > 0) mtifPctEl.value = ((g / totalRes) * 100).toFixed(2);
+
+    // Mirror calculated values into the read-only Budget summary card.
+    var fmtMoney = function(v) {
+      var n = parseFloat(v);
+      return isNaN(n) ? '\u2014' : '$' + Math.round(n).toLocaleString('en-US');
+    };
+    var fmtPct = function(v) {
+      var n = parseFloat(v);
+      return isNaN(n) ? '\u2014' : n.toFixed(2) + '%';
+    };
+    var setSummary = function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
+    var rawVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    setSummary('summary-total-project-budget', fmtMoney(rawVal('field-budget-funding-total-project-budget-dollars')));
+    setSummary('summary-total-financial-resources', fmtMoney(rawVal('field-budget-funding-total-financial-resources-dollars')));
+    setSummary('summary-contingency-pct', fmtPct(rawVal('field-budget-funding-construction-contingency')));
+    setSummary('summary-local-share', fmtPct(rawVal('field-budget-funding-local-funds-share')));
+    setSummary('summary-mtif-share', fmtPct(rawVal('field-budget-funding-mtif-funds-share')));
+
+    // Refresh the formatted "$1,234" display inputs from their numeric sources.
+    document.querySelectorAll('[data-currency="true"]').forEach(function(real) {
+      var disp = document.getElementById(real.id + '_display');
+      if (!disp) return;
+      var cn = parseFloat(real.value);
+      disp.value = isNaN(cn) ? '' : '$' + cn.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    });
   }
 
   // Report column-to-form mappings (same as applicant page)
@@ -1747,6 +1929,8 @@
   };
 
   var BF_COL_TO_FORM = {
+    'construction_costs': 'field-budget-funding-construction-cost-dollars',
+    'construction_contingency': 'field-budget-funding-construction-contingencies-dollars',
     'local_funds_budgeted': 'field-budget-funding-local-funds-budgeted-dollars',
     'mtif_funds_awarded': 'field-budget-funding-sorta-mtif-funds-awarded-dollars',
     'other_funds_budgeted': 'field-budget-funding-other-funds-budgeted-dollars',
