@@ -1764,6 +1764,7 @@
     if (lower.includes('multi-year project funding years')) return { type: 'number', min: 1, max: 5, step: 1 };
     if (lower.includes('useful life estimate')) return { type: 'number', min: 7, max: 100, step: 1 };
     if (lower.includes('construction contingency')) return { type: 'number', min: 0, max: 10, step: 0.01, placeholder: 'e.g. 10%' };
+    if (lower.includes("engineer's cost estimate")) return { type: 'file' };
     if (lower.includes('upload') || /\bfile\b/.test(lower) || lower.includes('photos')) return { type: 'file' };
     if (lower.includes('date')) return { type: 'date' };
     if (lower.includes('year')) return { type: 'number', min: 2000, max: 2100, step: 1 };
