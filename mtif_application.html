@@ -2910,9 +2910,11 @@
 
       if (result) {
         draftStatus.textContent = 'Saved at ' + new Date().toLocaleString();
+        draftStatus.style.color = '';
         alert('Save Successful');
       } else {
         draftStatus.textContent = 'Saved locally at ' + new Date().toLocaleString();
+        draftStatus.style.color = '';
         alert('Save Successful');
       }
 
@@ -2922,10 +2924,28 @@
         saveDraftBtn.textContent = originalText;
       }
       console.error('[MTIF] Error saving draft to API:', error);
-      draftStatus.textContent = 'Save error at ' + new Date().toLocaleString();
-      alert('Save Error');
+      var errorMessage = extractErrorMessage(error);
+      draftStatus.textContent = 'Save error at ' + new Date().toLocaleString() + ': ' + errorMessage;
+      draftStatus.style.color = '#dc2626';
+      alert('Save Error\n\n' + errorMessage);
     }
   };
+
+  // Pull a human-readable message out of an API/network error.
+  // API errors are thrown as: 'API <status>: <responseText>' where the
+  // response text may be a raw string or a JSON object like {"message":"..."}.
+  function extractErrorMessage(error) {
+    var raw = (error && error.message) ? String(error.message) : String(error);
+    var apiMatch = raw.match(/^API\s+\d+:\s*([\s\S]*)$/);
+    var body = apiMatch ? apiMatch[1].trim() : raw;
+    var parsed = null;
+    try { parsed = JSON.parse(body); } catch (e) { parsed = null; }
+    if (parsed && typeof parsed === 'object') {
+      var msg = parsed.message || parsed.error || parsed.Message || parsed.detail;
+      if (msg) return String(msg);
+    }
+    return body.replace(/^"|"$/g, '');
+  }
 
   // ============================================================
   // Submit Application handler
