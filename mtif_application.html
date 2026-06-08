@@ -109,6 +109,32 @@
         color: var(--metro-white);
       }
 
+      #saveDraftButton {
+        background: #22c55e;
+        color: var(--metro-white);
+      }
+
+      .metro-back-to-top {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 16px;
+        background: var(--metro-panel);
+        border: 1px solid var(--metro-border);
+        color: var(--metro-navy);
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.1s ease, transform 0.1s ease;
+      }
+
+      .metro-back-to-top:hover {
+        background: #eef2f7;
+        transform: translateY(-1px);
+      }
+
       .metro-button.secondary {
         background: var(--metro-blue);
         color: var(--metro-white);
@@ -1911,6 +1937,30 @@
           fieldWrap.appendChild(emailHelp);
         }
 
+        if (fieldName === 'Primary applicant email for notices') {
+          var sameEmailLabel = document.createElement('label');
+          sameEmailLabel.style.cssText = 'display:flex; align-items:center; gap:8px; font-weight:600; margin:8px 0 0; cursor:pointer;';
+          var sameEmailCb = document.createElement('input');
+          sameEmailCb.type = 'checkbox';
+          sameEmailCb.id = 'same-as-project-contact-email';
+          sameEmailCb.style.cssText = 'width:auto; margin:0;';
+          var sameEmailText = document.createElement('span');
+          sameEmailText.textContent = 'Is this the same email as the project contact?';
+          sameEmailLabel.appendChild(sameEmailCb);
+          sameEmailLabel.appendChild(sameEmailText);
+          fieldWrap.appendChild(sameEmailLabel);
+
+          sameEmailCb.addEventListener('change', function() {
+            if (!this.checked) return;
+            var contactEmail = document.getElementById('field-applicant-jurisdiction-project-contact-email');
+            var primaryEmail = document.getElementById('field-applicant-jurisdiction-primary-applicant-email-for-notices');
+            if (contactEmail && primaryEmail) {
+              primaryEmail.value = contactEmail.value;
+              primaryEmail.dispatchEvent(new Event('input'));
+            }
+          });
+        }
+
         if (config.type === 'file') {
           var statusDiv = document.createElement('div');
           statusDiv.id = fieldId + '_status';
@@ -1953,6 +2003,16 @@
       }
 
       section.appendChild(grid);
+
+      var backToTop = document.createElement('button');
+      backToTop.type = 'button';
+      backToTop.className = 'metro-back-to-top';
+      backToTop.innerHTML = '&#x2191; Back to top';
+      backToTop.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      section.appendChild(backToTop);
+
       formEl.appendChild(section);
     });
   };
