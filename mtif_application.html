@@ -1857,8 +1857,6 @@
           input.style.cursor = 'default';
         }
 
-        fieldWrap.appendChild(label);
-
         var notice = FIELD_NOTICES[fieldName];
         if (notice) {
           var noticeEl = document.createElement('div');
@@ -1866,6 +1864,8 @@
           noticeEl.textContent = notice;
           fieldWrap.appendChild(noticeEl);
         }
+
+        fieldWrap.appendChild(label);
 
         var guidance = SCORING_GUIDANCE[fieldName];
         if (guidance && category === 'Scoring / Criteria') {
