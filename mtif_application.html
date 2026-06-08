@@ -1252,6 +1252,10 @@
         },
         {
           "Category": "Applicant / Jurisdiction",
+          "FieldName": "Applicant role (City/Jurisdiction/County/Township/HCTID/CRC/SORTA)"
+        },
+        {
+          "Category": "Applicant / Jurisdiction",
           "FieldName": "Jurisdiction mailing address"
         },
         {
@@ -1285,10 +1289,6 @@
         {
           "Category": "Applicant / Jurisdiction",
           "FieldName": "Primary applicant email for notices"
-        },
-        {
-          "Category": "Applicant / Jurisdiction",
-          "FieldName": "Applicant role (City/Jurisdiction/County/Township/HCTID/CRC/SORTA)"
         },
         {
           "Category": "Project Header",
@@ -1816,7 +1816,8 @@
         const config = getFieldConfig(fieldName);
         const fieldId = 'field-' + slugify(category) + '-' + slugify(fieldName);
         const fieldWrap = document.createElement('div');
-        fieldWrap.className = config.type === 'textarea' ? 'metro-col-12' : 'metro-col-6';
+        var fullWidthField = config.type === 'textarea' || fieldName === 'Jurisdiction mailing address';
+        fieldWrap.className = fullWidthField ? 'metro-col-12' : 'metro-col-6';
 
         const label = document.createElement('label');
         label.setAttribute('for', fieldId);
