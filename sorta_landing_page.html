@@ -491,8 +491,7 @@
               <tr>
                 <th>Record Id</th>
                 <th>Project Name</th>
-                <th>Project Description</th>
-                <th>Project ID</th>
+                <th>Jurisdiction</th>
                 <th>Year Funded</th>
                 <th>Date of Award</th>
                 <th>Program Year Round</th>
@@ -826,8 +825,8 @@
       sorted.forEach(function (app) {
         var rid       = getRecordId(app);
         var name      = extractFieldValue(app, 'project name') || '-';
-        var desc      = extractFieldValue(app, 'project description') || '-';
-        var projId    = extractFieldValue(app, 'project id') || '-';
+        var jur       = extractFieldValue(app, 'jurisdiction name') ||
+                        extractFieldValue(app, 'jurisdiction_name') || '-';
         var yearFund  = extractFieldValue(app, 'year project funded') || '-';
         var awardDate = extractFieldValue(app, 'date of project award') || '';
         var progYear  = extractFieldValue(app, 'program year round') || '-';
@@ -839,8 +838,7 @@
         tr.innerHTML =
           '<td>' + (rid || '-') + '</td>' +
           '<td><strong>' + name + '</strong></td>' +
-          '<td>' + desc + '</td>' +
-          '<td>' + projId + '</td>' +
+          '<td>' + jur + '</td>' +
           '<td>' + yearFund + '</td>' +
           '<td>' + formatDate(awardDate) + '</td>' +
           '<td>' + progYear + '</td>' +
@@ -958,7 +956,8 @@
           $('sorta_loading').style.display = 'none';
 
           if (apps && apps.length > 0) {
-            var firstJur = extractFieldValue(apps[0], 'project name');
+            var firstJur = extractFieldValue(apps[0], 'jurisdiction name') ||
+                           extractFieldValue(apps[0], 'jurisdiction_name') || '';
             if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
           }
 
