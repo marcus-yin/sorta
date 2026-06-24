@@ -1126,13 +1126,13 @@
     'field-schedule-row-construction-start-within-1-year-must-be-within-18-months-of-grant-award': { name: 'start_within_one_year_flag' },
     'field-schedule-row-right-of-way-status-all-partial-none': { name: 'row_status' },
     'field-schedule-row-design-engineering-status-complete-in-process-not-started': { name: 'design_engineering_status' },
-    'field-scoring-criteria-physical-condition-narrative': { name: 'physical_condition_narrative' },
-    'field-scoring-criteria-safety-issues-narrative': { name: 'safety_issues_narrative' },
-    'field-scoring-criteria-economic-growth-connectivity-narrative': { name: 'economic_growth_narrative' },
-    'field-scoring-criteria-regional-impact-narrative': { name: 'regional_impact_narrative' },
-    'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative' },
-    'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details' },
-    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures' },
+    'field-scoring-criteria-physical-condition-narrative': { name: 'physical_condition_narrative_long' },
+    'field-scoring-criteria-safety-issues-narrative': { name: 'safety_issues_narrative_long' },
+    'field-scoring-criteria-economic-growth-connectivity-narrative': { name: 'economic_growth_narrative_long' },
+    'field-scoring-criteria-regional-impact-narrative': { name: 'regional_impact_narrative_long' },
+    'field-scoring-criteria-transit-impact-narrative': { name: 'transit_impact_narrative_long' },
+    'field-scoring-criteria-multimodal-infrastructure-details': { name: 'multimodal_infrastructure_details_long' },
+    'field-scoring-criteria-sustainability-measures-checklist': { name: 'sustainability_measures_long' },
     'field-progress-reporting-quarterly-report-date': { name: 'quarterly_report_date' },
     'field-progress-reporting-quarterly-report-prepared-by': { name: 'quarterly_prepared_by' },
     'field-progress-reporting-quarterly-jurisdiction': { name: 'quarterly_jurisdiction' },
@@ -3015,13 +3015,13 @@
             console.log('[MTIF] Found scoring criteria data. Keys:', Object.keys(scData));
 
             var SC_COL_TO_FORM = {
-              'physical_condition_narrative':    'field-scoring-criteria-physical-condition-narrative',
-              'safety_issues_narrative':         'field-scoring-criteria-safety-issues-narrative',
-              'economic_growth_narrative':       'field-scoring-criteria-economic-growth-connectivity-narrative',
-              'regional_impact_narrative':       'field-scoring-criteria-regional-impact-narrative',
-              'transit_impact_narrative':        'field-scoring-criteria-transit-impact-narrative',
-              'multimodal_infrastructure_details': 'field-scoring-criteria-multimodal-infrastructure-details',
-              'sustainability_measures':         'field-scoring-criteria-sustainability-measures-checklist'
+              'physical_condition_narrative_long':    'field-scoring-criteria-physical-condition-narrative',
+              'safety_issues_narrative_long':         'field-scoring-criteria-safety-issues-narrative',
+              'economic_growth_narrative_long':       'field-scoring-criteria-economic-growth-connectivity-narrative',
+              'regional_impact_narrative_long':       'field-scoring-criteria-regional-impact-narrative',
+              'transit_impact_narrative_long':        'field-scoring-criteria-transit-impact-narrative',
+              'multimodal_infrastructure_details_long': 'field-scoring-criteria-multimodal-infrastructure-details',
+              'sustainability_measures_long':         'field-scoring-criteria-sustainability-measures-checklist'
             };
 
             Object.keys(scData).forEach(function(scKey) {
