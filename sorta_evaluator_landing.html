@@ -464,7 +464,7 @@
         <div class="sorta-filters-grid">
           <div class="sorta-filter-group">
             <label for="filter_search">Search</label>
-            <input type="text" id="filter_search" placeholder="Project name, jurisdiction..." />
+            <input type="text" id="filter_search" placeholder="Search record ID, project name, jurisdiction, type, year..." />
           </div>
           <div class="sorta-filter-group">
             <label for="filter_project_type">Project Type</label>
@@ -604,6 +604,23 @@
       return row.id || extractFieldValue(row, 'id') || row.Rid || '';
     }
 
+    // Search across all values returned by the applications report row.
+    function getRowSearchText(row) {
+      var parts = [String(getRecordId(row) || '')];
+      Object.keys(row).forEach(function(key) {
+        var val = row[key];
+        if (val === null || val === undefined || val === '') return;
+        if (typeof val === 'object') return;
+        parts.push(String(val));
+      });
+      return parts.join(' ').toLowerCase();
+    }
+
+    function rowMatchesSearch(row, search) {
+      if (!search) return true;
+      return getRowSearchText(row).indexOf(search) !== -1;
+    }
+
     function getUserProfile(token) {
       return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
         method: 'GET',
@@ -712,16 +729,11 @@
     var allApplications = [];
 
     function filterAndRender() {
-      var search = ($('filter_search').value || '').toLowerCase();
+      var search = ($('filter_search').value || '').toLowerCase().trim();
       var typeFilter = $('filter_project_type').value;
 
       var filtered = allApplications.filter(function(app) {
-        if (search) {
-          var projName = (extractFieldValue(app, 'project name') || '').toLowerCase();
-          var jur = (extractFieldValue(app, 'jurisdiction name') ||
-                     extractFieldValue(app, 'jurisdiction_name') || '').toLowerCase();
-          if (!projName.includes(search) && !jur.includes(search)) return false;
-        }
+        if (!rowMatchesSearch(app, search)) return false;
         if (typeFilter) {
           var pt = extractFieldValue(app, 'project type category') || '';
           if (pt !== typeFilter) return false;
@@ -729,7 +741,7 @@
         return true;
       });
 
-      renderTable(filtered);
+      renderTable(filtered, search);
       updateMetrics(filtered);
     }
 
@@ -755,7 +767,7 @@
       });
     }
 
-    function renderTable(rows) {
+    function renderTable(rows, activeSearch) {
       var tbody = $('eval_tbody');
       var wrap = $('eval_table_wrap');
       var empty = $('eval_empty');
@@ -763,6 +775,15 @@
       if (!rows || rows.length === 0) {
         wrap.style.display = 'none';
         empty.style.display = 'block';
+        var emptyTitle = empty.querySelector('h3');
+        var emptyMsg = empty.querySelector('p');
+        if (allApplications.length > 0 && activeSearch) {
+          if (emptyTitle) emptyTitle.textContent = 'No Matching Applications';
+          if (emptyMsg) emptyMsg.textContent = 'No applications match your search or filters. Try different keywords or clear filters.';
+        } else {
+          if (emptyTitle) emptyTitle.textContent = 'No Applications Found';
+          if (emptyMsg) emptyMsg.textContent = 'No applications match your current filters.';
+        }
         return;
       }
 

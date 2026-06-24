@@ -370,6 +370,58 @@
     .sorta-badge-approved     { background: #d1fae5; color: #065f46; }
     .sorta-badge-rejected     { background: #fee2e2; color: #991b1b; }
 
+    .sorta-empty p {
+      font-size: 14px;
+    }
+
+    /* Filters */
+    .sorta-filters {
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-filters-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: end;
+    }
+
+    .sorta-filter-group { display: flex; flex-direction: column; }
+
+    .sorta-filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sorta-filter-group input {
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #ffffff;
+      width: 100%;
+    }
+
+    .sorta-filter-group input:focus {
+      outline: none;
+      border-color: #003da5;
+      box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.1);
+    }
+
+    @media (max-width: 600px) {
+      .sorta-filters-grid { grid-template-columns: 1fr; }
+    }
+
     /* Empty State */
     .sorta-empty {
       text-align: center;
@@ -472,6 +524,20 @@
            style="text-align:center;margin-top:12px;font-size:14px;color:#64748b;display:none;"></div>
     </div>
 
+    <!-- Search -->
+    <div class="sorta-filters" id="sorta_filters" style="display:none;">
+      <div class="sorta-filters-grid">
+        <div class="sorta-filter-group">
+          <label for="filter_search">Search</label>
+          <input type="text" id="filter_search" placeholder="Search record ID, project name, jurisdiction, type, year..." />
+        </div>
+        <div class="sorta-filter-group">
+          <label>&nbsp;</label>
+          <button type="button" id="clear_filters_btn" class="sorta-button" style="width:100%;">Clear</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Applications List -->
     <div class="sorta-section">
       <h2>My Applications</h2>
@@ -508,8 +574,8 @@
 
       <div id="sorta_empty" class="sorta-empty" style="display:none;">
         <div class="sorta-empty-icon">&#x1F4CB;</div>
-        <h3>No Applications Yet</h3>
-        <p>Click "+ Create New Application" above to get started with your first MTIF grant application.</p>
+        <h3 id="sorta_empty_title">No Applications Yet</h3>
+        <p id="sorta_empty_msg">Click "+ Create New Application" above to get started with your first MTIF grant application.</p>
       </div>
     </div>
 
@@ -621,6 +687,28 @@
 
     function getRecordId(app) {
       return app.id || extractFieldValue(app, 'id') || app.Rid || '';
+    }
+
+    // Build a single lowercase string from all report row values (plus status)
+    // so search matches any field returned by the applications report.
+    function getRowSearchText(row, statusMap) {
+      var parts = [String(getRecordId(row) || '')];
+      if (statusMap) {
+        var st = statusMap[String(getRecordId(row))];
+        if (st) parts.push(String(st));
+      }
+      Object.keys(row).forEach(function(key) {
+        var val = row[key];
+        if (val === null || val === undefined || val === '') return;
+        if (typeof val === 'object') return;
+        parts.push(String(val));
+      });
+      return parts.join(' ').toLowerCase();
+    }
+
+    function rowMatchesSearch(row, search, statusMap) {
+      if (!search) return true;
+      return getRowSearchText(row, statusMap).indexOf(search) !== -1;
     }
 
     // ============================================================
@@ -795,17 +883,37 @@
     // Render applications table
     // ============================================================
     var latestApp = null;
+    var allApplications = [];
+    var currentStatusMap = {};
 
-    function renderTable(apps, statusMap) {
+    function filterAndRender() {
+      var search = ($('filter_search').value || '').toLowerCase().trim();
+      var filtered = allApplications.filter(function(app) {
+        return rowMatchesSearch(app, search, currentStatusMap);
+      });
+      renderTable(filtered, currentStatusMap, search);
+    }
+
+    function renderTable(apps, statusMap, activeSearch) {
       statusMap = statusMap || {};
       var tbody  = $('sorta_tbody');
       var wrap   = $('sorta_table_wrap');
       var empty  = $('sorta_empty');
+      var filters = $('sorta_filters');
       if (!apps || apps.length === 0) {
         wrap.style.display = 'none';
         empty.style.display = 'block';
+        if (allApplications.length > 0 && activeSearch) {
+          $('sorta_empty_title').textContent = 'No Matching Applications';
+          $('sorta_empty_msg').textContent = 'No applications match your search. Try different keywords or clear the search.';
+        } else {
+          $('sorta_empty_title').textContent = 'No Applications Yet';
+          $('sorta_empty_msg').textContent = 'Click "+ Create New Application" above to get started with your first MTIF grant application.';
+        }
         return;
       }
+
+      if (filters) filters.style.display = allApplications.length > 0 ? '' : 'none';
 
       if (apps.length > 0) {
         console.log('[SORTA] Sample app keys:', Object.keys(apps[0]));
@@ -961,14 +1069,26 @@
             if (firstJur) $('sorta_jurisdiction_name').textContent = firstJur;
           }
 
-          renderTable(apps, statusMap);
+          allApplications = apps || [];
+          currentStatusMap = statusMap || {};
+          var filters = $('sorta_filters');
+          if (filters) filters.style.display = allApplications.length > 0 ? '' : 'none';
+          filterAndRender();
         });
       }).catch(function (err) {
         console.error('[SORTA] Init error:', err);
         $('sorta_loading').style.display = 'none';
+        allApplications = [];
+        currentStatusMap = {};
         renderTable([]);
       });
     }
+
+    $('filter_search').addEventListener('input', filterAndRender);
+    $('clear_filters_btn').addEventListener('click', function() {
+      $('filter_search').value = '';
+      filterAndRender();
+    });
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
