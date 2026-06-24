@@ -409,12 +409,24 @@
 
       /* ── Locked field style ── */
       .mtif-locked input:not([type=file]),
-      .mtif-locked textarea,
       .mtif-locked select {
         background: #f8fafc !important;
         color: #64748b !important;
         cursor: not-allowed !important;
         pointer-events: none;
+      }
+
+      /* Read-only narratives stay scrollable (disabled textareas cannot scroll). */
+      .mtif-locked textarea.mtif-readonly-textarea,
+      textarea.metro-readonly-field,
+      textarea.mtif-readonly-textarea {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        cursor: text !important;
+        pointer-events: auto !important;
+        overflow-y: auto !important;
+        resize: vertical;
+        -webkit-overflow-scrolling: touch;
       }
 
       /* ── Transit tool button ── */
@@ -3880,6 +3892,21 @@
   // ============================================================
   // Lock form when application status is Submitted
   // ============================================================
+  function prepareReadonlyTextareas(root) {
+    var scope = root || document;
+    scope.querySelectorAll('textarea[readonly], textarea.mtif-readonly-textarea, textarea.metro-readonly-field').forEach(function(ta) {
+      ta.disabled = false;
+      ta.style.overflowY = 'auto';
+      ta.style.pointerEvents = 'auto';
+      ta.style.cursor = 'text';
+      ta.style.resize = 'vertical';
+      var maxH = 420;
+      ta.style.maxHeight = maxH + 'px';
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight + 2, maxH) + 'px';
+    });
+  }
+
   function lockForm() {
     // Show submitted banner — insert it at the top of the form
     var banner = document.getElementById('mtif_submitted_banner');
@@ -3892,11 +3919,18 @@
     // Add locked class to body so CSS disables pointer events on fields
     document.body.classList.add('mtif-locked');
 
-    // Also explicitly disable inputs so they can't be tabbed into
+    // Disable inputs; keep textareas read-only (not disabled) so long narratives scroll.
     document.querySelectorAll(
       'input:not([type=hidden]):not(#mtif_record_id), textarea, select'
     ).forEach(function(el) {
-      el.disabled = true;
+      if (el.tagName === 'TEXTAREA') {
+        el.readOnly = true;
+        el.disabled = false;
+        el.classList.add('mtif-readonly-textarea');
+        el.tabIndex = 0;
+      } else {
+        el.disabled = true;
+      }
     });
 
     // Disable file inputs
@@ -3915,6 +3949,8 @@
     // Hide Send Message button if present
     var msgBtn = document.getElementById('openMessageModalBtn');
     if (msgBtn) msgBtn.style.display = 'none';
+
+    prepareReadonlyTextareas();
 
     console.log('[MTIF] Form locked — status is Submitted.');
   }

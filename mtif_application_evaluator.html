@@ -283,6 +283,16 @@
 
       textarea { min-height: 120px; resize: vertical; }
 
+      /* Read-only narrative fields must remain scrollable for long answers. */
+      textarea.metro-readonly-field,
+      textarea.mtif-readonly-textarea {
+        overflow-y: auto !important;
+        pointer-events: auto !important;
+        cursor: text !important;
+        resize: vertical;
+        -webkit-overflow-scrolling: touch;
+      }
+
       input:focus, select:focus, textarea:focus {
         border-color: rgba(0,61,165,0.6);
         box-shadow: 0 0 0 3px rgba(0,61,165,0.15);
@@ -1990,9 +2000,25 @@
         }
       } else if (field.tagName === 'TEXTAREA') {
         field.value = val;
+        prepareReadonlyTextareas(field.parentNode || field);
       } else {
         field.value = val;
       }
+    });
+  }
+
+  function prepareReadonlyTextareas(root) {
+    var scope = root || document;
+    scope.querySelectorAll('textarea[readonly], textarea.metro-readonly-field, textarea.mtif-readonly-textarea').forEach(function(ta) {
+      ta.disabled = false;
+      ta.style.overflowY = 'auto';
+      ta.style.pointerEvents = 'auto';
+      ta.style.cursor = 'text';
+      ta.style.resize = 'vertical';
+      var maxH = 420;
+      ta.style.maxHeight = maxH + 'px';
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight + 2, maxH) + 'px';
     });
   }
 
@@ -2459,11 +2485,13 @@
 
           Promise.all(reports.concat([weightsReady])).then(function() {
             console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
+            prepareReadonlyTextareas();
 
             // Load scoring criteria narratives (applicant-entered text)
             queryReport(token, API_CONFIG.scoringCriteriaReportId).then(function(rows) {
               console.log('[EVAL] Scoring criteria report returned', rows.length, 'rows');
               populateFromReport(rows, recordId, SC_COL_TO_FORM);
+              prepareReadonlyTextareas();
             }).catch(function(err) {
               console.warn('[EVAL] Could not load scoring criteria narratives:', err);
             });
