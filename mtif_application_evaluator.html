@@ -317,6 +317,67 @@
         border-color: #e2e8f0 !important;
       }
 
+      .eval-editable-active {
+        background: #fffbeb !important;
+        border-color: #fbbf24 !important;
+        color: var(--metro-ink) !important;
+        cursor: text !important;
+      }
+
+      select.eval-editable-active {
+        cursor: pointer !important;
+      }
+
+      .eval-edit-mode-banner {
+        display: none;
+        margin-top: 14px;
+        padding: 12px 16px;
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-radius: 10px;
+        font-size: 13px;
+        color: #92400e;
+        font-weight: 600;
+      }
+
+      .eval-edit-mode-banner.visible { display: block; }
+
+      .eval-edit-reason-panel {
+        display: none;
+        margin-top: 14px;
+        padding: 14px 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+      }
+
+      .eval-edit-reason-panel.visible { display: block; }
+
+      .eval-change-history-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--metro-border);
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 12px;
+      }
+
+      .eval-change-history-table thead {
+        background: var(--metro-navy);
+        color: #fff;
+      }
+
+      .eval-change-history-table th,
+      .eval-change-history-table td {
+        padding: 10px;
+        border-top: 1px solid #eef2f7;
+        vertical-align: top;
+        text-align: left;
+      }
+
+      .eval-change-history-table .chg-old { color: #991b1b; }
+      .eval-change-history-table .chg-new { color: #065f46; font-weight: 600; }
+
       .metro-access-denied {
         text-align: center;
         padding: 80px 20px;
@@ -671,11 +732,21 @@
       <div id="evaluatorContent" style="display:none;">
         <section class="metro-card">
           <h2>Evaluator Review</h2>
-          <p>You are viewing this application in <strong>evaluator mode</strong>. All application fields are read-only. Enter scores in the <strong>Scoring / Criteria</strong> section; the <strong>Scoring Summary</strong> below it updates automatically.</p>
+          <p>You are viewing this application in <strong>evaluator mode</strong>. Application fields are read-only until you unlock editing. Enter scores in the <strong>Scoring / Criteria</strong> section; the <strong>Scoring Summary</strong> updates automatically.</p>
           <div class="metro-actions">
+            <button class="metro-button secondary" type="button" id="editApplicationBtn">Unlock to edit application</button>
+            <button class="metro-button secondary" type="button" id="cancelEditApplicationBtn" style="display:none;">Cancel editing</button>
+            <button class="metro-button primary" type="button" id="saveApplicationBtn" style="display:none;">Save application changes</button>
             <button class="metro-button primary" type="button" id="saveScoresButton">Save Scores</button>
             <button class="metro-button secondary" type="button" id="printButton">Print / Save as PDF</button>
             <button class="metro-button ghost" type="button" id="sendMessageBtn">Send message</button>
+          </div>
+          <div class="eval-edit-mode-banner" id="editModeBanner">
+            Application editing is unlocked. Changed fields are highlighted. A reason is required when you save.
+          </div>
+          <div class="eval-edit-reason-panel" id="editReasonPanel">
+            <label for="evalEditReason" style="font-weight:600; font-size:13px; display:block; margin-bottom:6px;">Reason for changes (required to save)</label>
+            <textarea id="evalEditReason" rows="3" placeholder="Describe why these application changes are being made..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
           </div>
           <div class="metro-status" id="evalStatus">
             <span id="evalUserEmail"></span>
@@ -708,6 +779,30 @@
           <div style="margin-top:18px;">
             <label for="ws_justification_summary" style="font-weight:600; font-size:14px; color:#1e293b; display:block; margin-bottom:6px;">Justification Summary</label>
             <textarea id="ws_justification_summary" rows="5" placeholder="Provide an overall justification summary for the scores above..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; font-family:inherit; resize:vertical; min-height:80px;"></textarea>
+          </div>
+        </section>
+
+        <!-- Application change history -->
+        <section class="metro-section" id="changeHistorySection">
+          <h3 style="border-left-color: var(--metro-blue);">Application Edit History</h3>
+          <p style="font-size:13px; color:#475569; margin-bottom:12px;">Changes made by evaluators while editing this application are logged here.</p>
+          <div id="changeHistoryLoading" style="font-size:13px; color:#64748b;">Loading edit history...</div>
+          <div id="changeHistoryEmpty" style="display:none; font-size:13px; color:#94a3b8; font-style:italic;">No evaluator edits recorded yet.</div>
+          <div id="changeHistoryWrap" style="display:none; overflow-x:auto;">
+            <table class="eval-change-history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Editor</th>
+                  <th>Section</th>
+                  <th>Field</th>
+                  <th>Previous value</th>
+                  <th>New value</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody id="changeHistoryBody"></tbody>
+            </table>
           </div>
         </section>
 
@@ -862,7 +957,26 @@
     documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
     documentsFileFieldKey: '8x889kog8',
     documentsNameFieldKey: 't8ycbweq7',
-    documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE'
+    documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE',
+    changeLogTableKey: 'i2hqykwq7',
+    changeLogReportId: 'fyow6lqq6',
+    changeLogRelAppFieldKey: '' // optional: OpenGov field key for related_applications (set if log POST fails)
+  };
+
+  var applicationEditMode = false;
+  var applicationFieldSnapshot = {};
+  var _evaluatorEmail = '';
+
+  // Fields that stay read-only even when application editing is unlocked.
+  var CALCULATED_FIELD_LABELS = {
+    'Construction contingency %': true,
+    'Total project budget (dollars)': true,
+    'Subtotal local resources (dollars)': true,
+    'Local funds share (%)': true,
+    'Other funds share (%)': true,
+    'MTIF funds share (%)': true,
+    'Total financial resources (dollars)': true,
+    'Max grant % (90% of construction cost)': true
   };
 
   var FIELD_NOTICES = {
@@ -1387,6 +1501,16 @@
     return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
   }
 
+  function parseApiError(text, fallback) {
+    if (!text) return fallback || 'Unknown error';
+    try {
+      var parsed = JSON.parse(text);
+      return parsed.Message || parsed.message || parsed.error || text;
+    } catch (e) {
+      return text;
+    }
+  }
+
   function stripPrefix(key) {
     return key.replace(/^tbl\d+_/, '');
   }
@@ -1607,7 +1731,7 @@
     'field-applicant-jurisdiction-primary-applicant-email-for-notices': { name: 'primary_applicant_email' },
     'field-applicant-jurisdiction-applicant-role-city-jurisdiction-county-township-hctid-crc-sorta': { name: 'applicant_role' },
     'field-project-header-project-name': { name: 'project_name' },
-    'field-project-header-project-description-short-narrative': { name: 'project_description_long_text' },
+    'field-project-header-project-description-short-narrative': { name: 'project_description_long_text', saveKey: 'thkqdhug8' },
     'field-project-header-project-id-sorta-mtif-project-id': { name: 'project_id' },
     'field-project-header-application-year': { name: 'year_project_funded' },
     'field-project-header-date-of-project-award': { name: 'date_of_project_award' },
@@ -1628,6 +1752,8 @@
     'field-location-transit-project-location-photos-upload': { name: 'project_location_photos' },
     'field-location-transit-bus-trip-form-upload': { name: 'bus_trip_form' },
     'field-budget-funding-local-funds-budgeted-dollars': { name: 'local_funds_budgeted' },
+    'field-budget-funding-construction-cost-dollars': { name: 'construction_costs', saveKey: 'ktrjjboa5' },
+    'field-budget-funding-construction-contingencies-dollars': { name: 'construction_contingency', saveKey: 'baffftmq7' },
     'field-budget-funding-sorta-mtif-funds-awarded-dollars': { name: 'mtif_funds_awarded' },
     'field-budget-funding-other-funds-budgeted-dollars': { name: 'other_funds_budgeted' },
     'field-budget-funding-total-project-budget-dollars': { name: 'total_project_budget' },
@@ -2472,6 +2598,346 @@
     });
   }
 
+  function canFieldBeUnlocked(category, fieldName) {
+    if (!category || category === SCORING_CATEGORY) return false;
+    if (CALCULATED_FIELD_LABELS[fieldName]) return false;
+    if (/upload/i.test(fieldName)) return false;
+    if (fieldName.indexOf("Engineer's cost estimate") !== -1) return false;
+    if (!FIELD_MAPPING['field-' + slugify(category) + '-' + slugify(fieldName)]) return false;
+    return true;
+  }
+
+  function getApplicationFormFields() {
+    var fields = [];
+    if (!formEl) return fields;
+    formEl.querySelectorAll('[data-field-id]').forEach(function(field) {
+      if (canFieldBeUnlocked(field.dataset.category, field.dataset.fieldLabel)) {
+        fields.push(field);
+      }
+    });
+    return fields;
+  }
+
+  function getFieldCurrentValue(field) {
+    if (!field) return '';
+    if (field.type === 'checkbox') return field.checked ? 'Yes' : 'No';
+    return field.value == null ? '' : String(field.value);
+  }
+
+  function setFieldLocked(field, locked) {
+    if (!field || !canFieldBeUnlocked(field.dataset.category, field.dataset.fieldLabel)) return;
+
+    var isSelect = field.tagName === 'SELECT';
+    var isTextarea = field.tagName === 'TEXTAREA';
+
+    if (locked) {
+      if (isSelect) field.disabled = true;
+      else {
+        field.readOnly = true;
+        field.disabled = false;
+      }
+      field.classList.add('metro-readonly-field');
+      field.classList.remove('eval-editable-active');
+      if (field.dataset.currency === 'true') {
+        field.style.display = 'none';
+        var disp = document.getElementById(field.id + '_display');
+        if (disp) {
+          disp.style.display = '';
+          var n = parseFloat(field.value);
+          disp.value = isNaN(n) ? '' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+      }
+      if (isTextarea) prepareReadonlyTextareas(field.parentNode || field);
+    } else {
+      if (isSelect) field.disabled = false;
+      else {
+        field.readOnly = false;
+        field.disabled = false;
+      }
+      field.classList.remove('metro-readonly-field');
+      field.classList.add('eval-editable-active');
+      if (field.dataset.currency === 'true') {
+        field.style.display = '';
+        var dispHide = document.getElementById(field.id + '_display');
+        if (dispHide) dispHide.style.display = 'none';
+      }
+      if (isTextarea) {
+        field.style.overflowY = 'auto';
+        field.style.pointerEvents = 'auto';
+      }
+    }
+  }
+
+  function captureApplicationSnapshot() {
+    applicationFieldSnapshot = {};
+    getApplicationFormFields().forEach(function(field) {
+      applicationFieldSnapshot[field.id] = getFieldCurrentValue(field);
+    });
+  }
+
+  function restoreApplicationSnapshot() {
+    getApplicationFormFields().forEach(function(field) {
+      if (applicationFieldSnapshot[field.id] !== undefined) {
+        field.value = applicationFieldSnapshot[field.id];
+      }
+    });
+    recalcBudget();
+  }
+
+  function setApplicationEditMode(enabled) {
+    applicationEditMode = enabled;
+    getApplicationFormFields().forEach(function(field) {
+      setFieldLocked(field, !enabled);
+    });
+
+    var sameEmailCb = document.getElementById('same-as-project-contact-email');
+    if (sameEmailCb) sameEmailCb.disabled = !enabled;
+
+    var banner = document.getElementById('editModeBanner');
+    var reasonPanel = document.getElementById('editReasonPanel');
+    var editBtn = document.getElementById('editApplicationBtn');
+    var cancelBtn = document.getElementById('cancelEditApplicationBtn');
+    var saveBtn = document.getElementById('saveApplicationBtn');
+
+    if (banner) banner.classList.toggle('visible', enabled);
+    if (reasonPanel) reasonPanel.classList.toggle('visible', enabled);
+    if (editBtn) editBtn.style.display = enabled ? 'none' : '';
+    if (cancelBtn) cancelBtn.style.display = enabled ? '' : 'none';
+    if (saveBtn) saveBtn.style.display = enabled ? '' : 'none';
+
+    if (!enabled) {
+      var reasonEl = document.getElementById('evalEditReason');
+      if (reasonEl) reasonEl.value = '';
+    }
+  }
+
+  function diffApplicationChanges() {
+    var changes = [];
+    getApplicationFormFields().forEach(function(field) {
+      var oldVal = applicationFieldSnapshot[field.id] != null ? String(applicationFieldSnapshot[field.id]) : '';
+      var newVal = getFieldCurrentValue(field);
+      if (oldVal !== newVal) {
+        var mapping = FIELD_MAPPING[field.id];
+        changes.push({
+          fieldId: field.id,
+          fieldName: mapping ? mapping.name : field.id,
+          fieldLabel: field.dataset.fieldLabel || field.id,
+          section: field.dataset.category || '',
+          oldValue: oldVal,
+          newValue: newVal,
+          mapping: mapping
+        });
+      }
+    });
+    return changes;
+  }
+
+  function isChangeLogConfigured() {
+    var key = API_CONFIG.changeLogTableKey;
+    return key && key !== 'YOUR_CHANGE_LOG_TABLE_KEY_HERE';
+  }
+
+  function createChangeLogEntry(token, recordId, change, reason) {
+    if (!isChangeLogConfigured()) return Promise.resolve(null);
+
+    var relField = { Name: 'related_applications', Value: String(recordId) };
+    if (API_CONFIG.changeLogRelAppFieldKey) relField.Key = API_CONFIG.changeLogRelAppFieldKey;
+
+    var payload = {
+      ApplicationTableKey: API_CONFIG.changeLogTableKey,
+      FieldsList: [
+        relField,
+        { Name: 'field_name', Value: change.fieldName },
+        { Name: 'field_label', Value: change.fieldLabel },
+        { Name: 'old_value', Value: change.oldValue },
+        { Name: 'new_value', Value: change.newValue },
+        { Name: 'edited_by', Value: _evaluatorEmail || '' },
+        { Name: 'edit_reason', Value: reason },
+        { Name: 'section', Value: change.section }
+      ]
+    };
+
+    return fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
+      method: 'POST',
+      headers: apiHeaders(token),
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      if (!r.ok) {
+        return r.text().then(function(t) {
+          throw new Error(parseApiError(t, 'Change log ' + r.status));
+        });
+      }
+      return r.json();
+    });
+  }
+
+  function logApplicationChanges(token, recordId, changes, reason) {
+    if (!isChangeLogConfigured() || !changes.length) return Promise.resolve({ ok: true, skipped: true });
+
+    return Promise.all(changes.map(function(change) {
+      return createChangeLogEntry(token, recordId, change, reason);
+    })).then(function() {
+      return { ok: true };
+    }).catch(function(err) {
+      console.warn('[EVAL] Change log error:', err);
+      return { ok: false, error: err.message || String(err) };
+    });
+  }
+
+  function saveApplicationChanges(token, recordId) {
+    var reasonEl = document.getElementById('evalEditReason');
+    var reason = reasonEl ? reasonEl.value.trim() : '';
+    if (!reason) {
+      showToast('Please enter a reason for the changes before saving.', 'error');
+      return Promise.resolve();
+    }
+
+    var changes = diffApplicationChanges();
+    if (changes.length === 0) {
+      showToast('No application field changes to save.', 'error');
+      return Promise.resolve();
+    }
+
+    var rid = Number(recordId);
+    if (isNaN(rid)) {
+      showToast('Invalid record ID', 'error');
+      return Promise.resolve();
+    }
+
+    var fieldsList = changes.map(function(change) {
+      var entry = { Name: change.fieldName, Value: change.newValue };
+      if (change.mapping && change.mapping.saveKey) entry.Key = change.mapping.saveKey;
+      return entry;
+    });
+
+    // Save application first — change log runs after so a log permission issue
+    // does not block the actual application update.
+    return fetch(API_CONFIG.baseURL + '/api/FormAction/putdata', {
+      method: 'PUT',
+      headers: apiHeaders(token),
+      body: JSON.stringify({
+        ApplicationTableKey: API_CONFIG.applicationTableKey,
+        Where: { Rid: rid },
+        FieldsList: fieldsList
+      })
+    }).then(function(r) {
+      if (!r.ok) {
+        return r.text().then(function(t) {
+          throw new Error(parseApiError(t, 'Save application ' + r.status));
+        });
+      }
+      return r.json();
+    }).then(function() {
+      return logApplicationChanges(token, recordId, changes, reason);
+    }).then(function(logResult) {
+      recalcBudget();
+      captureApplicationSnapshot();
+      setApplicationEditMode(false);
+      loadChangeHistory(token, recordId);
+
+      var msg = 'Saved ' + changes.length + ' application change(s).';
+      if (!isChangeLogConfigured()) {
+        msg += ' (Change log not configured — edits saved but not logged.)';
+        showToast(msg, 'success');
+      } else if (logResult && logResult.ok) {
+        showToast(msg, 'success');
+      } else {
+        showToast(
+          msg + ' Warning: change log could not be written — ' +
+          (logResult && logResult.error ? logResult.error : 'check OpenGov permissions on table i2hqykwq7.'),
+          'error'
+        );
+      }
+    }).catch(function(err) {
+      console.error('[EVAL] Save application error:', err);
+      var msg = err.message || String(err);
+      if (/authoriz/i.test(msg)) {
+        showToast(
+          'OpenGov rejected the save: ' + msg +
+          ' Your evaluator role may need Update permission on the application table (iw3twwkw2) for the fields you edited.',
+          'error'
+        );
+      } else {
+        showToast('Error saving application changes: ' + msg, 'error');
+      }
+    });
+  }
+
+  function formatChangeValue(val) {
+    if (val === null || val === undefined || val === '') return '—';
+    var s = String(val);
+    return s.length > 120 ? s.substring(0, 117) + '...' : s;
+  }
+
+  function loadChangeHistory(token, recordId) {
+    var loading = document.getElementById('changeHistoryLoading');
+    var empty = document.getElementById('changeHistoryEmpty');
+    var wrap = document.getElementById('changeHistoryWrap');
+    var body = document.getElementById('changeHistoryBody');
+
+    if (!isChangeLogConfigured()) {
+      if (loading) loading.style.display = 'none';
+      if (empty) {
+        empty.style.display = 'block';
+        empty.textContent = 'Change log table is not configured. Add changeLogTableKey and changeLogReportId to API_CONFIG.';
+      }
+      if (wrap) wrap.style.display = 'none';
+      return Promise.resolve();
+    }
+
+    if (loading) loading.style.display = 'block';
+    if (empty) empty.style.display = 'none';
+    if (wrap) wrap.style.display = 'none';
+
+    return queryReport(token, API_CONFIG.changeLogReportId).then(function(rows) {
+      var appId = String(recordId);
+      var matches = rows.filter(function(row) {
+        var rel = extractFieldValue(row, 'related_applications') || '';
+        return String(rel) === appId;
+      });
+
+      if (loading) loading.style.display = 'none';
+
+      if (!matches.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+
+      matches.sort(function(a, b) {
+        var aId = a.id || a.Rid || 0;
+        var bId = b.id || b.Rid || 0;
+        return Number(bId) - Number(aId);
+      });
+
+      if (body) {
+        body.innerHTML = '';
+        matches.forEach(function(row) {
+          var tr = document.createElement('tr');
+          var dateVal = extractFieldValue(row, 'Created Date') ||
+            extractFieldValue(row, 'created date') ||
+            extractFieldValue(row, 'edited_at') || '—';
+          tr.innerHTML =
+            '<td>' + escHtml(String(dateVal)) + '</td>' +
+            '<td>' + escHtml(String(extractFieldValue(row, 'edited_by') || '—')) + '</td>' +
+            '<td>' + escHtml(String(extractFieldValue(row, 'section') || '—')) + '</td>' +
+            '<td>' + escHtml(String(extractFieldValue(row, 'field_label') || extractFieldValue(row, 'field_name') || '—')) + '</td>' +
+            '<td class="chg-old">' + escHtml(formatChangeValue(extractFieldValue(row, 'old_value'))) + '</td>' +
+            '<td class="chg-new">' + escHtml(formatChangeValue(extractFieldValue(row, 'new_value'))) + '</td>' +
+            '<td>' + escHtml(String(extractFieldValue(row, 'edit_reason') || '—')) + '</td>';
+          body.appendChild(tr);
+        });
+      }
+      if (wrap) wrap.style.display = 'block';
+    }).catch(function(err) {
+      console.warn('[EVAL] Could not load change history:', err);
+      if (loading) loading.style.display = 'none';
+      if (empty) {
+        empty.style.display = 'block';
+        empty.textContent = 'Could not load edit history.';
+      }
+    });
+  }
+
   function saveScores(token, recordId) {
     var fieldsList = getWeightedScoringFields();
 
@@ -2691,11 +3157,18 @@
           }
 
           console.log('[EVAL] Evaluator access granted for:', email);
+          _evaluatorEmail = email;
           document.getElementById('evaluatorContent').style.display = 'block';
           document.getElementById('evalUserEmail').textContent = 'Evaluator: ' + email;
           document.getElementById('mtif_record_id').value = recordId;
 
           buildSections();
+
+          formEl.addEventListener('input', function(e) {
+            if (!applicationEditMode) return;
+            var t = e.target;
+            if (t && t.dataset && t.dataset.category === 'Budget / Funding') recalcBudget();
+          });
 
           var weightsReady = loadScoringWeights(token).then(function() {
             console.log('[EVAL] Loaded', WEIGHTED_SCORING_CRITERIA.length, 'active scoring criteria');
@@ -2739,6 +3212,8 @@
           Promise.all(reports.concat([weightsReady])).then(function() {
             console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
             prepareReadonlyTextareas();
+            captureApplicationSnapshot();
+            loadChangeHistory(token, recordId);
 
             // Load scoring criteria narratives (applicant-entered text)
             queryReport(token, API_CONFIG.scoringCriteriaReportId).then(function(rows) {
@@ -2780,6 +3255,29 @@
           });
 
           // Attach button handlers
+          document.getElementById('editApplicationBtn').addEventListener('click', function() {
+            captureApplicationSnapshot();
+            setApplicationEditMode(true);
+          });
+
+          document.getElementById('cancelEditApplicationBtn').addEventListener('click', function() {
+            restoreApplicationSnapshot();
+            setApplicationEditMode(false);
+            showToast('Editing cancelled — changes discarded.', 'success');
+          });
+
+          document.getElementById('saveApplicationBtn').addEventListener('click', function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            getAuthToken().then(function(t) {
+              return saveApplicationChanges(t, recordId);
+            }).finally(function() {
+              btn.disabled = false;
+              btn.textContent = 'Save application changes';
+            });
+          });
+
           document.getElementById('saveScoresButton').addEventListener('click', function() {
             var btn = this;
             btn.disabled = true;
