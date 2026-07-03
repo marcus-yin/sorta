@@ -824,15 +824,9 @@
               <label for="docUploadFile">Select file(s)</label>
               <input type="file" id="docUploadFile" multiple style="width:100%; padding:8px; border:1px solid var(--metro-border); border-radius:10px; font-size:14px;" />
             </div>
-            <div style="min-width:180px;">
-              <label for="docUploadType">Document type</label>
-              <select id="docUploadType" style="width:100%;">
-                <option value="Evaluator Upload">Evaluator Upload</option>
-                <option value="Supporting Document">Supporting Document</option>
-                <option value="Scoring Backup">Scoring Backup</option>
-                <option value="Correspondence">Correspondence</option>
-                <option value="Other">Other</option>
-              </select>
+            <div style="flex:1; min-width:220px;">
+              <label for="docUploadDescription">Description <span style="color:#dc2626;">*</span></label>
+              <input type="text" id="docUploadDescription" required placeholder="Brief description of this document" style="width:100%; padding:8px 12px; border:1px solid var(--metro-border); border-radius:10px; font-size:14px;" />
             </div>
             <div>
               <button class="metro-button secondary" type="button" id="docUploadBtn" style="white-space:nowrap;">Upload</button>
@@ -848,6 +842,7 @@
                 <thead style="background:var(--metro-blue); color:#fff;">
                   <tr>
                     <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Name</th>
+                    <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Description</th>
                     <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Type</th>
                     <th style="padding:12px 10px; text-align:left; font-size:13px; font-weight:700;">Uploaded By</th>
                     <th style="padding:12px 10px; text-align:center; font-size:13px; font-weight:700; width:140px;">Actions</th>
@@ -965,7 +960,9 @@
     documentsRelatedNotificationFieldKey: 'YOUR_DOCUMENTS_RELATED_NOTIFICATION_FIELD_KEY_HERE',
     documentsFileFieldKey: '8x889kog8',
     documentsNameFieldKey: 't8ycbweq7',
-    documentsTypeFieldKey: 'YOUR_DOCUMENTS_TYPE_FIELD_KEY_HERE',
+    documentsDescriptionFieldKey: 'vtgd8jnw3',
+    documentsTypeFieldKey: 'mflehvcw2',
+    evaluatorDocumentType: 'Evaluator Document',
     changeLogTableKey: 'i2hqykwq7',
     changeLogReportId: 'fyow6lqq6',
     changeLogRelAppFieldKey: '' // optional: OpenGov field key for related_applications (set if log POST fails)
@@ -1548,18 +1545,21 @@
     return null;
   }
 
-  function uploadDocument(token, file, applicationRid, documentType) {
+  function uploadDocument(token, file, applicationRid, description) {
     return new Promise(function(resolve, reject) {
       var reader = new FileReader();
       reader.onload = function() {
         var base64 = reader.result.split(',')[1];
+        var fieldsList = [
+          { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
+          { Key: API_CONFIG.documentsRelAppFieldKey, Name: 'related_applications', Value: String(applicationRid) },
+          { Key: API_CONFIG.documentsNameFieldKey, Name: 'name', Value: file.name },
+          { Key: API_CONFIG.documentsTypeFieldKey, Name: 'type', Value: API_CONFIG.evaluatorDocumentType },
+          { Key: API_CONFIG.documentsDescriptionFieldKey, Name: 'description', Value: description }
+        ];
         var payload = {
           ApplicationTableKey: API_CONFIG.documentsTableKey,
-          FieldsList: [
-            { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
-            { Key: API_CONFIG.documentsRelAppFieldKey, Name: 'related_applications', Value: String(applicationRid) },
-            { Key: API_CONFIG.documentsNameFieldKey, Name: 'name', Value: file.name }
-          ]
+          FieldsList: fieldsList
         };
         fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
           method: 'POST',
@@ -1624,7 +1624,8 @@
       docs.forEach(function(doc) {
         var rid = doc.id || doc.Rid || extractFieldValue(doc, 'Record Id') || '';
         var name = extractFieldValue(doc, 'document_name') || extractFieldValue(doc, 'name') || extractFieldValue(doc, 'File') || 'Unnamed';
-        var docType = extractFieldValue(doc, 'document_type') || extractFieldValue(doc, 'description') || '-';
+        var docDesc = extractFieldValue(doc, 'description') || '-';
+        var docType = extractFieldValue(doc, 'type') || extractFieldValue(doc, 'document_type') || '-';
         var uploadedBy = extractFieldValue(doc, 'Created By') || extractFieldValue(doc, 'createdby') || '-';
         var fileUrl = extractFieldValue(doc, 'File URL') || extractFieldValue(doc, 'file_url') ||
                       (API_CONFIG.baseURL + '/api/File/download/' + (doc.Rid || rid));
@@ -1634,6 +1635,7 @@
           '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px; font-weight:600;">' +
             '<a href="' + escapeAttr(fileUrl) + '" target="_blank" rel="noopener" style="color:var(--metro-blue); text-decoration:none;">' + escHtml(name) + '</a>' +
           '</td>' +
+          '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px;">' + escHtml(docDesc) + '</td>' +
           '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px;">' + escHtml(docType) + '</td>' +
           '<td style="padding:10px; border-top:1px solid #eef2f7; font-size:13px;">' + escHtml(uploadedBy) + '</td>' +
           '<td style="padding:10px; border-top:1px solid #eef2f7; text-align:center;">' +
@@ -1672,13 +1674,21 @@
 
     uploadBtn.addEventListener('click', function() {
       var fileInput = document.getElementById('docUploadFile');
-      var typeSelect = document.getElementById('docUploadType');
+      var descInput = document.getElementById('docUploadDescription');
       var statusEl = document.getElementById('docUploadStatus');
       var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+      var description = descInput ? descInput.value.trim() : '';
 
       if (files.length === 0) {
         statusEl.textContent = 'Please select at least one file.';
         statusEl.style.color = '#dc2626';
+        return;
+      }
+
+      if (!description) {
+        statusEl.textContent = 'Please enter a description before uploading.';
+        statusEl.style.color = '#dc2626';
+        if (descInput) descInput.focus();
         return;
       }
 
@@ -1693,15 +1703,14 @@
       statusEl.textContent = 'Uploading ' + files.length + ' file(s)...';
       statusEl.style.color = 'var(--metro-ink)';
 
-      var documentType = typeSelect ? typeSelect.value : 'Evaluator Upload';
-
       Promise.all(files.map(function(f) {
-        return uploadDocument(token, f, applicationRid, documentType);
+        return uploadDocument(token, f, applicationRid, description);
       })).then(function() {
         statusEl.textContent = files.length + ' file(s) uploaded successfully.';
         statusEl.style.color = '#059669';
         showToast(files.length + ' file(s) uploaded.', 'success');
         fileInput.value = '';
+        if (descInput) descInput.value = '';
         loadDocuments(token, applicationRid);
       }).catch(function(err) {
         console.error('[EVAL] Upload error:', err);
@@ -3046,7 +3055,7 @@
             { Key: API_CONFIG.documentsFileFieldKey, Name: 'file', Value: file.name, base64EncodedFile: base64, fileName: file.name },
             { Key: API_CONFIG.documentsRelatedNotificationFieldKey, Name: 'related_notification', Value: String(notificationRid) },
             { Key: API_CONFIG.documentsNameFieldKey, Name: 'document_name', Value: file.name },
-            { Key: API_CONFIG.documentsTypeFieldKey, Name: 'document_type', Value: 'Notification Attachment' }
+            { Key: API_CONFIG.documentsTypeFieldKey, Name: 'type', Value: 'Notification Attachment' }
           ]
         };
         fetch(API_CONFIG.baseURL + '/api/formaction/postdata', {
