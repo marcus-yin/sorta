@@ -601,6 +601,22 @@
       }
       .inline-weighted-score.iws-unmatched .iws-title { color: #991b1b; }
 
+      .inline-weighted-score.iws-scored {
+        background: #ecfdf5;
+        border-color: #86efac;
+      }
+      .inline-weighted-score.iws-scored .iws-title { color: #065f46; }
+      .inline-weighted-score.iws-scored .iws-badge {
+        background: #059669;
+      }
+      .inline-weighted-score.iws-just-scored {
+        animation: iws-score-flash 0.65s ease;
+      }
+      @keyframes iws-score-flash {
+        0%, 100% { box-shadow: none; }
+        35% { box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.35); }
+      }
+
       .scoring-summary-card {
         margin-top: 18px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0;
         border-radius: 10px; display: flex; align-items: center; justify-content: space-between;
@@ -1264,7 +1280,7 @@
           '<textarea id="' + commentId + '" rows="2" placeholder="Comments..."></textarea>' +
         '</div>' +
       '</div>' +
-      '<div class="iws-hint">Tip: click a row in the scoring guidance above to auto-populate the Score field.</div>'
+      '<div class="iws-hint">Tip: click a rubric row above to fill Score, or type a value here. Guidance closes when the score is set.</div>'
     );
   }
 
@@ -1330,11 +1346,26 @@
           recalcWeightedScores();
         }
       });
+      document.addEventListener('blur', function(e) {
+        var t = e.target;
+        if (!t || !t.id || t.id.indexOf('ws_score_') !== 0) return;
+        commitScoreInput(t, { toast: true });
+      }, true);
+      document.addEventListener('keydown', function(e) {
+        var t = e.target;
+        if (!t || !t.id || t.id.indexOf('ws_score_') !== 0) return;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commitScoreInput(t, { toast: true });
+          t.blur();
+        }
+      });
       renderInlineWeightedScoring._listenerAttached = true;
     }
 
     renderScoringSummaryBatches();
     recalcWeightedScores();
+    updateScoreBlockStates();
   }
 
   function escapeAttr(v) {
@@ -1376,6 +1407,102 @@
     return bestScore > 0 ? best : null;
   }
 
+  function collapseScoringGuidance(narrativeFieldName) {
+    if (!narrativeFieldName) return;
+    var panelId = 'guidance-panel-' + slugify(narrativeFieldName);
+    var toggleId = 'guidance-toggle-' + slugify(narrativeFieldName);
+    var panel = document.getElementById(panelId);
+    var toggle = document.getElementById(toggleId);
+    if (panel) panel.classList.remove('open');
+    if (toggle) {
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function getCriterionForScoreInput(scoreEl) {
+    if (!scoreEl || !scoreEl.id) return null;
+    var critId = scoreEl.id.replace('ws_score_', '');
+    for (var i = 0; i < WEIGHTED_SCORING_CRITERIA.length; i++) {
+      if (WEIGHTED_SCORING_CRITERIA[i].id === critId) return WEIGHTED_SCORING_CRITERIA[i];
+    }
+    return null;
+  }
+
+  function markScoreBlockScored(scoreEl) {
+    var block = scoreEl ? scoreEl.closest('.inline-weighted-score') : null;
+    if (!block || block.classList.contains('iws-unmatched')) return;
+    block.classList.add('iws-scored');
+    var badge = block.querySelector('.iws-badge');
+    if (badge) badge.textContent = 'Scored';
+  }
+
+  function markScoreBlockUnscored(scoreEl) {
+    var block = scoreEl ? scoreEl.closest('.inline-weighted-score') : null;
+    if (!block || block.classList.contains('iws-unmatched')) return;
+    block.classList.remove('iws-scored');
+    var badge = block.querySelector('.iws-badge');
+    if (badge) badge.textContent = 'Editable';
+  }
+
+  function flashScoreBlock(scoreEl) {
+    var block = scoreEl ? scoreEl.closest('.inline-weighted-score') : null;
+    if (!block) return;
+    block.classList.add('iws-just-scored');
+    setTimeout(function() { block.classList.remove('iws-just-scored'); }, 650);
+  }
+
+  function updateScoreBlockStates() {
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      if (!scoreEl) return;
+      var val = scoreEl.value.trim();
+      if (val !== '' && !isNaN(parseFloat(val))) {
+        markScoreBlockScored(scoreEl);
+        scoreEl.dataset.lastCommittedScore = String(parseFloat(val));
+      } else {
+        markScoreBlockUnscored(scoreEl);
+        delete scoreEl.dataset.lastCommittedScore;
+      }
+    });
+  }
+
+  function commitScoreInput(scoreEl, options) {
+    options = options || {};
+    if (!scoreEl) return false;
+
+    var val = scoreEl.value.trim();
+    if (val === '' || isNaN(parseFloat(val))) {
+      markScoreBlockUnscored(scoreEl);
+      delete scoreEl.dataset.lastCommittedScore;
+      return false;
+    }
+
+    var numVal = parseFloat(val);
+    var prev = scoreEl.dataset.lastCommittedScore;
+    var changed = prev !== String(numVal);
+    scoreEl.dataset.lastCommittedScore = String(numVal);
+
+    var crit = getCriterionForScoreInput(scoreEl);
+    collapseScoringGuidance(getNarrativeFieldForScoreInput(scoreEl));
+    markScoreBlockScored(scoreEl);
+
+    if (changed) {
+      flashScoreBlock(scoreEl);
+      if (options.toast !== false && crit) {
+        showToast('Set "' + crit.label + '" score to ' + numVal + '.', 'success');
+      }
+    }
+
+    return true;
+  }
+
+  function getNarrativeFieldForScoreInput(scoreEl) {
+    if (!scoreEl) return null;
+    var slot = scoreEl.closest('.inline-weighted-score-slot');
+    return slot ? slot.getAttribute('data-narrative-field') : null;
+  }
+
   function handleRubricClick(narrativeFieldName, li) {
     var score = li.getAttribute('data-score');
     if (!score) return;
@@ -1403,7 +1530,7 @@
     li.classList.add('just-clicked');
     setTimeout(function() { li.classList.remove('just-clicked'); }, 650);
 
-    showToast('Set "' + crit.label + '" score to ' + clamped + '.', 'success');
+    commitScoreInput(scoreEl, { toast: true });
   }
 
   function recalcWeightedScores() {
@@ -1458,6 +1585,7 @@
     var justEl = document.getElementById('ws_justification_summary');
     if (justEl && justVal !== null && justVal !== undefined && justVal !== '') justEl.value = justVal;
     recalcWeightedScores();
+    updateScoreBlockStates();
   }
 
   // Token helpers
