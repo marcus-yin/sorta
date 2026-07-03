@@ -1769,9 +1769,10 @@
     'field-location-transit-project-location-photos-upload': { name: 'project_location_photos' },
     'field-location-transit-bus-trip-form-upload': { name: 'bus_trip_form' },
     'field-budget-funding-local-funds-budgeted-dollars': { name: 'local_funds_budgeted' },
+    'field-budget-funding-source-of-local-funds': { name: 'source_of_local_funds', saveKey: 'dxmnkong8' },
     'field-budget-funding-construction-cost-dollars': { name: 'construction_costs', saveKey: 'ktrjjboa5' },
     'field-budget-funding-construction-contingencies-dollars': { name: 'construction_contingency', saveKey: 'baffftmq7' },
-    'field-budget-funding-sorta-mtif-funds-awarded-dollars': { name: 'mtif_funds_awarded' },
+    'field-budget-funding-sorta-mtif-funds-requested-dollars': { name: 'mtif_funds_awarded' },
     'field-budget-funding-other-funds-budgeted-dollars': { name: 'other_funds_budgeted' },
     'field-budget-funding-total-project-budget-dollars': { name: 'total_project_budget' },
     'field-budget-funding-local-funds-share': { name: 'local_funds_share_pct' },
@@ -1833,10 +1834,11 @@
     { "Category": "Budget / Funding", "FieldName": "Construction contingency %" },
     { "Category": "Budget / Funding", "FieldName": "Total project budget (dollars)" },
     { "Category": "Budget / Funding", "FieldName": "Local funds budgeted (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "Source of Local Funds" },
     { "Category": "Budget / Funding", "FieldName": "Other funds budgeted (dollars)" },
     { "Category": "Budget / Funding", "FieldName": "Subtotal local resources (dollars)" },
     { "Category": "Budget / Funding", "FieldName": "Local funds share (%)" },
-    { "Category": "Budget / Funding", "FieldName": "SORTA MTIF funds awarded (dollars)" },
+    { "Category": "Budget / Funding", "FieldName": "SORTA MTIF funds requested (dollars)" },
     { "Category": "Budget / Funding", "FieldName": "MTIF funds share (%)" },
     { "Category": "Budget / Funding", "FieldName": "Total financial resources (dollars)" },
     { "Category": "Budget / Funding", "FieldName": "Multi-year project funding years (1-5)" },
@@ -2154,8 +2156,9 @@
         ]);
         var bFunding = bMakeGroup('Funding sources', [
           'Local funds budgeted (dollars)',
+          'Source of Local Funds',
           'Other funds budgeted (dollars)',
-          'SORTA MTIF funds awarded (dollars)'
+          'SORTA MTIF funds requested (dollars)'
         ]);
         var bDetails = bMakeGroup('Project details', [
           'Multi-year project funding years (1-5)',
@@ -2206,7 +2209,7 @@
           'field-budget-funding-construction-contingencies-dollars',
           'field-budget-funding-local-funds-budgeted-dollars',
           'field-budget-funding-other-funds-budgeted-dollars',
-          'field-budget-funding-sorta-mtif-funds-awarded-dollars'
+          'field-budget-funding-sorta-mtif-funds-requested-dollars'
         ].forEach(function(id) {
           var real = document.getElementById(id);
           if (!real || real.dataset.currency === 'true') return;
@@ -2276,7 +2279,7 @@
     var b = num('field-budget-funding-construction-contingencies-dollars');
     var d = num('field-budget-funding-local-funds-budgeted-dollars');
     var e = num('field-budget-funding-other-funds-budgeted-dollars');
-    var g = num('field-budget-funding-sorta-mtif-funds-awarded-dollars');
+    var g = num('field-budget-funding-sorta-mtif-funds-requested-dollars');
 
     var contPctEl = document.getElementById('field-budget-funding-construction-contingency');
     if (contPctEl && a > 0) contPctEl.value = ((b / a) * 100).toFixed(2);
@@ -2364,7 +2367,8 @@
     'construction_costs': 'field-budget-funding-construction-cost-dollars',
     'construction_contingency': 'field-budget-funding-construction-contingencies-dollars',
     'local_funds_budgeted': 'field-budget-funding-local-funds-budgeted-dollars',
-    'mtif_funds_awarded': 'field-budget-funding-sorta-mtif-funds-awarded-dollars',
+    'source_of_local_funds': 'field-budget-funding-source-of-local-funds',
+    'mtif_funds_awarded': 'field-budget-funding-sorta-mtif-funds-requested-dollars',
     'other_funds_budgeted': 'field-budget-funding-other-funds-budgeted-dollars',
     'total_project_budget': 'field-budget-funding-total-project-budget-dollars',
     'local_funds_share_pct': 'field-budget-funding-local-funds-share',
