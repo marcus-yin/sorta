@@ -249,6 +249,10 @@
     .sorta-badge-draft { background: #fef3c7; color: #92400e; }
     .sorta-badge-submitted { background: #d1fae5; color: #065f46; }
     .sorta-badge-review { background: #dbeafe; color: #1e40af; }
+    .sorta-badge-not-ready { background: #f1f5f9; color: #64748b; }
+    .sorta-badge-not-scored { background: #ffedd5; color: #9a3412; }
+    .sorta-badge-in-progress { background: #fef9c3; color: #854d0e; }
+    .sorta-badge-scored { background: #d1fae5; color: #065f46; }
 
     /* Loading / Empty / Error */
     .sorta-loading { text-align: center; padding: 60px 20px; color: #475569; }
@@ -401,7 +405,7 @@
       .sorta-header { flex-direction: column; align-items: flex-start; gap: 16px; }
       .sorta-user-info { text-align: left; }
       .sorta-table-wrap { overflow-x: auto; }
-      .sorta-table { min-width: 800px; }
+      .sorta-table { min-width: 1100px; }
       .sorta-filters-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -450,8 +454,12 @@
           <p>Submitted</p>
         </div>
         <div class="sorta-metric-card">
-          <h3 id="metric_draft">0</h3>
-          <p>Draft</p>
+          <h3 id="metric_scored">0</h3>
+          <p>Fully Scored</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_in_progress">0</h3>
+          <p>Scoring In Progress</p>
         </div>
       </div>
 
@@ -470,6 +478,16 @@
             <label for="filter_project_type">Project Type</label>
             <select id="filter_project_type">
               <option value="">All Types</option>
+            </select>
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_eval_status">Evaluation Status</label>
+            <select id="filter_eval_status">
+              <option value="">All statuses</option>
+              <option value="not-ready">Not submitted</option>
+              <option value="pending">Not scored</option>
+              <option value="in-progress">Scoring in progress</option>
+              <option value="complete">Fully scored</option>
             </select>
           </div>
           <div class="sorta-filter-group">
@@ -501,6 +519,9 @@
                   <th>Program Year</th>
                   <th>Project Type</th>
                   <th>Project Size</th>
+                  <th>App Status</th>
+                  <th>Evaluation Status</th>
+                  <th>Weighted Score</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -535,11 +556,20 @@
       baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
       applicationTableKey: 'iw3twwkw2',
       applicationsReportId: 's3derd1q7',
+      submissionStatusReportId: 'pclffuha7',
+      scoringWeightsReportId: 'qks5wukq5',
+      scoringDataReport1: '1ko0gu0g8',
+      scoringDataReport2: 'hol4pvng1',
+      scoringDataReport3: 'bgjvkccw7',
       evaluatorTableKey: 'xrglb4cg4',
       evaluatorReportId: 'aqjsnp6w4'
     };
 
     var EVALUATOR_PAGE = 'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/imahe5tq5';
+
+    var SCORING_CRITERIA = [];
+    var statusMap = {};
+    var scoringMap = {};
 
     function looksLikeSaltedCiphertext(s) {
       return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
@@ -600,19 +630,197 @@
       return null;
     }
 
+    // Strict lookup for ws_score_* / ws_comment_* — avoids false matches (e.g. criterion_1 vs criterion_12).
+    function extractScoringFieldValue(record, fieldName) {
+      if (!record) return null;
+      if (record[fieldName] !== undefined && record[fieldName] !== null) return record[fieldName];
+      var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+      for (var key in record) {
+        var stripped = stripPrefix(key).toLowerCase().replace(/[\s_]/g, '');
+        if (stripped === norm) return record[key];
+      }
+      return null;
+    }
+
+    function isPopulatedScoreValue(val) {
+      if (val === null || val === undefined) return false;
+      if (typeof val === 'string' && val.trim() === '') return false;
+      return !isNaN(parseFloat(val));
+    }
+
+    // A criterion counts as evaluator-entered only when there is real input.
+    // Default 0s in the database are ignored unless the evaluator left a comment
+    // (meaning they intentionally scored that criterion as 0).
+    function isCriterionEntered(row, crit) {
+      var raw = extractScoringFieldValue(row, 'ws_score_' + crit.id);
+      var comment = extractScoringFieldValue(row, 'ws_comment_' + crit.id);
+      var hasComment = !!(comment && String(comment).trim());
+
+      if (hasComment) return true;
+
+      if (!isPopulatedScoreValue(raw)) return false;
+      return parseFloat(raw) > 0;
+    }
+
+    function getCriterionScoreValue(row, crit) {
+      if (!isCriterionEntered(row, crit)) return null;
+      var raw = extractScoringFieldValue(row, 'ws_score_' + crit.id);
+      if (!isPopulatedScoreValue(raw)) return 0;
+      return parseFloat(raw);
+    }
+
     function getRecordId(row) {
       return row.id || extractFieldValue(row, 'id') || row.Rid || '';
     }
 
+    function queryReport(token, reportId) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({ ReportId: reportId, Filters: [] })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Report ' + reportId + ' ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        return Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+      });
+    }
+
+    function loadScoringWeights(token) {
+      return queryReport(token, API_CONFIG.scoringWeightsReportId).then(function(rows) {
+        var active = [];
+        rows.forEach(function(row) {
+          var isActive = extractFieldValue(row, 'is active');
+          if (String(isActive).toLowerCase() !== 'true') return;
+          var rid = extractFieldValue(row, 'Record Id') || row.id || row.Rid;
+          active.push({
+            id: 'criterion_' + rid,
+            weightPct: parseFloat(extractFieldValue(row, 'weight pct')) || 0
+          });
+        });
+        active.sort(function(a, b) {
+          return parseInt(a.id.replace('criterion_', ''), 10) - parseInt(b.id.replace('criterion_', ''), 10);
+        });
+        SCORING_CRITERIA = active;
+        return active;
+      });
+    }
+
+    function mergeScoringReports(results) {
+      var merged = {};
+      results.forEach(function(rows) {
+        rows.forEach(function(row) {
+          var id = String(getRecordId(row) || '');
+          if (!id) return;
+          if (!merged[id]) merged[id] = {};
+          Object.assign(merged[id], row);
+        });
+      });
+      return merged;
+    }
+
+    function buildStatusMap(rows) {
+      var map = {};
+      rows.forEach(function(row) {
+        var id = String(getRecordId(row) || '');
+        if (!id) return;
+        var st = extractFieldValue(row, 'status') || '';
+        if (st && (st.toLowerCase().indexOf('http://') === 0 || st.toLowerCase().indexOf('https://') === 0)) {
+          st = 'Draft';
+        }
+        map[id] = st || 'Draft';
+      });
+      return map;
+    }
+
+    function getScoringSummary(recordId) {
+      var row = scoringMap[String(recordId)] || {};
+      var enteredCount = 0;
+      var weightedTotal = 0;
+
+      var justification = extractScoringFieldValue(row, 'ws_justification_summary');
+      var hasJustification = !!(justification && String(justification).trim());
+
+      SCORING_CRITERIA.forEach(function(crit) {
+        if (!isCriterionEntered(row, crit)) return;
+
+        enteredCount++;
+        var rawNum = getCriterionScoreValue(row, crit);
+        if (rawNum !== null && !isNaN(rawNum)) {
+          weightedTotal += Math.round((rawNum * (crit.weightPct / 100)) * 100) / 100;
+        }
+      });
+
+      var hasStarted = enteredCount > 0 || hasJustification;
+
+      return {
+        scoredCount: enteredCount,
+        totalCriteria: SCORING_CRITERIA.length,
+        weightedTotal: hasStarted ? Math.round(weightedTotal * 100) / 100 : null,
+        hasExplicitScoring: hasStarted
+      };
+    }
+
+    function isSubmittedStatus(status) {
+      if (!status) return false;
+      var s = status.toLowerCase();
+      return s.indexOf('submit') !== -1 || s.indexOf('review') !== -1;
+    }
+
+    function determineEvaluationStatus(recordId) {
+      var appStatus = statusMap[String(recordId)] || 'Draft';
+      if (!isSubmittedStatus(appStatus)) {
+        return { key: 'not-ready', label: 'Not submitted' };
+      }
+
+      var summary = getScoringSummary(recordId);
+
+      if (summary.totalCriteria === 0) {
+        return summary.hasExplicitScoring
+          ? { key: 'complete', label: 'Fully scored' }
+          : { key: 'pending', label: 'Not scored' };
+      }
+
+      if (!summary.hasExplicitScoring) {
+        return { key: 'pending', label: 'Not scored' };
+      }
+
+      if (summary.scoredCount === 0) {
+        return { key: 'in-progress', label: 'Scoring started' };
+      }
+
+      if (summary.scoredCount < summary.totalCriteria) {
+        return { key: 'in-progress', label: 'Scoring in progress (' + summary.scoredCount + '/' + summary.totalCriteria + ')' };
+      }
+
+      return { key: 'complete', label: 'Fully scored' };
+    }
+
+    function getEvaluationStatusBadge(evalStatus) {
+      var key = evalStatus.key || 'pending';
+      var label = evalStatus.label || 'Not scored';
+      var cls = 'sorta-badge-not-scored';
+      if (key === 'not-ready') cls = 'sorta-badge-not-ready';
+      else if (key === 'in-progress') cls = 'sorta-badge-in-progress';
+      else if (key === 'complete') cls = 'sorta-badge-scored';
+      return '<span class="sorta-badge ' + cls + '">' + label + '</span>';
+    }
+
     // Search across all values returned by the applications report row.
     function getRowSearchText(row) {
-      var parts = [String(getRecordId(row) || '')];
+      var rid = String(getRecordId(row) || '');
+      var parts = [rid];
       Object.keys(row).forEach(function(key) {
         var val = row[key];
         if (val === null || val === undefined || val === '') return;
         if (typeof val === 'object') return;
         parts.push(String(val));
       });
+      if (statusMap[rid]) parts.push(statusMap[rid]);
+      var evalSt = determineEvaluationStatus(rid);
+      parts.push(evalSt.label, evalSt.key);
+      var summary = getScoringSummary(rid);
+      if (summary.weightedTotal != null) parts.push(String(summary.weightedTotal));
       return parts.join(' ').toLowerCase();
     }
 
@@ -731,12 +939,17 @@
     function filterAndRender() {
       var search = ($('filter_search').value || '').toLowerCase().trim();
       var typeFilter = $('filter_project_type').value;
+      var evalFilter = $('filter_eval_status').value;
 
       var filtered = allApplications.filter(function(app) {
         if (!rowMatchesSearch(app, search)) return false;
         if (typeFilter) {
           var pt = extractFieldValue(app, 'project type category') || '';
           if (pt !== typeFilter) return false;
+        }
+        if (evalFilter) {
+          var evalKey = determineEvaluationStatus(getRecordId(app)).key;
+          if (evalKey !== evalFilter) return false;
         }
         return true;
       });
@@ -747,9 +960,23 @@
 
     function updateMetrics(rows) {
       var total = rows.length;
+      var submitted = 0;
+      var scored = 0;
+      var inProgress = 0;
+
+      rows.forEach(function(row) {
+        var rid = getRecordId(row);
+        var appStatus = statusMap[String(rid)] || 'Draft';
+        if (isSubmittedStatus(appStatus)) submitted++;
+        var evalKey = determineEvaluationStatus(rid).key;
+        if (evalKey === 'complete') scored++;
+        else if (evalKey === 'in-progress') inProgress++;
+      });
+
       $('metric_total').textContent = total;
-      $('metric_submitted').textContent = '-';
-      $('metric_draft').textContent = '-';
+      $('metric_submitted').textContent = submitted;
+      $('metric_scored').textContent = scored;
+      $('metric_in_progress').textContent = inProgress;
     }
 
     function populateProjectTypeFilter(rows) {
@@ -804,6 +1031,10 @@
         var progYear  = extractFieldValue(row, 'program year round') || extractFieldValue(row, 'program year') || '-';
         var projType  = extractFieldValue(row, 'project type category') || '-';
         var projSize  = extractFieldValue(row, 'project size category') || '-';
+        var appStatus = statusMap[String(rid)] || 'Draft';
+        var evalStatus = determineEvaluationStatus(rid);
+        var scoringSummary = getScoringSummary(rid);
+        var weightedDisplay = scoringSummary.weightedTotal != null ? scoringSummary.weightedTotal : '-';
 
         var tr = document.createElement('tr');
         tr.innerHTML =
@@ -814,6 +1045,9 @@
           '<td>' + progYear + '</td>' +
           '<td>' + projType + '</td>' +
           '<td>' + projSize + '</td>' +
+          '<td>' + getStatusBadge(appStatus) + '</td>' +
+          '<td>' + getEvaluationStatusBadge(evalStatus) + '</td>' +
+          '<td style="font-weight:700; text-align:center;">' + weightedDisplay + '</td>' +
           '<td>' +
             '<button class="sorta-button sorta-button-small sorta-button-evaluate" data-rid="' + rid + '">Evaluate</button>' +
           '</td>';
@@ -854,8 +1088,18 @@
 
             renderEvaluatorTeam(result.evaluators, email);
 
-            return queryAllApplications(token).then(function(rows) {
-              console.log('[EVAL-LANDING] Loaded', rows.length, 'applications');
+            return Promise.all([
+              queryAllApplications(token),
+              queryReport(token, API_CONFIG.submissionStatusReportId),
+              loadScoringWeights(token),
+              queryReport(token, API_CONFIG.scoringDataReport1),
+              queryReport(token, API_CONFIG.scoringDataReport2),
+              queryReport(token, API_CONFIG.scoringDataReport3)
+            ]).then(function(results) {
+              var rows = results[0];
+              statusMap = buildStatusMap(results[1]);
+              scoringMap = mergeScoringReports([results[3], results[4], results[5]]);
+              console.log('[EVAL-LANDING] Loaded', rows.length, 'applications,', SCORING_CRITERIA.length, 'scoring criteria');
               allApplications = rows;
               $('eval_table_loading').style.display = 'none';
               populateProjectTypeFilter(rows);
@@ -872,9 +1116,11 @@
 
     $('filter_search').addEventListener('input', filterAndRender);
     $('filter_project_type').addEventListener('change', filterAndRender);
+    $('filter_eval_status').addEventListener('change', filterAndRender);
     $('clear_filters_btn').addEventListener('click', function() {
       $('filter_search').value = '';
       $('filter_project_type').value = '';
+      $('filter_eval_status').value = '';
       filterAndRender();
     });
 

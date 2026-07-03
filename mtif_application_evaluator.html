@@ -539,6 +539,110 @@
       }
       .scoring-summary-card .ss-label { font-weight: 700; color: #1e293b; font-size: 14px; }
       .scoring-summary-card .ss-total { font-size: 20px; font-weight: 800; color: #e4002b; }
+
+      .scoring-summary-batch {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+      }
+      .scoring-summary-batch h4 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        padding-left: 10px;
+        border-left: 3px solid var(--metro-blue);
+      }
+      .scoring-summary-batch .scoring-summary-empty {
+        margin: 0;
+        font-size: 13px;
+        color: #94a3b8;
+        font-style: italic;
+      }
+
+      /* Single master table — one header, fixed columns, section divider rows */
+      .scoring-summary-master-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      .scoring-summary-master-table thead {
+        background: var(--metro-navy);
+        color: #ffffff;
+      }
+      .scoring-summary-master-table thead th {
+        padding: 12px 10px;
+        font-size: 13px;
+        font-weight: 700;
+        text-align: left;
+      }
+      .scoring-summary-master-table thead th.col-num {
+        text-align: center;
+      }
+      .scoring-summary-master-table tbody td {
+        padding: 10px 12px;
+        border-top: 1px solid #eef2f7;
+        font-size: 13px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      .scoring-summary-master-table tbody tr.data-row:hover {
+        background: #f8fafc;
+      }
+      .scoring-summary-master-table tbody tr.data-row td:first-child {
+        font-weight: 600;
+        color: var(--metro-navy);
+      }
+      .scoring-summary-master-table .batch-row td {
+        background: #eff6ff;
+        font-weight: 700;
+        font-size: 13px;
+        color: #1e40af;
+        padding: 10px 12px;
+        border-top: 2px solid #bfdbfe;
+      }
+      .scoring-summary-master-table .batch-row:first-child td {
+        border-top: none;
+      }
+      .scoring-summary-master-table .ss-score,
+      .scoring-summary-master-table .ss-weighted {
+        text-align: center;
+        font-weight: 700;
+        color: var(--metro-blue);
+      }
+      .scoring-summary-master-table .ss-weight {
+        text-align: center;
+        color: #64748b;
+      }
+      .scoring-summary-master-table .ss-comment {
+        font-size: 12px;
+        color: #475569;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .scoring-summary-master-table .empty-row td {
+        font-style: italic;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+      .scoring-additional-criteria {
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 2px dashed #e2e8f0;
+      }
+      .scoring-additional-criteria h4 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+      }
       .scoring-guidance-panel .guidance-note { margin-top: 8px; font-style: italic; color: #64748b; font-size: 12px; }
       .scoring-guidance-panel .guidance-docs { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
     </style>
@@ -567,7 +671,7 @@
       <div id="evaluatorContent" style="display:none;">
         <section class="metro-card">
           <h2>Evaluator Review</h2>
-          <p>You are viewing this application in <strong>evaluator mode</strong>. All application fields are read-only. Use the <strong>Weighted Scoring</strong> section below to enter scores.</p>
+          <p>You are viewing this application in <strong>evaluator mode</strong>. All application fields are read-only. Enter scores in the <strong>Scoring / Criteria</strong> section; the <strong>Scoring Summary</strong> below it updates automatically.</p>
           <div class="metro-actions">
             <button class="metro-button primary" type="button" id="saveScoresButton">Save Scores</button>
             <button class="metro-button secondary" type="button" id="printButton">Print / Save as PDF</button>
@@ -590,13 +694,13 @@
           </section>
         </form>
 
-        <!-- Scoring Summary Section -->
+        <!-- Scoring Summary Section (placed after Scoring / Criteria via buildSections) -->
         <section class="metro-section scoring-section" id="weightedScoringSection">
-          <h3>Scoring Summary <span style="font-size:12px; color:#e4002b; font-weight:700;">(Editable)</span></h3>
+          <h3>Scoring Summary</h3>
           <p style="font-size:13px; color:#475569; margin-bottom:14px;">
-            Enter scores inline with each narrative above. The <strong>Total Weighted Score</strong> updates automatically as you enter values.
+            Scores entered in each <strong>Scoring / Criteria</strong> section above are grouped here automatically. Review totals before saving.
           </p>
-          <div id="unmatchedCriteriaBlock"></div>
+          <div id="scoringSummaryBatches"></div>
           <div class="scoring-summary-card">
             <div class="ss-label">Total Weighted Score</div>
             <div class="ss-total" id="weightedScoringTotal">0</div>
@@ -906,6 +1010,111 @@
     });
   }
 
+  function buildSummaryDataRow(crit) {
+    var tr = document.createElement('tr');
+    tr.className = 'data-row';
+    tr.innerHTML =
+      '<td>' + escapeAttr(crit.label) + '</td>' +
+      '<td class="ss-score col-num" data-criterion-id="' + crit.id + '">\u2014</td>' +
+      '<td class="ss-weight col-num">' + (crit.weightPct || 0) + '</td>' +
+      '<td class="ss-weighted col-num" data-criterion-id="' + crit.id + '">\u2014</td>' +
+      '<td class="ss-comment" data-criterion-id="' + crit.id + '">\u2014</td>';
+    return tr;
+  }
+
+  function buildSummaryBatchRow(title) {
+    var tr = document.createElement('tr');
+    tr.className = 'batch-row';
+    tr.innerHTML = '<td colspan="5">' + escapeAttr(title) + '</td>';
+    return tr;
+  }
+
+  function renderScoringSummaryBatches() {
+    var container = document.getElementById('scoringSummaryBatches');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (WEIGHTED_SCORING_CRITERIA.length === 0) {
+      container.innerHTML = '<p class="scoring-summary-empty">No active scoring criteria loaded.</p>';
+      return;
+    }
+
+    var table = document.createElement('table');
+    table.className = 'scoring-summary-master-table';
+    table.innerHTML =
+      '<colgroup>' +
+        '<col style="width:30%">' +
+        '<col style="width:10%">' +
+        '<col style="width:12%">' +
+        '<col style="width:12%">' +
+        '<col style="width:36%">' +
+      '</colgroup>' +
+      '<thead><tr>' +
+        '<th>Criterion</th>' +
+        '<th class="col-num">Score</th>' +
+        '<th class="col-num">Weight (%)</th>' +
+        '<th class="col-num">Weighted score</th>' +
+        '<th>Comments</th>' +
+      '</tr></thead>';
+
+    var tbody = document.createElement('tbody');
+    var matchedCritIds = {};
+    var narrativeFields = fieldData
+      .filter(function(item) { return item.Category === SCORING_CATEGORY; })
+      .map(function(item) { return item.FieldName; });
+
+    narrativeFields.forEach(function(fieldName) {
+      tbody.appendChild(buildSummaryBatchRow(fieldName));
+      var crit = findCriterionForNarrative(fieldName);
+      if (!crit) {
+        var emptyTr = document.createElement('tr');
+        emptyTr.className = 'empty-row';
+        emptyTr.innerHTML = '<td colspan="5">No matching scoring criterion configured for this section.</td>';
+        tbody.appendChild(emptyTr);
+      } else {
+        matchedCritIds[crit.id] = true;
+        tbody.appendChild(buildSummaryDataRow(crit));
+      }
+    });
+
+    var extras = WEIGHTED_SCORING_CRITERIA.filter(function(c) { return !matchedCritIds[c.id]; });
+    if (extras.length > 0) {
+      tbody.appendChild(buildSummaryBatchRow('Additional scoring criteria'));
+      extras.forEach(function(crit) {
+        tbody.appendChild(buildSummaryDataRow(crit));
+      });
+    }
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+  }
+
+  function updateScoringSummaryDisplay() {
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      var commentEl = document.getElementById('ws_comment_' + crit.id);
+      var scoreRaw = scoreEl ? scoreEl.value : '';
+      var hasScore = scoreRaw !== '' && !isNaN(parseFloat(scoreRaw));
+      var scoreDisplay = hasScore ? scoreRaw : '\u2014';
+      var weightedDisplay = '\u2014';
+      if (hasScore) {
+        var w = crit.weightPct || 0;
+        weightedDisplay = Math.round((parseFloat(scoreRaw) * (w / 100)) * 100) / 100;
+      }
+      var commentDisplay = (commentEl && commentEl.value.trim()) ? commentEl.value.trim() : '\u2014';
+
+      document.querySelectorAll('.ss-score[data-criterion-id="' + crit.id + '"]').forEach(function(el) {
+        el.textContent = scoreDisplay;
+      });
+      document.querySelectorAll('.ss-weighted[data-criterion-id="' + crit.id + '"]').forEach(function(el) {
+        el.textContent = weightedDisplay;
+      });
+      document.querySelectorAll('.ss-comment[data-criterion-id="' + crit.id + '"]').forEach(function(el) {
+        el.textContent = commentDisplay;
+      });
+    });
+  }
+
   function renderCriterionControls(crit) {
     var scoreId = 'ws_score_' + crit.id;
     var weightId = 'ws_weight_' + crit.id;
@@ -969,10 +1178,6 @@
       unmatchedContainer.innerHTML = '';
       var extras = WEIGHTED_SCORING_CRITERIA.filter(function(c) { return !matched[c.id]; });
       if (extras.length > 0) {
-        var header = document.createElement('div');
-        header.style.cssText = 'font-weight:700; color:#1e293b; margin-bottom:10px; font-size:14px;';
-        header.textContent = 'Additional Scoring Criteria';
-        unmatchedContainer.appendChild(header);
         extras.forEach(function(crit) {
           var block = document.createElement('div');
           block.className = 'inline-weighted-score';
@@ -982,6 +1187,12 @@
           unmatchedContainer.appendChild(block);
         });
       }
+    }
+
+    var additionalWrap = document.querySelector('.scoring-additional-criteria');
+    if (additionalWrap) {
+      var extraCount = WEIGHTED_SCORING_CRITERIA.filter(function(c) { return !matched[c.id]; }).length;
+      additionalWrap.style.display = extraCount > 0 ? 'block' : 'none';
     }
 
     if (WEIGHTED_SCORING_CRITERIA.length === 0) {
@@ -996,11 +1207,14 @@
     if (!renderInlineWeightedScoring._listenerAttached) {
       document.addEventListener('input', function(e) {
         var t = e.target;
-        if (t && t.id && t.id.indexOf('ws_score_') === 0) recalcWeightedScores();
+        if (t && t.id && (t.id.indexOf('ws_score_') === 0 || t.id.indexOf('ws_comment_') === 0)) {
+          recalcWeightedScores();
+        }
       });
       renderInlineWeightedScoring._listenerAttached = true;
     }
 
+    renderScoringSummaryBatches();
     recalcWeightedScores();
   }
 
@@ -1091,6 +1305,7 @@
     });
     var totalEl = document.getElementById('weightedScoringTotal');
     if (totalEl) totalEl.textContent = Math.round(total * 100) / 100;
+    updateScoringSummaryDisplay();
   }
 
   function getWeightedScoringFields() {
@@ -1727,6 +1942,22 @@
         grid.appendChild(fieldWrap);
       });
 
+      if (category === SCORING_CATEGORY) {
+        var additionalWrap = document.createElement('div');
+        additionalWrap.className = 'metro-col-12 scoring-additional-criteria';
+        var additionalTitle = document.createElement('h4');
+        additionalTitle.textContent = 'Additional scoring criteria';
+        additionalWrap.appendChild(additionalTitle);
+        var additionalHint = document.createElement('p');
+        additionalHint.style.cssText = 'font-size:13px; color:#64748b; margin:0 0 12px;';
+        additionalHint.textContent = 'Criteria not linked to a narrative above can be scored here.';
+        additionalWrap.appendChild(additionalHint);
+        var additionalBlock = document.createElement('div');
+        additionalBlock.id = 'unmatchedCriteriaBlock';
+        additionalWrap.appendChild(additionalBlock);
+        grid.appendChild(additionalWrap);
+      }
+
       // Group Budget / Funding into labeled subsections + a read-only summary
       // card, mirroring the applicant form. All inputs here are read-only.
       if (category === 'Budget / Funding') {
@@ -1840,6 +2071,28 @@
       section.appendChild(backToTop);
 
       formEl.appendChild(section);
+
+      if (category === SCORING_CATEGORY) {
+        var summaryEl = document.getElementById('weightedScoringSection');
+        if (summaryEl && section.parentNode) {
+          if (section.nextSibling) {
+            section.parentNode.insertBefore(summaryEl, section.nextSibling);
+          } else {
+            section.parentNode.appendChild(summaryEl);
+          }
+        }
+
+        var summaryNav = document.createElement('a');
+        summaryNav.href = 'javascript:void(0)';
+        summaryNav.textContent = 'Scoring Summary';
+        summaryNav.setAttribute('data-target', 'weightedScoringSection');
+        summaryNav.addEventListener('click', function(e) {
+          e.preventDefault();
+          var target = document.getElementById('weightedScoringSection');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        sectionNav.appendChild(summaryNav);
+      }
     });
   }
 

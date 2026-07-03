@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SORTA Metro - MTIF Scoring Report</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background-color: #f3f5f9;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+
+    .sorta-container { max-width: 100%; margin: 0 auto; padding: 20px; }
+
+    .sorta-banner {
+      background: linear-gradient(135deg, #003da5 0%, #1b4fbf 60%, #0b1f3a 100%);
+      padding: 28px 20px;
+      margin: 0 0 20px 0;
+      text-align: center;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.12);
+      border-bottom: 4px solid #e4002b;
+    }
+
+    .sorta-logo {
+      height: 64px;
+      max-width: 100%;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+
+    .sorta-banner-title {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .sorta-banner-sub {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .sorta-header {
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sorta-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+    .sorta-user-info { font-size: 13px; color: #475569; text-align: right; }
+
+    .sorta-filters {
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+
+    .sorta-filter-group { display: flex; flex-direction: column; }
+
+    .sorta-filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sorta-filter-group input,
+    .sorta-filter-group select {
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #ffffff;
+    }
+
+    .sorta-filter-group input:focus,
+    .sorta-filter-group select:focus {
+      outline: none;
+      border-color: #003da5;
+      box-shadow: 0 0 0 3px rgba(0,61,165,0.1);
+    }
+
+    .sorta-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .sorta-button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,61,165,0.25);
+      background: rgba(0,61,165,0.08);
+      color: #003da5;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .sorta-button:hover { background: rgba(0,61,165,0.14); }
+    .sorta-button-primary { background: #003da5; border-color: #003da5; color: #ffffff; }
+    .sorta-button-primary:hover { background: #002d7a; }
+
+    .sorta-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .sorta-metric-card {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .sorta-metric-card h3 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #003da5;
+      margin: 0 0 4px;
+    }
+
+    .sorta-metric-card p {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin: 0;
+    }
+
+    .sorta-section {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .sorta-section h2 {
+      font-size: 18px;
+      margin-bottom: 14px;
+      padding-left: 10px;
+      border-left: 4px solid #e4002b;
+    }
+
+    .sorta-table-scroll {
+      overflow: auto;
+      max-height: calc(100vh - 320px);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+
+    .sorta-report-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+      min-width: 100%;
+      font-size: 12px;
+    }
+
+    .sorta-report-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #003da5;
+      color: #ffffff;
+      padding: 8px 10px;
+      text-align: center;
+      font-weight: 700;
+      border-right: 1px solid rgba(255,255,255,0.15);
+      white-space: nowrap;
+      vertical-align: bottom;
+      line-height: 1.3;
+    }
+
+    .sorta-report-table thead tr.group-row th {
+      top: 0;
+      background: #002d7a;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 6px 10px;
+    }
+
+    .sorta-report-table thead tr.label-row th {
+      top: 28px;
+    }
+
+    .sorta-report-table tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eef2f7;
+      border-right: 1px solid #f1f5f9;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .sorta-report-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .sorta-report-table tbody tr:hover { background: #eff6ff; }
+
+    .sorta-report-table .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: inherit;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.04);
+    }
+
+    .sorta-report-table .sticky-col-2 {
+      position: sticky;
+      left: 140px;
+      z-index: 1;
+      background: inherit;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.04);
+    }
+
+    .sorta-report-table thead .sticky-col,
+    .sorta-report-table thead .sticky-col-2 {
+      z-index: 4;
+      background: #003da5;
+    }
+
+    .sorta-report-table thead tr.group-row .sticky-col,
+    .sorta-report-table thead tr.group-row .sticky-col-2 {
+      background: #002d7a;
+    }
+
+    .col-info { background: #ffffff; }
+    .col-criteria { background: #fefce8; text-align: center; }
+    .col-weighted { background: #ecfdf5; text-align: center; }
+    .col-total { background: #dbeafe; text-align: center; font-weight: 700; }
+
+    .sorta-report-table thead .col-criteria-h { background: #ca8a04; }
+    .sorta-report-table thead .col-weighted-h { background: #059669; }
+    .sorta-report-table thead .col-total-h { background: #2563eb; }
+
+    .sorta-loading, .sorta-access-denied, .sorta-empty {
+      text-align: center;
+      padding: 60px 20px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .sorta-spinner {
+      display: inline-block;
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #003da5;
+      border-radius: 50%;
+      animation: sorta-spin 1s linear infinite;
+      margin-bottom: 14px;
+    }
+
+    @keyframes sorta-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .sorta-access-denied h2 { color: #e4002b; margin-bottom: 8px; }
+    .sorta-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .num { font-variant-numeric: tabular-nums; }
+    .text-left { text-align: left !important; }
+    .text-center { text-align: center !important; }
+
+    @media print {
+      body { background: #fff; }
+      .sorta-banner, .sorta-filters, .sorta-metrics, .sorta-actions, .no-print { display: none !important; }
+      .sorta-table-scroll { max-height: none; overflow: visible; border: none; }
+      .sorta-report-table thead th { position: static; }
+      .sorta-report-table .sticky-col,
+      .sorta-report-table .sticky-col-2 { position: static; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sorta-container">
+    <div class="sorta-banner">
+      <img class="sorta-logo" src="https://www.sortametro.com/wp-content/uploads/2020/06/SORTA-Metro-logo.png" alt="SORTA Metro">
+      <h1 class="sorta-banner-title">MTIF Scoring Report</h1>
+      <p class="sorta-banner-sub">Combined weighted scores for all applications</p>
+    </div>
+
+    <div id="loading_screen" class="sorta-loading">
+      <div class="sorta-spinner"></div>
+      <p>Loading scoring report...</p>
+    </div>
+
+    <div id="access_denied" class="sorta-access-denied" style="display:none;">
+      <h2>Access Denied</h2>
+      <p>Your account is not authorized to view the scoring report.</p>
+    </div>
+
+    <div id="report_content" style="display:none;">
+      <div class="sorta-header">
+        <h1>Scoring Report</h1>
+        <div class="sorta-user-info">
+          <div id="user_email"></div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Evaluator / Admin view</div>
+        </div>
+      </div>
+
+      <div id="error_banner" class="sorta-error" style="display:none;"></div>
+
+      <div class="sorta-metrics no-print">
+        <div class="sorta-metric-card">
+          <h3 id="metric_apps">-</h3>
+          <p>Applications</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_scored">-</h3>
+          <p>With Scores</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_criteria">-</h3>
+          <p>Criteria</p>
+        </div>
+        <div class="sorta-metric-card">
+          <h3 id="metric_top">-</h3>
+          <p>Top Weighted Score</p>
+        </div>
+      </div>
+
+      <div class="sorta-filters no-print">
+        <div class="sorta-filters-grid">
+          <div class="sorta-filter-group">
+            <label for="filter_search">Search</label>
+            <input type="text" id="filter_search" placeholder="Project, jurisdiction, contact...">
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_round">Round</label>
+            <select id="filter_round"><option value="">All rounds</option></select>
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_type">Project type</label>
+            <select id="filter_type"><option value="">All types</option></select>
+          </div>
+          <div class="sorta-filter-group">
+            <label for="filter_sort">Sort by</label>
+            <select id="filter_sort">
+              <option value="weighted_desc">Weighted score (high to low)</option>
+              <option value="weighted_asc">Weighted score (low to high)</option>
+              <option value="raw_desc">Raw score (high to low)</option>
+              <option value="jurisdiction">Jurisdiction (A–Z)</option>
+              <option value="project">Project name (A–Z)</option>
+              <option value="record_id">Record ID</option>
+            </select>
+          </div>
+        </div>
+        <div class="sorta-actions">
+          <button type="button" class="sorta-button" id="clear_filters_btn">Clear filters</button>
+          <button type="button" class="sorta-button sorta-button-primary" id="export_csv_btn">Export CSV</button>
+          <button type="button" class="sorta-button" id="print_btn">Print</button>
+        </div>
+      </div>
+
+      <div class="sorta-section">
+        <h2>Application Scores</h2>
+        <div id="table_empty" class="sorta-empty" style="display:none;">
+          <h3>No matching applications</h3>
+          <p>Try adjusting your search or filters.</p>
+        </div>
+        <div class="sorta-table-scroll" id="table_wrap">
+          <table class="sorta-report-table" id="report_table">
+            <thead id="report_thead"></thead>
+            <tbody id="report_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    var AES_KEY = 'UjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9';
+
+    var API_CONFIG = {
+      baseURL: IS_LOCALHOST ? '/proxy' : 'https://api.ignatius.io',
+      applicationTableKey: 'iw3twwkw2',
+      applicationsReportId: 's3derd1q7',
+      granteesReportId: 'niazpvhq8',
+      budgetFundingReportId: 'tvp6ny9w7',
+      evaluatorTableKey: 'xrglb4cg4',
+      evaluatorReportId: 'aqjsnp6w4',
+      evalAssignmentReportId: 'n7r13epq2',
+      scoringWeightsReportId: 'qks5wukq5',
+      scoringDataReport1: '1ko0gu0g8',
+      scoringDataReport2: 'hol4pvng1',
+      scoringDataReport3: 'bgjvkccw7'
+    };
+
+    var CRITERIA = [];
+    var reportRows = [];
+    var allRows = [];
+
+    function $(id) { return document.getElementById(id); }
+
+    function looksLikeSaltedCiphertext(s) {
+      return typeof s === 'string' && /^U2FsdGVkX1/.test(s.trim());
+    }
+
+    function safeJsonParse(s) {
+      try { return JSON.parse(s); } catch (_) { return null; }
+    }
+
+    function extractAccessToken(decrypted) {
+      if (typeof decrypted !== 'string') return '';
+      var t = decrypted.trim();
+      if (!t) return '';
+      var j = safeJsonParse(t);
+      if (j && typeof j === 'object') {
+        if (j.access_token) return String(j.access_token);
+        if (j.token) return String(j.token);
+      }
+      return t;
+    }
+
+    function bootstrapToken() {
+      var enc = '';
+      try { enc = localStorage.getItem('token') || ''; } catch (_) { return ''; }
+      if (!enc || typeof CryptoJS === 'undefined') return '';
+      try {
+        var dec = CryptoJS.AES.decrypt(enc, AES_KEY).toString(CryptoJS.enc.Utf8);
+        if (!dec) return '';
+        var tok = extractAccessToken(dec);
+        if (!tok || looksLikeSaltedCiphertext(tok)) return '';
+        return tok;
+      } catch (_) { return ''; }
+    }
+
+    var userToken = bootstrapToken();
+
+    function getAuthToken() {
+      if (userToken) return Promise.resolve(userToken);
+      userToken = bootstrapToken();
+      return Promise.resolve(userToken || null);
+    }
+
+    function apiHeaders(token) {
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+    }
+
+    function stripPrefix(key) {
+      return key.replace(/^tbl\d+_/, '');
+    }
+
+    function extractFieldValue(record, fieldName) {
+      if (!record) return null;
+      if (record[fieldName] !== undefined) return record[fieldName];
+      var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+      for (var key in record) {
+        var kn = key.toLowerCase().replace(/[\s_]/g, '');
+        if (kn === norm || kn.endsWith(norm)) return record[key];
+      }
+      return null;
+    }
+
+    function getRecordId(row) {
+      return row.id || extractFieldValue(row, 'Record Id') || row.Rid || '';
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatCurrency(val) {
+      var n = parseFloat(val);
+      if (isNaN(n)) return '-';
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function formatScore(val) {
+      if (val === null || val === undefined || val === '') return '-';
+      var n = parseFloat(val);
+      if (isNaN(n)) return '-';
+      return String(Math.round(n * 100) / 100);
+    }
+
+    function shortCriterionLabel(label) {
+      var lower = String(label || '').toLowerCase();
+      var map = [
+        ['physical condition', 'Cond.'],
+        ['safety', 'Safety'],
+        ['priority', 'Priority'],
+        ['economic growth', 'Econ/Conn.'],
+        ['connectivity', 'Econ/Conn.'],
+        ['matching', 'Match'],
+        ['regional impact', 'Impact'],
+        ['economic strength', 'Relative'],
+        ['transit impact', 'Transit'],
+        ['multimodal', 'MultiM'],
+        ['ability to proceed', 'Proceed'],
+        ['sustainability', 'Sustain'],
+        ['past performance', 'Perform']
+      ];
+      for (var i = 0; i < map.length; i++) {
+        if (lower.indexOf(map[i][0]) !== -1) return map[i][1];
+      }
+      return label.length > 10 ? label.substring(0, 9) + '…' : label;
+    }
+
+    function queryReport(token, reportId) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({ ReportId: reportId, Filters: [] })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Report ' + reportId + ' returned ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        return Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+      });
+    }
+
+    function indexByRecordId(rows) {
+      var map = {};
+      (rows || []).forEach(function(row) {
+        var id = String(getRecordId(row) || '');
+        if (id) map[id] = row;
+      });
+      return map;
+    }
+
+    function mergeScoringReports(results) {
+      var merged = {};
+      results.forEach(function(rows) {
+        rows.forEach(function(row) {
+          var id = String(getRecordId(row) || '');
+          if (!id) return;
+          if (!merged[id]) merged[id] = {};
+          Object.assign(merged[id], row);
+        });
+      });
+      return merged;
+    }
+
+    function getUserProfile(token) {
+      return fetch(API_CONFIG.baseURL + '/api/user/getprofile', {
+        method: 'GET',
+        headers: apiHeaders(token)
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Profile ' + r.status);
+        return r.json();
+      });
+    }
+
+    function checkEvaluatorAccess(token, email) {
+      return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
+        method: 'POST',
+        headers: apiHeaders(token),
+        body: JSON.stringify({
+          ApplicationTableKeyId: API_CONFIG.evaluatorTableKey,
+          ReportId: API_CONFIG.evaluatorReportId,
+          PageNumber: 1,
+          PageSize: 500
+        })
+      }).then(function(r) {
+        if (!r.ok) throw new Error('Evaluator check ' + r.status);
+        return r.json();
+      }).then(function(data) {
+        var rows = Array.isArray(data) ? data : (data.Records || data.data || data.Data || []);
+        var emailLower = email.toLowerCase();
+        var isEvaluator = false;
+        rows.forEach(function(row) {
+          Object.keys(row).forEach(function(key) {
+            var col = stripPrefix(key).toLowerCase().replace(/[\s_]/g, '');
+            if (col === 'email' && String(row[key] || '').toLowerCase() === emailLower) {
+              isEvaluator = true;
+            }
+          });
+        });
+        return isEvaluator;
+      });
+    }
+
+    function loadScoringWeights(token) {
+      return queryReport(token, API_CONFIG.scoringWeightsReportId).then(function(rows) {
+        var active = [];
+        rows.forEach(function(row) {
+          var isActive = extractFieldValue(row, 'is active');
+          if (String(isActive).toLowerCase() !== 'true') return;
+          var rid = extractFieldValue(row, 'Record Id') || row.id || row.Rid;
+          active.push({
+            id: 'criterion_' + rid,
+            label: extractFieldValue(row, 'criterion label') || ('Criterion ' + rid),
+            shortLabel: '',
+            weightPct: parseFloat(extractFieldValue(row, 'weight pct')) || 0,
+            scaleMin: parseFloat(extractFieldValue(row, 'scale min')) || 0,
+            scaleMax: parseFloat(extractFieldValue(row, 'scale max')) || 10
+          });
+        });
+        active.sort(function(a, b) {
+          return parseInt(a.id.replace('criterion_', ''), 10) - parseInt(b.id.replace('criterion_', ''), 10);
+        });
+        active.forEach(function(c) { c.shortLabel = shortCriterionLabel(c.label); });
+        CRITERIA = active;
+        return active;
+      });
+    }
+
+    function buildAssignmentMap(rows) {
+      var map = {};
+      rows.forEach(function(row) {
+        var appId = '';
+        var email = '';
+        Object.keys(row).forEach(function(key) {
+          var col = stripPrefix(key);
+          if (col === 'application_record_id') appId = String(row[key] || '');
+          if (col === 'evaluator_email') email = String(row[key] || '').toLowerCase();
+        });
+        if (!appId || !email) return;
+        if (!map[appId]) map[appId] = [];
+        map[appId].push(email);
+      });
+      return map;
+    }
+
+    function assignedToFirm(emails, domainPart) {
+      if (!emails || !emails.length) return 'No';
+      for (var i = 0; i < emails.length; i++) {
+        if (emails[i].indexOf(domainPart) !== -1) return 'Yes';
+      }
+      return 'No';
+    }
+
+    function calcScoresForApp(scoringRow) {
+      var rawTotal = 0;
+      var weightedTotal = 0;
+      var hasAny = false;
+      var scores = CRITERIA.map(function(crit) {
+        var raw = extractFieldValue(scoringRow, 'ws_score_' + crit.id);
+        var rawNum = parseFloat(raw);
+        if (!isNaN(rawNum)) {
+          hasAny = true;
+          rawTotal += rawNum;
+        }
+        var weighted = '';
+        if (!isNaN(rawNum)) {
+          var ws = Math.round((rawNum * (crit.weightPct / 100)) * 100) / 100;
+          weighted = ws;
+          weightedTotal += ws;
+        }
+        return { raw: raw, weighted: weighted };
+      });
+      return {
+        scores: scores,
+        rawTotal: hasAny ? Math.round(rawTotal * 100) / 100 : null,
+        weightedTotal: hasAny ? Math.round(weightedTotal * 100) / 100 : null,
+        hasAny: hasAny
+      };
+    }
+
+    function buildReportRows(apps, granteesMap, budgetMap, scoringMap, assignmentMap) {
+      return apps.map(function(app) {
+        var rid = String(getRecordId(app));
+        var grantee = granteesMap[rid] || {};
+        var budget = budgetMap[rid] || {};
+        var scoring = scoringMap[rid] || {};
+        var assignments = assignmentMap[rid] || [];
+
+        var jurisdiction = extractFieldValue(app, 'jurisdiction name') ||
+          extractFieldValue(grantee, 'jurisdiction_name') ||
+          extractFieldValue(grantee, 'jurisdiction name') || '-';
+        var projectName = extractFieldValue(app, 'project name') || '-';
+        var contact = extractFieldValue(grantee, 'project_contact_name') ||
+          extractFieldValue(grantee, 'project contact name') || '-';
+        var phone = extractFieldValue(grantee, 'project_contact_phone') ||
+          extractFieldValue(grantee, 'project contact phone') || '-';
+        var email = extractFieldValue(grantee, 'project_contact_email') ||
+          extractFieldValue(grantee, 'project contact email') || '-';
+        var subdivision = extractFieldValue(grantee, 'applicant_role') ||
+          extractFieldValue(grantee, 'applicant role') || '-';
+        var projectType = extractFieldValue(app, 'project type category') || '-';
+        var projectSize = extractFieldValue(app, 'project size category') || '-';
+        var round = extractFieldValue(app, 'program year round') || extractFieldValue(app, 'round') || '';
+
+        var totalCost = extractFieldValue(budget, 'total_project_budget');
+        if (totalCost == null || totalCost === '') {
+          var cc = parseFloat(extractFieldValue(budget, 'construction_costs')) || 0;
+          var cont = parseFloat(extractFieldValue(budget, 'construction_contingency')) || 0;
+          totalCost = cc + cont || null;
+        }
+        var fundingRequested = extractFieldValue(budget, 'mtif_funds_awarded') ||
+          extractFieldValue(budget, 'sorta mtif funds awarded dollars') || null;
+
+        var multiYearYears = parseFloat(extractFieldValue(budget, 'multi_year_funding_years'));
+        var multiYear = (!isNaN(multiYearYears) && multiYearYears > 1) ? 'Yes' : (multiYearYears === 1 ? 'No' : '-');
+
+        var calc = calcScoresForApp(scoring);
+
+        return {
+          recordId: rid,
+          jurisdiction: jurisdiction,
+          projectName: projectName,
+          woolpert: assignedToFirm(assignments, 'woolpert'),
+          aecom: assignedToFirm(assignments, 'aecom'),
+          contact: contact,
+          phone: phone,
+          email: email,
+          subdivision: subdivision,
+          projectType: projectType,
+          projectSize: projectSize,
+          round: round,
+          totalCost: totalCost,
+          fundingRequested: fundingRequested,
+          multiYear: multiYear,
+          criteriaScores: calc.scores,
+          rawTotal: calc.rawTotal,
+          weightedTotal: calc.weightedTotal,
+          hasScores: calc.hasAny,
+          searchText: [
+            rid, jurisdiction, projectName, contact, phone, email,
+            subdivision, projectType, projectSize, round
+          ].join(' ').toLowerCase()
+        };
+      });
+    }
+
+    function renderTableHead() {
+      var thead = $('report_thead');
+      var infoCols = 14;
+      var critCount = CRITERIA.length;
+      var critSpan = critCount;
+      var weightedSpan = critCount;
+
+      var groupHtml = '<tr class="group-row">';
+      groupHtml += '<th class="sticky-col text-left" colspan="2">Application</th>';
+      groupHtml += '<th colspan="' + (infoCols - 2) + '">Project Details</th>';
+      if (critCount) {
+        groupHtml += '<th class="col-criteria-h" colspan="' + critSpan + '">Criteria Scores</th>';
+        groupHtml += '<th class="col-weighted-h" colspan="' + weightedSpan + '">Weighted Scores</th>';
+      }
+      groupHtml += '<th class="col-total-h" colspan="2">Totals</th>';
+      groupHtml += '</tr>';
+
+      var labelHtml = '<tr class="label-row">';
+      labelHtml += '<th class="sticky-col text-left">Municipality</th>';
+      labelHtml += '<th class="sticky-col-2 text-left">Project Name</th>';
+      labelHtml += '<th>Woolpert</th><th>AECOM</th>';
+      labelHtml += '<th>Contact</th><th>Phone</th><th>Email</th>';
+      labelHtml += '<th>Subdivision</th><th>Project Type</th>';
+      labelHtml += '<th>Total Cost</th><th>Funding Req.</th>';
+      labelHtml += '<th>Multi-Year</th><th>Size Cat.</th><th>Round</th>';
+
+      CRITERIA.forEach(function(crit, idx) {
+        labelHtml += '<th class="col-criteria-h" title="' + escHtml(crit.label) + '">C' + (idx + 1) + '<br>' + escHtml(crit.shortLabel) + '</th>';
+      });
+      CRITERIA.forEach(function(crit, idx) {
+        labelHtml += '<th class="col-weighted-h" title="' + escHtml(crit.label) + ' (' + crit.weightPct + '%)">W' + (idx + 1) + '</th>';
+      });
+      labelHtml += '<th class="col-total-h">Raw<br>Score</th>';
+      labelHtml += '<th class="col-total-h">Weighted<br>Score</th>';
+      labelHtml += '</tr>';
+
+      thead.innerHTML = groupHtml + labelHtml;
+    }
+
+    function renderTableBody(rows) {
+      var tbody = $('report_tbody');
+      tbody.innerHTML = '';
+
+      rows.forEach(function(row) {
+        var tr = document.createElement('tr');
+        var html = '';
+        html += '<td class="sticky-col col-info text-left">' + escHtml(row.jurisdiction) + '</td>';
+        html += '<td class="sticky-col-2 col-info text-left"><strong>' + escHtml(row.projectName) + '</strong></td>';
+        html += '<td class="col-info text-center">' + escHtml(row.woolpert) + '</td>';
+        html += '<td class="col-info text-center">' + escHtml(row.aecom) + '</td>';
+        html += '<td class="col-info text-left">' + escHtml(row.contact) + '</td>';
+        html += '<td class="col-info num">' + escHtml(row.phone) + '</td>';
+        html += '<td class="col-info text-left">' + escHtml(row.email) + '</td>';
+        html += '<td class="col-info">' + escHtml(row.subdivision) + '</td>';
+        html += '<td class="col-info">' + escHtml(row.projectType) + '</td>';
+        html += '<td class="col-info num">' + formatCurrency(row.totalCost) + '</td>';
+        html += '<td class="col-info num">' + formatCurrency(row.fundingRequested) + '</td>';
+        html += '<td class="col-info text-center">' + escHtml(row.multiYear) + '</td>';
+        html += '<td class="col-info">' + escHtml(row.projectSize) + '</td>';
+        html += '<td class="col-info text-center">' + escHtml(row.round || '-') + '</td>';
+
+        row.criteriaScores.forEach(function(s) {
+          html += '<td class="col-criteria num">' + formatScore(s.raw) + '</td>';
+        });
+        row.criteriaScores.forEach(function(s) {
+          html += '<td class="col-weighted num">' + formatScore(s.weighted) + '</td>';
+        });
+
+        html += '<td class="col-total num">' + formatScore(row.rawTotal) + '</td>';
+        html += '<td class="col-total num">' + formatScore(row.weightedTotal) + '</td>';
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateMetrics(rows) {
+      $('metric_apps').textContent = rows.length;
+      var scored = rows.filter(function(r) { return r.hasScores; }).length;
+      $('metric_scored').textContent = scored;
+      $('metric_criteria').textContent = CRITERIA.length;
+      var top = rows.reduce(function(max, r) {
+        if (r.weightedTotal == null) return max;
+        return r.weightedTotal > max ? r.weightedTotal : max;
+      }, 0);
+      $('metric_top').textContent = top ? formatScore(top) : '-';
+    }
+
+    function sortRows(rows, sortKey) {
+      var sorted = rows.slice();
+      sorted.sort(function(a, b) {
+        if (sortKey === 'weighted_desc') {
+          return (b.weightedTotal == null ? -1 : b.weightedTotal) - (a.weightedTotal == null ? -1 : a.weightedTotal);
+        }
+        if (sortKey === 'weighted_asc') {
+          return (a.weightedTotal == null ? Infinity : a.weightedTotal) - (b.weightedTotal == null ? Infinity : b.weightedTotal);
+        }
+        if (sortKey === 'raw_desc') {
+          return (b.rawTotal == null ? -1 : b.rawTotal) - (a.rawTotal == null ? -1 : a.rawTotal);
+        }
+        if (sortKey === 'jurisdiction') {
+          return String(a.jurisdiction).localeCompare(String(b.jurisdiction));
+        }
+        if (sortKey === 'project') {
+          return String(a.projectName).localeCompare(String(b.projectName));
+        }
+        return Number(b.recordId || 0) - Number(a.recordId || 0);
+      });
+      return sorted;
+    }
+
+    function populateFilterOptions(rows) {
+      var rounds = {};
+      var types = {};
+      rows.forEach(function(r) {
+        if (r.round) rounds[r.round] = true;
+        if (r.projectType && r.projectType !== '-') types[r.projectType] = true;
+      });
+      var roundSel = $('filter_round');
+      var typeSel = $('filter_type');
+      Object.keys(rounds).sort().forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        roundSel.appendChild(opt);
+      });
+      Object.keys(types).sort().forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        typeSel.appendChild(opt);
+      });
+    }
+
+    function filterAndRender() {
+      var search = ($('filter_search').value || '').toLowerCase().trim();
+      var round = $('filter_round').value;
+      var type = $('filter_type').value;
+      var sortKey = $('filter_sort').value;
+
+      var filtered = allRows.filter(function(r) {
+        if (search && r.searchText.indexOf(search) === -1) return false;
+        if (round && String(r.round) !== round) return false;
+        if (type && r.projectType !== type) return false;
+        return true;
+      });
+
+      filtered = sortRows(filtered, sortKey);
+      reportRows = filtered;
+
+      if (filtered.length === 0) {
+        $('table_wrap').style.display = 'none';
+        $('table_empty').style.display = 'block';
+      } else {
+        $('table_wrap').style.display = 'block';
+        $('table_empty').style.display = 'none';
+        renderTableBody(filtered);
+      }
+      updateMetrics(filtered);
+    }
+
+    function exportCsv() {
+      if (!reportRows.length) return;
+
+      var headers = [
+        'Record Id', 'Municipality', 'Project Name', 'Assigned Woolpert', 'Assigned AECOM',
+        'Contact', 'Phone', 'Email', 'Subdivision Type', 'Project Type',
+        'Total Cost', 'Funding Requested', 'Multi-Year', 'Size Category', 'Round'
+      ];
+      CRITERIA.forEach(function(c, i) {
+        headers.push('Criteria ' + (i + 1) + ' ' + c.label);
+      });
+      CRITERIA.forEach(function(c, i) {
+        headers.push('Weighted ' + (i + 1) + ' ' + c.label);
+      });
+      headers.push('Raw Score', 'Weighted Score');
+
+      function csvCell(v) {
+        var s = String(v == null ? '' : v);
+        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }
+
+      var lines = [headers.map(csvCell).join(',')];
+      reportRows.forEach(function(r) {
+        var row = [
+          r.recordId, r.jurisdiction, r.projectName, r.woolpert, r.aecom,
+          r.contact, r.phone, r.email, r.subdivision, r.projectType,
+          r.totalCost || '', r.fundingRequested || '', r.multiYear, r.projectSize, r.round || ''
+        ];
+        r.criteriaScores.forEach(function(s) { row.push(s.raw != null && s.raw !== '' ? s.raw : ''); });
+        r.criteriaScores.forEach(function(s) { row.push(s.weighted !== '' ? s.weighted : ''); });
+        row.push(r.rawTotal != null ? r.rawTotal : '', r.weightedTotal != null ? r.weightedTotal : '');
+        lines.push(row.map(csvCell).join(','));
+      });
+
+      var blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'sorta_mtif_scoring_report.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function showError(msg) {
+      var el = $('error_banner');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function init() {
+      getAuthToken().then(function(token) {
+        if (!token) {
+          $('loading_screen').style.display = 'none';
+          $('access_denied').style.display = 'block';
+          return;
+        }
+
+        return getUserProfile(token).then(function(profile) {
+          var email = (profile && profile.Email) || '';
+          return checkEvaluatorAccess(token, email).then(function(isEvaluator) {
+            $('loading_screen').style.display = 'none';
+            if (!isEvaluator) {
+              $('access_denied').style.display = 'block';
+              return;
+            }
+
+            $('report_content').style.display = 'block';
+            $('user_email').textContent = email;
+
+            return Promise.all([
+              loadScoringWeights(token),
+              queryReport(token, API_CONFIG.applicationsReportId),
+              queryReport(token, API_CONFIG.granteesReportId),
+              queryReport(token, API_CONFIG.budgetFundingReportId),
+              queryReport(token, API_CONFIG.evalAssignmentReportId),
+              queryReport(token, API_CONFIG.scoringDataReport1),
+              queryReport(token, API_CONFIG.scoringDataReport2),
+              queryReport(token, API_CONFIG.scoringDataReport3)
+            ]).then(function(results) {
+              var apps = results[1];
+              var granteesMap = indexByRecordId(results[2]);
+              var budgetMap = indexByRecordId(results[3]);
+              var assignmentMap = buildAssignmentMap(results[4]);
+              var scoringMap = mergeScoringReports([results[5], results[6], results[7]]);
+
+              renderTableHead();
+              allRows = buildReportRows(apps, granteesMap, budgetMap, scoringMap, assignmentMap);
+              populateFilterOptions(allRows);
+              filterAndRender();
+            }).catch(function(err) {
+              console.error('[SCORING-REPORT]', err);
+              showError('Could not load report data: ' + (err.message || err));
+            });
+          });
+        });
+      }).catch(function(err) {
+        console.error('[SCORING-REPORT] Init error:', err);
+        $('loading_screen').style.display = 'none';
+        $('access_denied').style.display = 'block';
+      });
+    }
+
+    $('filter_search').addEventListener('input', filterAndRender);
+    $('filter_round').addEventListener('change', filterAndRender);
+    $('filter_type').addEventListener('change', filterAndRender);
+    $('filter_sort').addEventListener('change', filterAndRender);
+    $('clear_filters_btn').addEventListener('click', function() {
+      $('filter_search').value = '';
+      $('filter_round').value = '';
+      $('filter_type').value = '';
+      $('filter_sort').value = 'weighted_desc';
+      filterAndRender();
+    });
+    $('export_csv_btn').addEventListener('click', exportCsv);
+    $('print_btn').addEventListener('click', function() { window.print(); });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>
