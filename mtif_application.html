@@ -429,6 +429,14 @@
         -webkit-overflow-scrolling: touch;
       }
 
+      /* Hidden location fields — kept out of applicant/evaluator UI */
+      .metro-grid .metro-col-6:has([data-field-label="Municipality/township/county"]),
+      .metro-grid .metro-col-12:has([data-field-label="Municipality/township/county"]),
+      .metro-grid .metro-col-6:has([data-field-label="Project limits description"]),
+      .metro-grid .metro-col-12:has([data-field-label="Project limits description"]) {
+        display: none !important;
+      }
+
       /* ── Transit tool button ── */
       #mtif_transit_tool_btn {
         display: inline-flex;
@@ -1421,14 +1429,6 @@
         },
         {
           "Category": "Location / Transit",
-          "FieldName": "Municipality/township/county"
-        },
-        {
-          "Category": "Location / Transit",
-          "FieldName": "Project limits description"
-        },
-        {
-          "Category": "Location / Transit",
           "FieldName": "Project vicinity map file"
         },
         {
@@ -1873,6 +1873,31 @@
     return { type: 'text' };
   };
 
+  var HIDDEN_FIELDS = {
+    'Municipality/township/county': true,
+    'Project limits description': true
+  };
+
+  var HIDDEN_FIELD_IDS = [
+    'field-location-transit-municipality-township-county',
+    'field-location-transit-project-limits-description'
+  ];
+
+  function hideHiddenApplicationFields() {
+    HIDDEN_FIELD_IDS.forEach(function(fieldId) {
+      var field = document.getElementById(fieldId);
+      if (!field) return;
+      var wrap = field.closest('.metro-col-6, .metro-col-12');
+      if (wrap) wrap.style.display = 'none';
+    });
+    Object.keys(HIDDEN_FIELDS).forEach(function(label) {
+      document.querySelectorAll('[data-field-label="' + label + '"]').forEach(function(field) {
+        var wrap = field.closest('.metro-col-6, .metro-col-12');
+        if (wrap) wrap.style.display = 'none';
+      });
+    });
+  }
+
   // ============================================================
   // Build form sections dynamically
   // ============================================================
@@ -1911,6 +1936,7 @@
       grid.className = 'metro-grid';
 
       grouped[category].forEach(function(fieldName) {
+        if (HIDDEN_FIELDS[fieldName]) return;
         const config = getFieldConfig(fieldName);
         const fieldId = 'field-' + slugify(category) + '-' + slugify(fieldName);
         const fieldWrap = document.createElement('div');
@@ -2241,6 +2267,8 @@
         formEl.appendChild(buildSupportingDocumentsSection());
       }
     });
+
+    hideHiddenApplicationFields();
   };
 
   // ============================================================
@@ -3077,7 +3105,12 @@
       console.log('[MTIF] Application status:', appStatus);
       if (appStatus === 'Submitted') {
         // Slight delay ensures all dynamic fields are rendered before locking
-        setTimeout(lockForm, 300);
+        setTimeout(function() {
+          hideHiddenApplicationFields();
+          lockForm();
+        }, 300);
+      } else {
+        hideHiddenApplicationFields();
       }
 
       console.log('[MTIF] Successfully loaded application from API');
@@ -3951,6 +3984,7 @@
     if (msgBtn) msgBtn.style.display = 'none';
 
     prepareReadonlyTextareas();
+    hideHiddenApplicationFields();
 
     console.log('[MTIF] Form locked — status is Submitted.');
   }

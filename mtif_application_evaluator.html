@@ -317,6 +317,14 @@
         border-color: #e2e8f0 !important;
       }
 
+      /* Hidden location fields — kept out of applicant/evaluator UI */
+      .metro-grid .metro-col-6:has([data-field-label="Municipality/township/county"]),
+      .metro-grid .metro-col-12:has([data-field-label="Municipality/township/county"]),
+      .metro-grid .metro-col-6:has([data-field-label="Project limits description"]),
+      .metro-grid .metro-col-12:has([data-field-label="Project limits description"]) {
+        display: none !important;
+      }
+
       .eval-editable-active {
         background: #fffbeb !important;
         border-color: #fbbf24 !important;
@@ -1803,8 +1811,6 @@
     { "Category": "Project Header", "FieldName": "Large vs small grant award category (>= $1M vs < $1M)" },
     { "Category": "Project Header", "FieldName": "Emergency project indicator (Yes/No)" },
     { "Category": "Location / Transit", "FieldName": "Project street name(s)" },
-    { "Category": "Location / Transit", "FieldName": "Municipality/township/county" },
-    { "Category": "Location / Transit", "FieldName": "Project limits description" },
     { "Category": "Location / Transit", "FieldName": "Project latitude/longitude" },
     { "Category": "Location / Transit", "FieldName": "Identify nearest fixed route" },
     { "Category": "Location / Transit", "FieldName": "Distance to nearest fixed-route transit (miles)" },
@@ -1890,6 +1896,31 @@
     return { type: 'text' };
   };
 
+  var HIDDEN_FIELDS = {
+    'Municipality/township/county': true,
+    'Project limits description': true
+  };
+
+  var HIDDEN_FIELD_IDS = [
+    'field-location-transit-municipality-township-county',
+    'field-location-transit-project-limits-description'
+  ];
+
+  function hideHiddenApplicationFields() {
+    HIDDEN_FIELD_IDS.forEach(function(fieldId) {
+      var field = document.getElementById(fieldId);
+      if (!field) return;
+      var wrap = field.closest('.metro-col-6, .metro-col-12');
+      if (wrap) wrap.style.display = 'none';
+    });
+    Object.keys(HIDDEN_FIELDS).forEach(function(label) {
+      document.querySelectorAll('[data-field-label="' + label + '"]').forEach(function(field) {
+        var wrap = field.closest('.metro-col-6, .metro-col-12');
+        if (wrap) wrap.style.display = 'none';
+      });
+    });
+  }
+
   var formEl = document.getElementById('mtifForm');
   var sectionNav = document.getElementById('sectionNav');
 
@@ -1927,6 +1958,7 @@
       grid.className = 'metro-grid';
 
       grouped[category].forEach(function(fieldName) {
+        if (HIDDEN_FIELDS[fieldName]) return;
         var config = getFieldConfig(fieldName);
         var fieldId = 'field-' + slugify(category) + '-' + slugify(fieldName);
         var fieldWrap = document.createElement('div');
@@ -2220,6 +2252,8 @@
         sectionNav.appendChild(summaryNav);
       }
     });
+
+    hideHiddenApplicationFields();
   }
 
   // Recompute calculated budget fields from loaded values. Construction
@@ -2709,6 +2743,8 @@
       var reasonEl = document.getElementById('evalEditReason');
       if (reasonEl) reasonEl.value = '';
     }
+
+    hideHiddenApplicationFields();
   }
 
   function diffApplicationChanges() {
@@ -3212,6 +3248,7 @@
           Promise.all(reports.concat([weightsReady])).then(function() {
             console.log('[EVAL] All reports, evaluator assignments, and scoring weights loaded');
             prepareReadonlyTextareas();
+            hideHiddenApplicationFields();
             captureApplicationSnapshot();
             loadChangeHistory(token, recordId);
 
