@@ -1322,17 +1322,19 @@
     },
     'Sustainability measures checklist': {
       question: 'What sustainability measures are included in the project?',
-      description: 'The inclusion of sustainability in a project from the earliest stage produces the largest benefits. Points awarded will be the sum of points from the categories below.',
+      description: 'The inclusion of sustainability in a project from the earliest stage produces the largest benefits. Points awarded will be the sum of points from categories A through C below.',
       rubric: [
-        { score: '1', label: 'Energy Efficiency', desc: 'Removal or replacement of existing traffic signals, pedestrian or roadway lighting with LED lighting' },
-        { score: '2', label: 'Recycled Materials', desc: 'New pavement, structures or ancillary materials incorporate recycled materials' },
-        { score: '2', label: 'Traffic Signal Improvements', desc: 'Signal synchronization, adaptive control, transit signal priority, or transit queue jump phase' },
-        { score: '1', label: 'Trees or Open Space', desc: 'Reducing impervious area and/or providing additional trees (cost of trees should not exceed 2% of total project cost)' },
-        { score: '1\u20132', label: 'Electric Vehicle/Bus Charging', desc: '2 pts for charging stations, 1 pt for conduits for future use' },
-        { score: '1', label: 'Permeable Pavement', desc: 'Use permeable pavement for more than 25% of areas on the project' }
+        { score: '1', label: 'Energy Consumption', desc: 'Energy Efficiency' },
+        { score: '1', label: 'Recycled Materials', desc: '' },
+        { score: '2', label: 'Traffic Signal Synchronization', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Transit Signal Priority', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Transit Queue Jump Phase (including lane)', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Trees', desc: 'Reduce paved area and add landscaping (Air Quality Factors)' },
+        { score: '2', label: 'Electric Vehicle/Bus Charging', desc: 'Accommodations for electric vehicle/bus charging (Air Quality Factors)' },
+        { score: '1', label: 'Permeable Pavement', desc: 'Air Quality Factors' }
       ],
-      docs: 'Please provide details on all proposed sustainability components. Categories include: energy efficiency, recycled materials, air quality factors (traffic signal improvements, trees/open space, EV charging accommodations), and permeable pavement.',
-      notes: 'Points are cumulative across categories. Maximum possible score is 10.'
+      docs: 'Please provide details on all proposed sustainability components under categories A (Energy Efficiency), B (Recycled Materials), and C (Air Quality Factors).',
+      notes: 'Points are cumulative across subcriteria. Maximum possible score is 10.'
     }
   };
 

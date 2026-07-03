@@ -617,6 +617,93 @@
         35% { box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.35); }
       }
 
+      .iws-sustain-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 12px;
+        padding: 0;
+        background: #fff;
+        border: 1px solid #d1fae5;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .iws-sustain-head,
+      .iws-sustain-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 88px 72px;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 14px;
+      }
+      .iws-sustain-head {
+        background: #ecfdf5;
+        border-bottom: 1px solid #d1fae5;
+        font-size: 11px;
+        font-weight: 700;
+        color: #065f46;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .iws-sustain-head span:nth-child(2),
+      .iws-sustain-head span:nth-child(3),
+      .iws-sustain-row .iws-sustain-input-wrap,
+      .iws-sustain-row .iws-sustain-pts {
+        text-align: center;
+      }
+      .iws-sustain-row {
+        border-bottom: 1px solid #f0fdf4;
+        font-size: 13px;
+        color: #334155;
+      }
+      .iws-sustain-row:last-child {
+        border-bottom: none;
+      }
+      .iws-sustain-row:nth-child(even) {
+        background: #fafdfa;
+      }
+      .iws-sustain-label {
+        line-height: 1.45;
+        font-weight: 500;
+        padding-right: 4px;
+        word-break: break-word;
+      }
+      .iws-sustain-input-wrap {
+        display: flex;
+        justify-content: center;
+      }
+      .inline-weighted-score input.iws-sustain-input {
+        width: 72px !important;
+        max-width: 72px;
+        min-width: 72px;
+        padding: 7px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        background: #fff;
+        box-sizing: border-box;
+      }
+      .inline-weighted-score input.iws-sustain-input:focus {
+        border-color: rgba(0,61,165,0.6);
+        box-shadow: 0 0 0 3px rgba(0,61,165,0.15);
+        outline: none;
+      }
+      .iws-sustain-pts {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .iws-sustain-total-row {
+        margin-top: 10px;
+        padding: 0 2px;
+        font-size: 12px;
+        color: #065f46;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
       .scoring-summary-card {
         margin-top: 18px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0;
         border-radius: 10px; display: flex; align-items: center; justify-content: space-between;
@@ -1095,21 +1182,189 @@
     },
     'Sustainability measures checklist': {
       question: 'What sustainability measures are included in the project?',
-      description: 'Points awarded will be the sum of points from the categories below.',
+      description: 'Points awarded will be the sum of points from categories A through C below.',
       rubric: [
-        { score: '1', label: 'Energy Efficiency', desc: 'LED lighting replacement' },
-        { score: '2', label: 'Recycled Materials', desc: 'Recycled materials in pavement/structures' },
-        { score: '2', label: 'Traffic Signal Improvements', desc: 'Signal synchronization, transit signal priority, queue jump' },
-        { score: '1', label: 'Trees or Open Space', desc: 'Reducing impervious area / additional plantings' },
-        { score: '1\u20132', label: 'Electric Vehicle/Bus Charging', desc: '2 pts charging stations, 1 pt conduits' },
-        { score: '1', label: 'Permeable Pavement', desc: 'More than 25% of project areas' }
+        { score: '1', label: 'Energy Consumption', desc: 'Energy Efficiency' },
+        { score: '1', label: 'Recycled Materials', desc: '' },
+        { score: '2', label: 'Traffic Signal Synchronization', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Transit Signal Priority', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Transit Queue Jump Phase (including lane)', desc: 'Traffic Signal Improvements (Air Quality Factors)' },
+        { score: '1', label: 'Trees', desc: 'Reduce paved area and add landscaping (Air Quality Factors)' },
+        { score: '2', label: 'Electric Vehicle/Bus Charging', desc: 'Accommodations for electric vehicle/bus charging (Air Quality Factors)' },
+        { score: '1', label: 'Permeable Pavement', desc: 'Air Quality Factors' }
       ],
       docs: 'Provide details on all proposed sustainability components.',
-      notes: 'Points are cumulative across categories. Maximum possible score is 10.'
+      notes: 'Points are cumulative across subcriteria. Maximum possible score is 10.'
     }
   };
 
   var WEIGHTED_SCORING_CRITERIA = [];
+  var SUSTAINABILITY_NARRATIVE = 'Sustainability measures checklist';
+
+  function getSustainabilitySubcriteria() {
+    var guidance = SCORING_GUIDANCE[SUSTAINABILITY_NARRATIVE];
+    if (!guidance || !guidance.rubric) return [];
+    return guidance.rubric.map(function(r, i) {
+      var maxPts = parseFloat(String(r.score).replace(/[^\d.]/g, ' ').trim().split(/\s+/)[0]) || 0;
+      return { id: 'sub' + i, maxPts: maxPts, label: r.label };
+    });
+  }
+
+  function isSustainabilityNarrative(fieldName) {
+    return fieldName === SUSTAINABILITY_NARRATIVE;
+  }
+
+  function sustainMetaRegex(critId) {
+    var escaped = String(critId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('<!--sust:' + escaped + ':([^>]*)-->');
+  }
+
+  function hasSustainabilityControls(critId) {
+    return !!document.getElementById('ws_sustain_' + critId + '_sub0');
+  }
+
+  function stripSustainMeta(text, critId) {
+    if (!text) return '';
+    return String(text).replace(sustainMetaRegex(critId), '').trim();
+  }
+
+  function parseSustainMeta(text, critId) {
+    if (!text) return {};
+    var m = String(text).match(sustainMetaRegex(critId));
+    if (!m || !m[1]) return {};
+    var out = {};
+    m[1].split(',').forEach(function(part) {
+      part = part.trim();
+      if (!part) return;
+      if (part.indexOf('=') !== -1) {
+        var kv = part.split('=');
+        out[kv[0].trim()] = parseFloat(kv[1]) || 0;
+      } else {
+        // Legacy: sub id only meant full points — resolved on restore
+        out[part] = null;
+      }
+    });
+    return out;
+  }
+
+  function embedSustainMeta(text, critId, subScores) {
+    var clean = stripSustainMeta(text, critId);
+    var parts = [];
+    getSustainabilitySubcriteria().forEach(function(sub) {
+      var val = subScores[sub.id];
+      if (val !== undefined && val !== null && val !== '' && !isNaN(Number(val)) && Number(val) > 0) {
+        parts.push(sub.id + '=' + Number(val));
+      }
+    });
+    if (!parts.length) return clean;
+    var meta = '<!--sust:' + critId + ':' + parts.join(',') + '-->';
+    return clean ? clean + '\n' + meta : meta;
+  }
+
+  function getSustainabilitySubScores(critId) {
+    var scores = {};
+    getSustainabilitySubcriteria().forEach(function(sub) {
+      var inp = document.getElementById('ws_sustain_' + critId + '_' + sub.id);
+      if (!inp || inp.value.trim() === '') return;
+      var val = parseFloat(inp.value);
+      if (!isNaN(val) && val > 0) scores[sub.id] = val;
+    });
+    return scores;
+  }
+
+  function recalcSustainabilityFromInputs(critId) {
+    var total = 0;
+    getSustainabilitySubcriteria().forEach(function(sub) {
+      var inp = document.getElementById('ws_sustain_' + critId + '_' + sub.id);
+      if (!inp) return;
+      var val = parseFloat(inp.value);
+      if (isNaN(val) || val < 0) {
+        if (inp.value.trim() !== '') inp.value = '0';
+        return;
+      }
+      if (val > sub.maxPts) {
+        val = sub.maxPts;
+        inp.value = String(val);
+      }
+      total += val;
+    });
+    var scoreEl = document.getElementById('ws_score_' + critId);
+    if (scoreEl) scoreEl.value = total > 0 ? String(total) : '';
+    recalcWeightedScores();
+  }
+
+  function restoreSustainabilityInputs(critId, subScores) {
+    getSustainabilitySubcriteria().forEach(function(sub) {
+      var inp = document.getElementById('ws_sustain_' + critId + '_' + sub.id);
+      if (!inp) return;
+      if (subScores[sub.id] === null || subScores[sub.id] === undefined) {
+        inp.value = '';
+      } else if (subScores[sub.id] !== undefined) {
+        var val = Math.min(sub.maxPts, Math.max(0, Number(subScores[sub.id]) || 0));
+        inp.value = val > 0 ? String(val) : '';
+      } else {
+        inp.value = '';
+      }
+    });
+    recalcSustainabilityFromInputs(critId);
+  }
+
+  function renderSustainabilityCriterionControls(crit) {
+    var scoreId = 'ws_score_' + crit.id;
+    var weightId = 'ws_weight_' + crit.id;
+    var resultId = 'ws_result_' + crit.id;
+    var commentId = 'ws_comment_' + crit.id;
+    var maxTotal = getSustainabilitySubcriteria().reduce(function(sum, sub) { return sum + sub.maxPts; }, 0);
+
+    var subHtml =
+      '<div class="iws-sustain-head">' +
+        '<span>Subcriterion</span>' +
+        '<span>Points</span>' +
+        '<span>Max</span>' +
+      '</div>' +
+      getSustainabilitySubcriteria().map(function(sub) {
+        var inputId = 'ws_sustain_' + crit.id + '_' + sub.id;
+        return (
+          '<div class="iws-sustain-row">' +
+            '<span class="iws-sustain-label">' + escapeAttr(sub.label) + '</span>' +
+            '<span class="iws-sustain-input-wrap">' +
+              '<input type="number" class="iws-sustain-input" id="' + inputId + '" min="0" max="' + sub.maxPts + '" step="1" placeholder="0" ' +
+                'data-crit-id="' + escapeAttr(crit.id) + '" data-sub-id="' + escapeAttr(sub.id) + '" ' +
+                'aria-label="' + escapeAttr(sub.label) + ' points" />' +
+            '</span>' +
+            '<span class="iws-sustain-pts">' + sub.maxPts + '</span>' +
+          '</div>'
+        );
+      }).join('');
+
+    return (
+      '<div class="iws-header">' +
+        '<div class="iws-title">Weighted Score \u2014 ' + escapeAttr(crit.label) + '</div>' +
+        '<div class="iws-badge">Editable</div>' +
+      '</div>' +
+      '<div class="iws-sustain-grid">' + subHtml + '</div>' +
+      '<div class="iws-sustain-total-row">Enter points for each subcriterion (0 to max shown). Total score (max ' + maxTotal + ') is calculated automatically.</div>' +
+      '<div class="iws-grid">' +
+        '<div class="metro-col-3">' +
+          '<label for="' + scoreId + '">Total score (0\u2013' + maxTotal + ')</label>' +
+          '<input type="number" class="iws-readonly" id="' + scoreId + '" min="0" max="' + maxTotal + '" step="1" readonly tabindex="-1" />' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label for="' + weightId + '">Weight (%)</label>' +
+          '<input type="number" class="iws-readonly" id="' + weightId + '" value="' + (crit.weightPct || '') + '" readonly tabindex="-1" />' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label>Weighted Score</label>' +
+          '<div class="iws-result" id="' + resultId + '">0</div>' +
+        '</div>' +
+        '<div class="metro-col-3">' +
+          '<label for="' + commentId + '">Comments</label>' +
+          '<textarea id="' + commentId + '" rows="2" placeholder="Comments..."></textarea>' +
+        '</div>' +
+      '</div>' +
+      '<div class="iws-hint">Tip: click a rubric row above to fill max points, or enter values here directly.</div>'
+    );
+  }
 
   function loadScoringWeights(token) {
     return fetch(API_CONFIG.baseURL + '/api/Report/queryreport', {
@@ -1304,7 +1559,9 @@
       var block = document.createElement('div');
       block.className = 'inline-weighted-score';
       block.setAttribute('data-criterion-id', crit.id);
-      block.innerHTML = renderCriterionControls(crit);
+      block.innerHTML = isSustainabilityNarrative(fieldName)
+        ? renderSustainabilityCriterionControls(crit)
+        : renderCriterionControls(crit);
       slot.appendChild(block);
     });
 
@@ -1342,12 +1599,26 @@
     if (!renderInlineWeightedScoring._listenerAttached) {
       document.addEventListener('input', function(e) {
         var t = e.target;
+        if (t && t.id && t.id.indexOf('ws_sustain_') === 0) {
+          var critId = t.getAttribute('data-crit-id');
+          if (critId) {
+            recalcSustainabilityFromInputs(critId);
+            var scoreEl = document.getElementById('ws_score_' + critId);
+            if (scoreEl) commitScoreInput(scoreEl, { toast: false });
+          }
+          return;
+        }
         if (t && t.id && (t.id.indexOf('ws_score_') === 0 || t.id.indexOf('ws_comment_') === 0)) {
           recalcWeightedScores();
         }
       });
       document.addEventListener('blur', function(e) {
         var t = e.target;
+        if (t && t.id && t.id.indexOf('ws_sustain_') === 0) {
+          var critId = t.getAttribute('data-crit-id');
+          if (critId) recalcSustainabilityFromInputs(critId);
+          return;
+        }
         if (!t || !t.id || t.id.indexOf('ws_score_') !== 0) return;
         commitScoreInput(t, { toast: true });
       }, true);
@@ -1504,6 +1775,33 @@
   }
 
   function handleRubricClick(narrativeFieldName, li) {
+    if (isSustainabilityNarrative(narrativeFieldName)) {
+      var crit = findCriterionForNarrative(narrativeFieldName);
+      if (!crit) {
+        showToast('No matching Weighted Scoring row found for Sustainability.', 'error');
+        return;
+      }
+      var panel = li.closest('.scoring-guidance-panel');
+      var items = panel ? panel.querySelectorAll('li.clickable') : [];
+      var idx = Array.prototype.indexOf.call(items, li);
+      if (idx < 0) return;
+      var subs = getSustainabilitySubcriteria();
+      if (idx >= subs.length) return;
+      var sub = subs[idx];
+      var inp = document.getElementById('ws_sustain_' + crit.id + '_' + sub.id);
+      if (!inp) {
+        showToast('Sustainability scoring not yet loaded. Please try again.', 'error');
+        return;
+      }
+      inp.value = String(sub.maxPts);
+      recalcSustainabilityFromInputs(crit.id);
+      li.classList.add('just-clicked');
+      setTimeout(function() { li.classList.remove('just-clicked'); }, 650);
+      var scoreEl = document.getElementById('ws_score_' + crit.id);
+      if (scoreEl) commitScoreInput(scoreEl, { toast: true });
+      return;
+    }
+
     var score = li.getAttribute('data-score');
     if (!score) return;
     // Rubric scores like "1-2" can't resolve to a single number; use the first numeric token.
@@ -1563,6 +1861,10 @@
       var s = scoreEl ? scoreEl.value : '';
       var w = weightEl ? weightEl.value : '';
       var c = commentEl ? commentEl.value : '';
+      var sustainChk = hasSustainabilityControls(crit.id);
+      if (sustainChk) {
+        c = embedSustainMeta(c, crit.id, getSustainabilitySubScores(crit.id));
+      }
       if (s !== '') fields.push({ Name: 'ws_score_' + crit.id, Value: s });
       if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
       if (c !== '') fields.push({ Name: 'ws_comment_' + crit.id, Value: c });
@@ -1578,8 +1880,28 @@
       var commentVal = extractFieldValue(row, 'ws_comment_' + crit.id);
       var scoreEl = document.getElementById('ws_score_' + crit.id);
       var commentEl = document.getElementById('ws_comment_' + crit.id);
-      if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') scoreEl.value = scoreVal;
-      if (commentEl && commentVal !== null && commentVal !== undefined && commentVal !== '') commentEl.value = commentVal;
+      var sustainChk = hasSustainabilityControls(crit.id);
+      if (commentEl && commentVal !== null && commentVal !== undefined && commentVal !== '') {
+        if (sustainChk) {
+          var subScores = parseSustainMeta(String(commentVal), crit.id);
+          commentEl.value = stripSustainMeta(String(commentVal), crit.id);
+          // Legacy meta: id-only entries implied full max points
+          getSustainabilitySubcriteria().forEach(function(sub) {
+            if (subScores[sub.id] === null) subScores[sub.id] = sub.maxPts;
+          });
+          if (Object.keys(subScores).length) {
+            restoreSustainabilityInputs(crit.id, subScores);
+          } else if (scoreVal !== null && scoreVal !== undefined && scoreVal !== '' && scoreEl) {
+            scoreEl.value = scoreVal;
+          }
+        } else {
+          commentEl.value = commentVal;
+        }
+      } else if (sustainChk && scoreVal !== null && scoreVal !== undefined && scoreVal !== '' && scoreEl) {
+        scoreEl.value = scoreVal;
+      } else if (scoreEl && !sustainChk && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') {
+        scoreEl.value = scoreVal;
+      }
     });
     var justVal = extractFieldValue(row, 'ws_justification_summary');
     var justEl = document.getElementById('ws_justification_summary');
@@ -2174,10 +2496,15 @@
 
           var html = '<div class="guidance-question">' + guidance.question + '</div>';
           if (guidance.description) html += '<p>' + guidance.description + '</p>';
-          html += '<div class="rubric-hint">Click a row below to populate the matching Weighted Scoring row.</div>';
+          if (isSustainabilityNarrative(fieldName)) {
+            html += '<div class="rubric-hint">Click a row below to fill max points for that subcriterion.</div>';
+          } else {
+            html += '<div class="rubric-hint">Click a row below to populate the matching Weighted Scoring row.</div>';
+          }
           html += '<ul class="guidance-rubric">';
           guidance.rubric.forEach(function(r) {
-            html += '<li class="clickable" tabindex="0" role="button" data-score="' + escapeAttr(r.score) + '" title="Click to set Weighted Score">' +
+            var rowTitle = isSustainabilityNarrative(fieldName) ? 'Click to fill max points for this subcriterion' : 'Click to set Weighted Score';
+            html += '<li class="clickable" tabindex="0" role="button" data-score="' + escapeAttr(r.score) + '" title="' + rowTitle + '">' +
                     '<strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
             if (r.desc) html += ' \u2014 ' + r.desc;
             html += '</li>';
