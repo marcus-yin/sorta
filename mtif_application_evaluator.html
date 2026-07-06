@@ -1831,18 +1831,30 @@
     commitScoreInput(scoreEl, { toast: true });
   }
 
+  function hasActiveScoreInput(scoreEl) {
+    return !!(scoreEl && String(scoreEl.value).trim() !== '');
+  }
+
   function recalcWeightedScores() {
     var total = 0;
     WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
       var scoreEl = document.getElementById('ws_score_' + crit.id);
       var weightEl = document.getElementById('ws_weight_' + crit.id);
       var resultEl = document.getElementById('ws_result_' + crit.id);
-      var s = parseFloat(scoreEl ? scoreEl.value : '') || 0;
+      var w = parseFloat(weightEl ? weightEl.value : '') || 0;
+      if (!hasActiveScoreInput(scoreEl)) {
+        if (resultEl) resultEl.textContent = '0';
+        return;
+      }
+      var s = parseFloat(scoreEl.value);
+      if (isNaN(s)) {
+        if (resultEl) resultEl.textContent = '0';
+        return;
+      }
       var maxVal = crit.scaleMax || 10;
       var minVal = crit.scaleMin || 0;
       if (s > maxVal) { s = maxVal; if (scoreEl) scoreEl.value = maxVal; }
       if (s < minVal) { s = minVal; if (scoreEl) scoreEl.value = minVal; }
-      var w = parseFloat(weightEl ? weightEl.value : '') || 0;
       var ws = Math.round((s * (w / 100)) * 100) / 100;
       if (resultEl) resultEl.textContent = ws || '0';
       total += ws;
@@ -1865,8 +1877,13 @@
       if (sustainChk) {
         c = embedSustainMeta(c, crit.id, getSustainabilitySubScores(crit.id));
       }
-      // Always send ws_score so clearing a field removes stale values from the database.
-      fields.push({ Name: 'ws_score_' + crit.id, Value: s });
+      // Comment-only criteria save ws_score 0 so stale rubric values are cleared in OpenGov.
+      // Unscored criteria with no comment omit ws_score so defaults are not written.
+      if (s !== '') {
+        fields.push({ Name: 'ws_score_' + crit.id, Value: s });
+      } else if (c.trim() !== '') {
+        fields.push({ Name: 'ws_score_' + crit.id, Value: '0' });
+      }
       if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
       if (c !== '') fields.push({ Name: 'ws_comment_' + crit.id, Value: c });
     });
@@ -1897,7 +1914,7 @@
           }
         } else {
           commentEl.value = commentVal;
-          if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') {
+          if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '' && parseFloat(scoreVal) > 0) {
             scoreEl.value = scoreVal;
           }
         }

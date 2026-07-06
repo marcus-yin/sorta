@@ -669,11 +669,12 @@
       return parseFloat(raw);
     }
 
-    // Weighted total uses the same rule as the evaluator form: only populated scores count.
+    // Weighted total: only positive populated scores count (ws_score 0 = comment-only).
     function getCriterionWeightedScore(row, crit) {
       var raw = extractScoringFieldValue(row, 'ws_score_' + crit.id);
       if (!isPopulatedScoreValue(raw)) return 0;
-      return parseFloat(raw);
+      var num = parseFloat(raw);
+      return num > 0 ? num : 0;
     }
 
     function getRecordId(row) {
