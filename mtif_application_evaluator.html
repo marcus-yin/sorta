@@ -1865,7 +1865,8 @@
       if (sustainChk) {
         c = embedSustainMeta(c, crit.id, getSustainabilitySubScores(crit.id));
       }
-      if (s !== '') fields.push({ Name: 'ws_score_' + crit.id, Value: s });
+      // Always send ws_score so clearing a field removes stale values from the database.
+      fields.push({ Name: 'ws_score_' + crit.id, Value: s });
       if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
       if (c !== '') fields.push({ Name: 'ws_comment_' + crit.id, Value: c });
     });
@@ -1876,8 +1877,8 @@
 
   function populateWeightedScoring(row) {
     WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
-      var scoreVal = extractFieldValue(row, 'ws_score_' + crit.id);
-      var commentVal = extractFieldValue(row, 'ws_comment_' + crit.id);
+      var scoreVal = extractScoringFieldValue(row, 'ws_score_' + crit.id);
+      var commentVal = extractScoringFieldValue(row, 'ws_comment_' + crit.id);
       var scoreEl = document.getElementById('ws_score_' + crit.id);
       var commentEl = document.getElementById('ws_comment_' + crit.id);
       var sustainChk = hasSustainabilityControls(crit.id);
@@ -1896,6 +1897,9 @@
           }
         } else {
           commentEl.value = commentVal;
+          if (scoreEl && scoreVal !== null && scoreVal !== undefined && scoreVal !== '') {
+            scoreEl.value = scoreVal;
+          }
         }
       } else if (sustainChk && scoreVal !== null && scoreVal !== undefined && scoreVal !== '' && scoreEl) {
         scoreEl.value = scoreVal;
@@ -1991,6 +1995,17 @@
     for (var key in record) {
       var kn = key.toLowerCase().replace(/[\s_]/g, '');
       if (kn === norm || kn.endsWith(norm)) return record[key];
+    }
+    return null;
+  }
+
+  function extractScoringFieldValue(record, fieldName) {
+    if (!record) return null;
+    if (record[fieldName] !== undefined && record[fieldName] !== null) return record[fieldName];
+    var norm = fieldName.toLowerCase().replace(/[\s_]/g, '');
+    for (var key in record) {
+      var stripped = stripPrefix(key).toLowerCase().replace(/[\s_]/g, '');
+      if (stripped === norm) return record[key];
     }
     return null;
   }

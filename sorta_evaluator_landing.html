@@ -669,6 +669,13 @@
       return parseFloat(raw);
     }
 
+    // Weighted total uses the same rule as the evaluator form: only populated scores count.
+    function getCriterionWeightedScore(row, crit) {
+      var raw = extractScoringFieldValue(row, 'ws_score_' + crit.id);
+      if (!isPopulatedScoreValue(raw)) return 0;
+      return parseFloat(raw);
+    }
+
     function getRecordId(row) {
       return row.id || extractFieldValue(row, 'id') || row.Rid || '';
     }
@@ -742,11 +749,10 @@
       var hasJustification = !!(justification && String(justification).trim());
 
       SCORING_CRITERIA.forEach(function(crit) {
-        if (!isCriterionEntered(row, crit)) return;
+        if (isCriterionEntered(row, crit)) enteredCount++;
 
-        enteredCount++;
-        var rawNum = getCriterionScoreValue(row, crit);
-        if (rawNum !== null && !isNaN(rawNum)) {
+        var rawNum = getCriterionWeightedScore(row, crit);
+        if (!isNaN(rawNum)) {
           weightedTotal += Math.round((rawNum * (crit.weightPct / 100)) * 100) / 100;
         }
       });
