@@ -236,9 +236,28 @@
     .sorta-report-table tbody tr:nth-child(even) { background: #f8fafc; }
     .sorta-report-table tbody tr:hover { background: #eff6ff; }
 
-    .sorta-report-table .sticky-col {
+    .sorta-report-table .sticky-col-id {
       position: sticky;
       left: 0;
+      z-index: 1;
+      background: inherit;
+      text-align: center;
+      min-width: 52px;
+    }
+
+    .sorta-report-table .sticky-col-id a {
+      color: #003da5;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+
+    .sorta-report-table .sticky-col-id a:hover {
+      color: #e4002b;
+    }
+
+    .sorta-report-table .sticky-col {
+      position: sticky;
+      left: 52px;
       z-index: 1;
       background: inherit;
       box-shadow: 2px 0 4px rgba(0,0,0,0.04);
@@ -246,18 +265,20 @@
 
     .sorta-report-table .sticky-col-2 {
       position: sticky;
-      left: 140px;
+      left: 192px;
       z-index: 1;
       background: inherit;
       box-shadow: 2px 0 4px rgba(0,0,0,0.04);
     }
 
+    .sorta-report-table thead .sticky-col-id,
     .sorta-report-table thead .sticky-col,
     .sorta-report-table thead .sticky-col-2 {
       z-index: 4;
       background: #003da5;
     }
 
+    .sorta-report-table thead tr.group-row .sticky-col-id,
     .sorta-report-table thead tr.group-row .sticky-col,
     .sorta-report-table thead tr.group-row .sticky-col-2 {
       background: #002d7a;
@@ -316,6 +337,7 @@
       .sorta-banner, .sorta-filters, .sorta-metrics, .sorta-actions, .no-print { display: none !important; }
       .sorta-table-scroll { max-height: none; overflow: visible; border: none; }
       .sorta-report-table thead th { position: static; }
+      .sorta-report-table .sticky-col-id,
       .sorta-report-table .sticky-col,
       .sorta-report-table .sticky-col-2 { position: static; box-shadow: none; }
     }
@@ -437,6 +459,8 @@
       scoringDataReport2: 'hol4pvng1',
       scoringDataReport3: 'bgjvkccw7'
     };
+
+    var EVALUATOR_PAGE = 'https://apps.opengov.com/apps/guuj01sg1/settings/user-interface/pages/view/imahe5tq5';
 
     var CRITERIA = [];
     var reportRows = [];
@@ -676,6 +700,45 @@
       return 'No';
     }
 
+    // Transit Impact is an either/or criterion pair (Fixed Route OR Paratransit Only).
+    // Only the higher-scoring member of the pair contributes to totals.
+    function transitPairRole(label) {
+      var l = String(label || '').toLowerCase();
+      if (l.indexOf('transit impact') === -1) return null;
+      if (l.indexOf('fixed route') !== -1) return 'fixed';
+      if (l.indexOf('paratransit') !== -1) return 'para';
+      return null;
+    }
+
+    function getTransitPairIndexes() {
+      var pair = {};
+      CRITERIA.forEach(function(crit, i) {
+        var role = transitPairRole(crit.label);
+        if (role) pair[role] = i;
+      });
+      return (pair.fixed !== undefined && pair.para !== undefined) ? pair : null;
+    }
+
+    // Display columns: the transit pair is shown as one merged column (12 criteria, not 13).
+    function getDisplayCriteria() {
+      var pair = getTransitPairIndexes();
+      if (!pair) return CRITERIA;
+      var fixed = CRITERIA[pair.fixed];
+      var para = CRITERIA[pair.para];
+      return CRITERIA.map(function(crit, i) {
+        if (i === pair.fixed) {
+          return {
+            id: fixed.id,
+            label: 'Transit Impact (Fixed Route or Paratransit Only)',
+            shortLabel: 'Transit',
+            weightPct: fixed.weightPct + '% fixed / ' + para.weightPct + '% para',
+            merged: true
+          };
+        }
+        return crit;
+      }).filter(function(crit, i) { return i !== pair.para; });
+    }
+
     function calcScoresForApp(scoringRow) {
       var rawTotal = 0;
       var weightedTotal = 0;
@@ -695,6 +758,21 @@
         }
         return { raw: raw, weighted: weighted };
       });
+      // Either/or transit pair: remove the lower member's contribution from totals
+      // and merge the pair into a single display column (the effective score wins).
+      var pair = getTransitPairIndexes();
+      if (pair) {
+        var fixedRaw = parseFloat(scores[pair.fixed].raw);
+        var paraRaw = parseFloat(scores[pair.para].raw);
+        var fixedWs = parseFloat(scores[pair.fixed].weighted) || 0;
+        var paraWs = parseFloat(scores[pair.para].weighted) || 0;
+        rawTotal -= Math.min(isNaN(fixedRaw) ? 0 : fixedRaw, isNaN(paraRaw) ? 0 : paraRaw);
+        weightedTotal -= Math.min(fixedWs, paraWs);
+
+        var effective = (paraWs > fixedWs) ? scores[pair.para] : scores[pair.fixed];
+        scores = scores.map(function(s, i) { return i === pair.fixed ? effective : s; })
+          .filter(function(s, i) { return i !== pair.para; });
+      }
       return {
         scores: scores,
         rawTotal: hasAny ? Math.round(rawTotal * 100) / 100 : null,
@@ -772,12 +850,13 @@
     function renderTableHead() {
       var thead = $('report_thead');
       var infoCols = 14;
-      var critCount = CRITERIA.length;
+      var displayCriteria = getDisplayCriteria();
+      var critCount = displayCriteria.length;
       var critSpan = critCount;
       var weightedSpan = critCount;
 
       var groupHtml = '<tr class="group-row">';
-      groupHtml += '<th class="sticky-col text-left" colspan="2">Application</th>';
+      groupHtml += '<th class="sticky-col-id" colspan="3">Application</th>';
       groupHtml += '<th colspan="' + (infoCols - 2) + '">Project Details</th>';
       if (critCount) {
         groupHtml += '<th class="col-criteria-h" colspan="' + critSpan + '">Criteria Scores</th>';
@@ -787,6 +866,7 @@
       groupHtml += '</tr>';
 
       var labelHtml = '<tr class="label-row">';
+      labelHtml += '<th class="sticky-col-id">ID</th>';
       labelHtml += '<th class="sticky-col text-left">Municipality</th>';
       labelHtml += '<th class="sticky-col-2 text-left">Project Name</th>';
       labelHtml += '<th>Woolpert</th><th>AECOM</th>';
@@ -795,11 +875,11 @@
       labelHtml += '<th>Total Cost</th><th>Funding Req.</th>';
       labelHtml += '<th>Multi-Year</th><th>Size Cat.</th><th>Round</th>';
 
-      CRITERIA.forEach(function(crit, idx) {
+      displayCriteria.forEach(function(crit, idx) {
         labelHtml += '<th class="col-criteria-h" title="' + escHtml(crit.label) + '">C' + (idx + 1) + '<br>' + escHtml(crit.shortLabel) + '</th>';
       });
-      CRITERIA.forEach(function(crit, idx) {
-        labelHtml += '<th class="col-weighted-h" title="' + escHtml(crit.label) + ' (' + crit.weightPct + '%)">W' + (idx + 1) + '</th>';
+      displayCriteria.forEach(function(crit, idx) {
+        labelHtml += '<th class="col-weighted-h" title="' + escHtml(crit.label) + ' (' + crit.weightPct + (crit.merged ? '' : '%') + ')">W' + (idx + 1) + '</th>';
       });
       labelHtml += '<th class="col-total-h">Raw<br>Score</th>';
       labelHtml += '<th class="col-total-h">Weighted<br>Score</th>';
@@ -815,6 +895,8 @@
       rows.forEach(function(row) {
         var tr = document.createElement('tr');
         var html = '';
+        var evalUrl = EVALUATOR_PAGE + '?recordId=' + encodeURIComponent(row.recordId);
+        html += '<td class="sticky-col-id col-info"><a href="' + escHtml(evalUrl) + '" target="_blank" rel="noopener" title="Open evaluation for application ' + escHtml(row.recordId) + '">' + escHtml(row.recordId) + '</a></td>';
         html += '<td class="sticky-col col-info text-left">' + escHtml(row.jurisdiction) + '</td>';
         html += '<td class="sticky-col-2 col-info text-left"><strong>' + escHtml(row.projectName) + '</strong></td>';
         html += '<td class="col-info text-center">' + escHtml(row.woolpert) + '</td>';
@@ -937,10 +1019,11 @@
         'Contact', 'Phone', 'Email', 'Subdivision Type', 'Project Type',
         'Total Cost', 'Funding Requested', 'Multi-Year', 'Size Category', 'Round'
       ];
-      CRITERIA.forEach(function(c, i) {
+      var displayCriteria = getDisplayCriteria();
+      displayCriteria.forEach(function(c, i) {
         headers.push('Criteria ' + (i + 1) + ' ' + c.label);
       });
-      CRITERIA.forEach(function(c, i) {
+      displayCriteria.forEach(function(c, i) {
         headers.push('Weighted ' + (i + 1) + ' ' + c.label);
       });
       headers.push('Raw Score', 'Weighted Score');

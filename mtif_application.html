@@ -645,6 +645,16 @@
       .scoring-guidance-panel .guidance-rubric strong {
         color: #003da5;
       }
+      .scoring-guidance-panel .guidance-rubric li.rubric-section-heading {
+        font-weight: 700;
+        color: #1e293b;
+        background: #eef2f7;
+        padding: 6px 10px;
+        margin: 8px 0 2px;
+        border-radius: 6px;
+        border-bottom: none;
+        font-size: 12.5px;
+      }
       .scoring-guidance-panel .guidance-note {
         margin-top: 8px;
         font-style: italic;
@@ -1298,15 +1308,21 @@
       question: 'What is the impact to the Transit Authority\'s transit system by completing the project?',
       description: 'If the Transit Authority\'s fixed route bus service operates on the street included in the application, use section (A) for scoring; otherwise, use section (B). A project must score 1 or higher in this criterion to be eligible for MTIF funding.',
       rubric: [
+        { heading: 'A. Serving Fixed Route Service (Weight 19%)' },
         { score: '10', label: '125+ fixed-route weekday trips', desc: 'Or located on a BRT Corridor designated by the Transit Authority' },
         { score: '8', label: '80\u2013124 fixed-route weekday trips', desc: '' },
         { score: '6', label: '50\u201379 fixed-route weekday trips', desc: '' },
         { score: '4', label: '20\u201349 fixed-route weekday trips', desc: '' },
         { score: '2', label: '10\u201319 fixed-route weekday trips', desc: '' },
         { score: '1', label: '1\u20139 fixed-route weekday trips', desc: '' },
-        { score: '0', label: 'No fixed-route bus service', desc: '' }
+        { score: '0', label: 'No fixed-route bus service', desc: '' },
+        { heading: 'B. Serving Paratransit Service \u2014 score only if 0 on Fixed Route (Weight 2%)' },
+        { score: '10', label: 'Within 1/3 mile of fixed route transit', desc: '' },
+        { score: '6', label: 'Within 1/2 mile of fixed route transit', desc: '' },
+        { score: '4', label: 'Within 3/4 mile of fixed route transit', desc: '' },
+        { score: '0', label: 'Over 3/4 mile of fixed route transit \u2014 does not serve paratransit', desc: '' }
       ],
-      docs: 'Paratransit Only (if scored 0 on Fixed Route): 10 = within 1/3 mile of fixed route; 6 = within 1/2 mile; 4 = within 3/4 mile; 0 = over 3/4 mile. Describe the impact to the Transit Authority\'s transit system by completing the project.',
+      docs: 'Fixed route: scheduled weekday bus trips, one direction. Paratransit (ACCESS): measured by proximity to a fixed route alignment. Describe the impact to the Transit Authority\'s transit system by completing the project.',
       notes: 'At least 75% of the proposed project length must be served by the fixed route to receive corresponding points. Any project receiving a score of zero (0) in this criterion will not be eligible for MTIF funding.'
     },
     'Multimodal infrastructure details': {
@@ -2027,6 +2043,10 @@
           }
           html += '<ul class="guidance-rubric">';
           guidance.rubric.forEach(function(r) {
+            if (r.heading) {
+              html += '<li class="rubric-section-heading">' + r.heading + '</li>';
+              return;
+            }
             html += '<li><strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
             if (r.desc) html += ' \u2014 ' + r.desc;
             html += '</li>';

@@ -677,6 +677,25 @@
       return num > 0 ? num : 0;
     }
 
+    // Transit Impact is an either/or criterion pair (Fixed Route OR Paratransit Only).
+    // The pair counts as one criterion; only the higher score contributes to totals.
+    function transitPairRole(label) {
+      var l = String(label || '').toLowerCase();
+      if (l.indexOf('transit impact') === -1) return null;
+      if (l.indexOf('fixed route') !== -1) return 'fixed';
+      if (l.indexOf('paratransit') !== -1) return 'para';
+      return null;
+    }
+
+    function getTransitPairIds() {
+      var pair = {};
+      SCORING_CRITERIA.forEach(function(crit) {
+        var role = transitPairRole(crit.label);
+        if (role) pair[role] = crit.id;
+      });
+      return (pair.fixed && pair.para) ? pair : null;
+    }
+
     function getRecordId(row) {
       return row.id || extractFieldValue(row, 'id') || row.Rid || '';
     }
@@ -703,6 +722,7 @@
           var rid = extractFieldValue(row, 'Record Id') || row.id || row.Rid;
           active.push({
             id: 'criterion_' + rid,
+            label: extractFieldValue(row, 'criterion label') || ('Criterion ' + rid),
             weightPct: parseFloat(extractFieldValue(row, 'weight pct')) || 0
           });
         });
@@ -749,20 +769,40 @@
       var justification = extractScoringFieldValue(row, 'ws_justification_summary');
       var hasJustification = !!(justification && String(justification).trim());
 
-      SCORING_CRITERIA.forEach(function(crit) {
-        if (isCriterionEntered(row, crit)) enteredCount++;
+      var pair = getTransitPairIds();
+      var pairEntered = false;
+      var pairWeighted = [];
 
+      SCORING_CRITERIA.forEach(function(crit) {
+        var isPairMember = pair && (crit.id === pair.fixed || crit.id === pair.para);
+        var entered = isCriterionEntered(row, crit);
+
+        var ws = 0;
         var rawNum = getCriterionWeightedScore(row, crit);
         if (!isNaN(rawNum)) {
-          weightedTotal += Math.round((rawNum * (crit.weightPct / 100)) * 100) / 100;
+          ws = Math.round((rawNum * (crit.weightPct / 100)) * 100) / 100;
+        }
+
+        if (isPairMember) {
+          if (entered) pairEntered = true;
+          pairWeighted.push(ws);
+        } else {
+          if (entered) enteredCount++;
+          weightedTotal += ws;
         }
       });
+
+      // The transit pair counts as a single criterion; only the higher score contributes.
+      if (pair) {
+        if (pairEntered) enteredCount++;
+        weightedTotal += Math.max.apply(null, pairWeighted.concat([0]));
+      }
 
       var hasStarted = enteredCount > 0 || hasJustification;
 
       return {
         scoredCount: enteredCount,
-        totalCriteria: SCORING_CRITERIA.length,
+        totalCriteria: SCORING_CRITERIA.length - (pair ? 1 : 0),
         weightedTotal: hasStarted ? Math.round(weightedTotal * 100) / 100 : null,
         hasExplicitScoring: hasStarted
       };

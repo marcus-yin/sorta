@@ -548,6 +548,11 @@
         outline-offset: 1px;
       }
       .scoring-guidance-panel .guidance-rubric li.just-clicked { background: #bbf7d0 !important; }
+      .scoring-guidance-panel .guidance-rubric li.rubric-section-heading {
+        font-weight: 700; color: #1e293b; background: #eef2f7;
+        padding: 6px 10px; margin: 8px -10px 2px; border-radius: 6px;
+        border-bottom: none; font-size: 12.5px;
+      }
       .scoring-guidance-panel .rubric-hint {
         font-size: 11.5px; color: #64748b; margin: 4px 0 6px; font-style: italic;
       }
@@ -1158,15 +1163,21 @@
       question: 'What is the impact to the Transit Authority\'s transit system by completing the project?',
       description: 'If fixed route bus service operates on the street, use section (A); otherwise use section (B). A project must score 1 or higher to be eligible.',
       rubric: [
-        { score: '10', label: '125+ fixed-route weekday trips', desc: 'Or on a BRT Corridor' },
-        { score: '8', label: '80\u2013124 fixed-route weekday trips', desc: '' },
-        { score: '6', label: '50\u201379 fixed-route weekday trips', desc: '' },
-        { score: '4', label: '20\u201349 fixed-route weekday trips', desc: '' },
-        { score: '2', label: '10\u201319 fixed-route weekday trips', desc: '' },
-        { score: '1', label: '1\u20139 fixed-route weekday trips', desc: '' },
-        { score: '0', label: 'No fixed-route bus service', desc: '' }
+        { heading: 'A. Serving Fixed Route Service (Weight 19%)' },
+        { score: '10', label: '125+ fixed-route weekday trips', desc: 'Or on a BRT Corridor', target: 'fixed' },
+        { score: '8', label: '80\u2013124 fixed-route weekday trips', desc: '', target: 'fixed' },
+        { score: '6', label: '50\u201379 fixed-route weekday trips', desc: '', target: 'fixed' },
+        { score: '4', label: '20\u201349 fixed-route weekday trips', desc: '', target: 'fixed' },
+        { score: '2', label: '10\u201319 fixed-route weekday trips', desc: '', target: 'fixed' },
+        { score: '1', label: '1\u20139 fixed-route weekday trips', desc: '', target: 'fixed' },
+        { score: '0', label: 'No fixed-route bus service', desc: '', target: 'fixed' },
+        { heading: 'B. Serving Paratransit Service \u2014 score only if 0 on Fixed Route (Weight 2%)' },
+        { score: '10', label: 'Within 1/3 mile of fixed route transit', desc: '', target: 'para' },
+        { score: '6', label: 'Within 1/2 mile of fixed route transit', desc: '', target: 'para' },
+        { score: '4', label: 'Within 3/4 mile of fixed route transit', desc: '', target: 'para' },
+        { score: '0', label: 'Over 3/4 mile of fixed route transit \u2014 does not serve paratransit', desc: '', target: 'para' }
       ],
-      docs: 'Paratransit Only (if scored 0 on Fixed Route): 10 = within 1/3 mile; 6 = within 1/2 mile; 4 = within 3/4 mile; 0 = over 3/4 mile.',
+      docs: 'Fixed route: scheduled weekday bus trips, one direction. Paratransit (ACCESS): measured by proximity to a fixed route alignment.',
       notes: 'At least 75% of the proposed project length must be served by the fixed route. Score of 0 means not eligible for MTIF funding.'
     },
     'Multimodal infrastructure details': {
@@ -1464,6 +1475,11 @@
       } else {
         matchedCritIds[crit.id] = true;
         tbody.appendChild(buildSummaryDataRow(crit));
+        var counterpart = getTransitCounterpart(crit);
+        if (counterpart && !matchedCritIds[counterpart.id]) {
+          matchedCritIds[counterpart.id] = true;
+          tbody.appendChild(buildSummaryDataRow(counterpart));
+        }
       }
     });
 
@@ -1512,7 +1528,11 @@
     var commentId = 'ws_comment_' + crit.id;
     var min = (typeof crit.scaleMin === 'number') ? crit.scaleMin : 0;
     var max = (typeof crit.scaleMax === 'number' && crit.scaleMax > 0) ? crit.scaleMax : 10;
+    var transitNote = transitPairRole(crit.label)
+      ? '<div class="iws-hint" style="font-weight:600;">Either/or: score this criterion OR the other Transit Impact criterion \u2014 not both. Scoring one clears the other.</div>'
+      : '';
     return (
+      transitNote +
       '<div class="iws-header">' +
         '<div class="iws-title">Weighted Score \u2014 ' + escapeAttr(crit.label) + '</div>' +
         '<div class="iws-badge">Editable</div>' +
@@ -1563,6 +1583,18 @@
         ? renderSustainabilityCriterionControls(crit)
         : renderCriterionControls(crit);
       slot.appendChild(block);
+
+      // The transit pair is scored from the same narrative (option A vs option B),
+      // so render the counterpart block right below its partner.
+      var counterpart = getTransitCounterpart(crit);
+      if (counterpart && !matched[counterpart.id]) {
+        matched[counterpart.id] = true;
+        var pairBlock = document.createElement('div');
+        pairBlock.className = 'inline-weighted-score';
+        pairBlock.setAttribute('data-criterion-id', counterpart.id);
+        pairBlock.innerHTML = renderCriterionControls(counterpart);
+        slot.appendChild(pairBlock);
+      }
     });
 
     var unmatchedContainer = document.getElementById('unmatchedCriteriaBlock');
@@ -1609,6 +1641,7 @@
           return;
         }
         if (t && t.id && (t.id.indexOf('ws_score_') === 0 || t.id.indexOf('ws_comment_') === 0)) {
+          if (t.id.indexOf('ws_score_') === 0) enforceTransitExclusivity(t);
           recalcWeightedScores();
         }
       });
@@ -1698,6 +1731,48 @@
       if (WEIGHTED_SCORING_CRITERIA[i].id === critId) return WEIGHTED_SCORING_CRITERIA[i];
     }
     return null;
+  }
+
+  // Transit Impact is an either/or criterion: a project is scored on Fixed Route OR
+  // Paratransit Only, never both. The pair counts as a single criterion in totals.
+  function transitPairRole(label) {
+    var l = String(label || '').toLowerCase();
+    if (l.indexOf('transit impact') === -1) return null;
+    if (l.indexOf('fixed route') !== -1) return 'fixed';
+    if (l.indexOf('paratransit') !== -1) return 'para';
+    return null;
+  }
+
+  function getTransitPair() {
+    var pair = {};
+    WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
+      var role = transitPairRole(crit.label);
+      if (role) pair[role] = crit;
+    });
+    return (pair.fixed && pair.para) ? pair : null;
+  }
+
+  function getTransitCounterpart(crit) {
+    if (!crit) return null;
+    var role = transitPairRole(crit.label);
+    if (!role) return null;
+    var pair = getTransitPair();
+    if (!pair) return null;
+    return role === 'fixed' ? pair.para : pair.fixed;
+  }
+
+  // Entering a score on one transit criterion clears the other.
+  function enforceTransitExclusivity(scoreEl) {
+    if (!scoreEl || String(scoreEl.value).trim() === '') return;
+    var crit = getCriterionForScoreInput(scoreEl);
+    var other = getTransitCounterpart(crit);
+    if (!other) return;
+    var otherEl = document.getElementById('ws_score_' + other.id);
+    if (!otherEl || String(otherEl.value).trim() === '') return;
+    otherEl.value = '';
+    delete otherEl.dataset.lastCommittedScore;
+    markScoreBlockUnscored(otherEl);
+    showToast('Transit Impact is either/or \u2014 cleared "' + other.label + '".', 'success');
   }
 
   function markScoreBlockScored(scoreEl) {
@@ -1808,7 +1883,14 @@
     var numeric = parseFloat(String(score).replace(/[^0-9.\-]+/g, ' ').trim().split(/\s+/)[0]);
     if (isNaN(numeric)) return;
 
-    var crit = findCriterionForNarrative(narrativeFieldName);
+    // Transit rubric rows route to their own criterion (fixed route vs paratransit).
+    var crit = null;
+    var target = li.getAttribute('data-target');
+    if (target) {
+      var pair = getTransitPair();
+      if (pair) crit = (target === 'para') ? pair.para : pair.fixed;
+    }
+    if (!crit) crit = findCriterionForNarrative(narrativeFieldName);
     if (!crit) {
       showToast('No matching Weighted Scoring row found for "' + narrativeFieldName + '".', 'error');
       return;
@@ -1822,6 +1904,7 @@
     if (typeof crit.scaleMax === 'number' && clamped > crit.scaleMax) clamped = crit.scaleMax;
     if (typeof crit.scaleMin === 'number' && clamped < crit.scaleMin) clamped = crit.scaleMin;
     scoreEl.value = clamped;
+    enforceTransitExclusivity(scoreEl);
     scoreEl.dispatchEvent(new Event('input', { bubbles: true }));
     recalcWeightedScores();
 
@@ -1837,11 +1920,13 @@
 
   function recalcWeightedScores() {
     var total = 0;
+    var wsById = {};
     WEIGHTED_SCORING_CRITERIA.forEach(function(crit) {
       var scoreEl = document.getElementById('ws_score_' + crit.id);
       var weightEl = document.getElementById('ws_weight_' + crit.id);
       var resultEl = document.getElementById('ws_result_' + crit.id);
       var w = parseFloat(weightEl ? weightEl.value : '') || 0;
+      wsById[crit.id] = 0;
       if (!hasActiveScoreInput(scoreEl)) {
         if (resultEl) resultEl.textContent = '0';
         return;
@@ -1857,8 +1942,14 @@
       if (s < minVal) { s = minVal; if (scoreEl) scoreEl.value = minVal; }
       var ws = Math.round((s * (w / 100)) * 100) / 100;
       if (resultEl) resultEl.textContent = ws || '0';
+      wsById[crit.id] = ws;
       total += ws;
     });
+    // Transit Impact is either/or: if both are somehow scored, only the higher counts.
+    var pair = getTransitPair();
+    if (pair) {
+      total -= Math.min(wsById[pair.fixed.id] || 0, wsById[pair.para.id] || 0);
+    }
     var totalEl = document.getElementById('weightedScoringTotal');
     if (totalEl) totalEl.textContent = Math.round(total * 100) / 100;
     updateScoringSummaryDisplay();
@@ -1879,9 +1970,12 @@
       }
       // Comment-only criteria save ws_score 0 so stale rubric values are cleared in OpenGov.
       // Unscored criteria with no comment omit ws_score so defaults are not written.
+      // The unscored half of the either/or transit pair also saves 0 to clear stale values.
+      var counterpart = getTransitCounterpart(crit);
+      var counterpartScored = counterpart && hasActiveScoreInput(document.getElementById('ws_score_' + counterpart.id));
       if (s !== '') {
         fields.push({ Name: 'ws_score_' + crit.id, Value: s });
-      } else if (c.trim() !== '') {
+      } else if (c.trim() !== '' || counterpartScored) {
         fields.push({ Name: 'ws_score_' + crit.id, Value: '0' });
       }
       if (w !== '') fields.push({ Name: 'ws_weight_' + crit.id, Value: w });
@@ -2535,8 +2629,13 @@
           }
           html += '<ul class="guidance-rubric">';
           guidance.rubric.forEach(function(r) {
+            if (r.heading) {
+              html += '<li class="rubric-section-heading">' + escapeAttr(r.heading) + '</li>';
+              return;
+            }
             var rowTitle = isSustainabilityNarrative(fieldName) ? 'Click to fill max points for this subcriterion' : 'Click to set Weighted Score';
-            html += '<li class="clickable" tabindex="0" role="button" data-score="' + escapeAttr(r.score) + '" title="' + rowTitle + '">' +
+            html += '<li class="clickable" tabindex="0" role="button" data-score="' + escapeAttr(r.score) + '"' +
+                    (r.target ? ' data-target="' + escapeAttr(r.target) + '"' : '') + ' title="' + rowTitle + '">' +
                     '<strong>' + r.score + ' \u2013 ' + r.label + '</strong>';
             if (r.desc) html += ' \u2014 ' + r.desc;
             html += '</li>';
