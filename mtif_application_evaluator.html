@@ -3758,10 +3758,33 @@
     }
   }
 
+  // The page is embedded by OpenGov, so ?recordId= usually lives on the parent
+  // page URL rather than this frame's own URL. Resolve in order: own URL,
+  // parent URL, referrer, then localStorage. A URL-resolved id is written back
+  // to localStorage so it always reflects the record actually being viewed.
+  function resolveRecordId() {
+    function fromSearch(search) {
+      try {
+        return search ? (new URLSearchParams(search).get('recordId') || '') : '';
+      } catch (_) { return ''; }
+    }
+    var rid = fromSearch(window.location.search);
+    if (!rid) {
+      try { rid = fromSearch(window.top.location.search); } catch (_) { /* cross-origin */ }
+    }
+    if (!rid && document.referrer) {
+      try { rid = fromSearch(new URL(document.referrer).search); } catch (_) {}
+    }
+    if (rid) {
+      try { localStorage.setItem('mtif_current_application_id', rid); } catch (_) {}
+      return rid;
+    }
+    try { return localStorage.getItem('mtif_current_application_id') || ''; } catch (_) { return ''; }
+  }
+
   // Initialization
   function init() {
-    var params = new URLSearchParams(window.location.search);
-    var recordId = params.get('recordId') || localStorage.getItem('mtif_current_application_id') || '';
+    var recordId = resolveRecordId();
 
     if (!recordId) {
       document.getElementById('loadingScreen').style.display = 'none';
